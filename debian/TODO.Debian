@@ -1,0 +1,20 @@
+  * Use dh_buildinfo.
+  * Use cdbs.
+  * Place config in separate c-client-config package to make it general.
+    across versions of libc-client (replaces all earlier libc-client and
+    requires current one or newer - is that possible to define?!?).
+  * Replace 10_disallow_escaping_home.diff with c-client.conf option
+    "set restrict-mailbox-access all".
+  * Move all dialogs to debconf.
+  * Support non-self-signed certificates, and ask for optional CA
+    certificate or already prepared (or bought) certificate and private
+    key.
+  * Add hint to certificates about the creator, and check for creator in
+    postrm and remove if matching.
+  * Suggest the above to slapd, dovecot and others creating self-signed
+    certificates (or maybe create a dh_cert helper package?).
+  * Shlibs patch links unconditionally against -lk5crypto - should
+    probably do a check similar to the one in Makefile.gss.
+  * Now that $C/ARCHIVENAME is correctly read in src/imapd/Makefile and
+    src/ipopd/Makefile, check if other parts of 01_shlib.diff is no
+    longer needed.

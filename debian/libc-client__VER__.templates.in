@@ -1,0 +1,29 @@
+Template: libc-client/plaintext
+Type: boolean
+Default: false
+Description: Allow insecure authentication using plaintext passwords?
+ The use of unencrypted plaintext passwords is generally insecure, and
+ the current version of libc-client by default only allows network
+ access through either TLS or SSL connections.  This affects uw-imapd,
+ ipopd and any other programs that use libc-client for mail access
+ through the network.  However, this functionality can be changed by
+ using the semi-official /etc/c-client.cf configuration file.  Read more
+ about this in /usr/share/doc/libc-client__VER__/README.Debian.
+ .
+ Do you want to allow email access authentication using insecure
+ plaintext passwords?
+ .
+ Note: cramd-md5 passwords are treated as plaintext passwords!
+
+Template: libc-client/no_maildir_warning
+Type: boolean
+Default: true
+Description: Continue installing libc-client without Maildir support?
+ Libc-client earlier than version 2002d (and development versions of
+ 2003) included an unofficial and no longer maintained patch to support
+ Maildirs.
+ By default Maildirs were not used by uw-imapd or ipopd, but if you have
+ changed your system configuration or other installed programs depend on
+ libc-client then upgrading may result in broken mail handling.
+ .
+ Do you want to continue installing a libc-client without Maildir support?

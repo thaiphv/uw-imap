@@ -1,0 +1,5 @@
+debian/linda/ipopd	/usr/share/linda/overrides/
+debian/lintian/ipopd	/usr/share/lintian/overrides/
+debian/logcheck/ipopd	/etc/logcheck/ignore.d.server/
+ipopd/ipop2d		/usr/sbin/
+ipopd/ipop3d		/usr/sbin/

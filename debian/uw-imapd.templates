@@ -1,0 +1,44 @@
+Template: uw-imapd/protocol
+Type: multiselect
+Choices: imap2, imap3, imaps
+Choices-da: imap2, imap3, imaps
+Choices-ja: imap2, imap3, imaps
+Choices-pt_BR: imap2, imap3, imaps
+Default: imap2, imaps
+Description: Which ports should the server listen on?
+ imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS
+ support.
+ .
+ imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete.
+ .
+ imaps = IMAP 4Rev1 on TCP port 993 with SSL support.
+ .
+ If in doubt, pick imap2 and imaps.
+Description-da: Hvilke porte skal serveren lytte på?
+ imap2 = IMAP 4Rev1 (ikke 2, spøjst nok) på TCP port 143 med
+ TLS-understøttelse.
+ .
+ imap3 = IMAP 3 på TCP port 220 med TLS-understøttelse. Dette er forældet.
+ .
+ imaps = IMAP 4Rev1 på TCP port 993 med SSL-understøttelse.
+ .
+ Er du i tvivl så vælg imap2 og imaps.
+Description-ja: ¥µ¡¼¥Ð¤Ç¤É¤Î¥Ý¡¼¥È¤ò¥ê¥¹¥ó¤·¤Þ¤¹¤«?
+ imap2 = TCP ¥Ý¡¼¥È 143 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥Ý¡¼¥ÈÉÕ¤­ IMAP 4Rev1
+ (´ñÌ¯¤Ê¤³¤È¤Ç¤¹¤¬ 2 ¤Ç¤Ï¤¢¤ê¤Þ¤»¤ó)¡£
+ .
+ imap3 = TCP ¥Ý¡¼¥È 220 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥Ý¡¼¥ÈÉÕ¤­ IMAP
+ 3¡£¤³¤ì¤Ï¤â¤¦»þÂåÃÙ¤ì¤Î¤â¤Î¤Ç¤¹¡£
+ .
+ imaps = TCP ¥Ý¡¼¥È 993 ¤ÇÆ°ºî¤¹¤ë SSL ¥µ¥Ý¡¼¥ÈÉÕ¤­ IMAP 4Rev1¡£
+ .
+ ¤è¤¯¤ï¤«¤é¤Ê¤±¤ì¤Ð¡¢imap2 ¤È imaps ¤òÁª¤ó¤Ç¤¯¤À¤µ¤¤¡£
+Description-pt_BR: Em quais portas o servidor deve ouvir ?
+ imapd2 = IMAP 4Rev1 (não 2, estranho o bastante) na porta TCP 143 com
+ suporte TLS.
+ .
+ imap3 = IMAP 3 na porta TCP 220 com suporte TLS. Isto é obsoleto.
+ .
+ imaps = IMAP 4Rev1 na porta TCP 993 com suporte SSL.
+ .
+ Em caso de dúvidas, escolha imap2 e imaps

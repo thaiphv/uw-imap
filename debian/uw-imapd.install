@@ -1,0 +1,4 @@
+debian/linda/uw-imapd		usr/share/linda/overrides/
+debian/lintian/uw-imapd		usr/share/lintian/overrides/
+debian/logcheck/uw-imapd	etc/logcheck/ignore.d.server/
+imapd/imapd			/usr/sbin/

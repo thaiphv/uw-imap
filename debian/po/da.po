@@ -1,0 +1,175 @@
+# Translators, if you are not familiar with the PO format, gettext
+# documentation is worth reading, especially sections dedicated to
+# this format, e.g. by running:
+# info -n '(gettext)PO Files'
+# info -n '(gettext)Header Entry'
+# Some information specific to po-debconf are available at
+# /usr/share/doc/po-debconf/README-trans
+# or http://www.debian.org/intl/l10n/po-debconf/README-trans
+# Developers do not need to manually edit POT or PO files.
+# 
+msgid ""
+msgstr ""
+"Project-Id-Version: uw-imap 2003debian0.0303051641\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-02-28 16:43+0100\n"
+"PO-Revision-Date: 2003-12-10 03:25+0100\n"
+"Last-Translator: Jonas Smedegaard <dr@jones.dk>\n"
+"Language-Team: Danish <dansk@klid.dk>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: multiselect
+#. Choices
+#: ../ipopd.templates.master:3
+msgid "pop2, pop3, pop3s"
+msgstr "pop2, pop3, pop3s"
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
+msgid "Which ports should the server listen on?"
+msgstr "Hvilke porte skal serveren lytte på?"
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
+msgstr ""
+"pop2 = POP 2 på TCP port 109 med TLS-understøttelse. Dette er forældet."
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop3  = POP 3 on TCP port 110 with TLS support."
+msgstr "pop3 = POP 3 på TCP port 110 med TLS-understøttelse."
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop3s = POP 3 on TCP port 995 with SSL support."
+msgstr "pop3s = POP 3 på TCP port 995 med SSL-understøttelse."
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "If in doubt, choose pop3 and pop3s."
+msgstr "Er du i tvivl så vælg pop3 og pop3s."
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid "Allow insecure authentication using plaintext passwords?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+#, fuzzy
+msgid ""
+"The use of unencrypted plaintext passwords is generally insecure, and the "
+"current version of libc-client by default only allows network access through "
+"either TLS or SSL connections.  This affects uw-imapd, ipopd and any other "
+"programs that use libc-client for mail access through the network.  However, "
+"this functionality can be changed by using the semi-official /etc/c-client."
+"cf configuration file.  Read more about this in /usr/share/doc/libc-"
+"client__VER__/README.Debian."
+msgstr ""
+"Ukrypterede simpel-tekst adgangskoder er generelt usikre, og den nuvÃ¦rende "
+"version af libc-client tillader som standard kun netvÃ¦rksadgang via TLS- "
+"eller SSLforbindelser. Dette pÃ¥virker uw-imapd, ipopd og alle andre "
+"programmer som bruger libc-client til adgang til email via netvÃ¦rk. Denne "
+"funktionalitet kan dog Ã¦ndres ved at bruge den semi-officielle "
+"konfigurationsfil /etc/c-client.cf. LÃ¦s mere om dette i /usr/share/doc/libc-"
+"client2003debian/README.Debian."
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+#, fuzzy
+msgid ""
+"Do you want to allow email access authentication using insecure plaintext "
+"passwords?"
+msgstr ""
+"Svar ja for at tillade netvÃ¦rksadgang ved brug af usikre simpel-tekst "
+"adgangskoder."
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
+msgstr "Note: cramd-md5 adgangskoder hÃ¥ndteres som simpel-tekst adgangskoder."
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:21
+msgid "Continue installing libc-client without Maildir support?"
+msgstr "Fortsæt installation af libc-client uden understøttelse for Maildir?"
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:21
+#, fuzzy
+msgid ""
+"Libc-client earlier than version 2002d (and development versions of 2003) "
+"included an unofficial and no longer maintained patch to support Maildirs. "
+"By default Maildirs were not used by uw-imapd or ipopd, but if you have "
+"changed your system configuration or other installed programs depend on libc-"
+"client then upgrading may result in broken mail handling."
+msgstr ""
+"Libc-client tidligere end version 2002d (og udvikler-versioner af 2003) "
+"indeholdt en uofficiel og ikke længere vedligeholdt rettelse til "
+"understøttelse af Maildir. Som standard blev Maildir ikke benyttet af uw-"
+"imapd eller ipopd, men hvis du har ændret din systemopsætning eller andre "
+"installerede programmer som afhænger af libc-client vil denne opgradering "
+"medføre at fejl i håndtering af emails."
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:21
+msgid ""
+"Do you want to continue installing a libc-client without Maildir support?"
+msgstr ""
+"Vil du fortsætte installation af libc-client uden Maildir understøttelse?"
+
+#. Type: multiselect
+#. Choices
+#: ../uw-imapd.templates.master:3
+msgid "imap2, imap3, imaps"
+msgstr "imap2, imap3, imaps"
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid ""
+"imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
+"support."
+msgstr ""
+"imap2 = IMAP 4Rev1 (ikke 2, spøjst nok) på TCP port 143 med TLS-"
+"understøttelse."
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
+msgstr ""
+"imap3 = IMAP 3 på TCP port 220 med TLS-understøttelse. Dette er forældet."
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
+msgstr "imaps = IMAP 4Rev1 på TCP port 993 med SSL-understøttelse."
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "If in doubt, pick imap2 and imaps."
+msgstr "Er du i tvivl så vælg imap2 og imaps."
+
+#~ msgid "yes, no"
+#~ msgstr "ja, nej"
+
+#~ msgid "Should plaintext passwords be enabled?"
+#~ msgstr "Skal simpel-tekst adgangskoder aktiveres?"

@@ -1,0 +1,2 @@
+debian/lintian/libc-client__VER__	usr/share/lintian/overrides/
+c-client/libc-client.so /usr/lib/

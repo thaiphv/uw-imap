@@ -1,0 +1,12 @@
+Template: ipopd/protocol
+Type: multiselect
+_Choices: pop2, pop3, pop3s
+Default: pop3, pop3s
+_Description: Which ports should the server listen on?
+ pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete.
+ .
+ pop3  = POP 3 on TCP port 110 with TLS support.
+ .
+ pop3s = POP 3 on TCP port 995 with SSL support.
+ .
+ If in doubt, choose pop3 and pop3s.

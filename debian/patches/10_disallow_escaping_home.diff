@@ -1,0 +1,12 @@
+diff -ruN uw-imap-2002ddebian1.orig/src/osdep/unix/env_unix.c uw-imap-2002ddebian1/src/osdep/unix/env_unix.c
+--- uw-imap-2002ddebian1.orig/src/osdep/unix/env_unix.c	2003-04-17 02:14:42.000000000 +0200
++++ uw-imap-2002ddebian1/src/osdep/unix/env_unix.c	2003-07-04 18:28:24.000000000 +0200
+@@ -44,7 +44,7 @@
+ static short anonymous = NIL;	/* is anonymous */
+ static short blackBox = NIL;	/* is a black box */
+ static short closedBox = NIL;	/* is a closed box */
+-static short restrictBox = NIL;	/* is a restricted box */
++static short restrictBox = -1;	/* is a restricted box */
+ static short has_no_life = NIL;	/* is a cretin with no life */
+ 				/* flock() emulator is a no-op */
+ static short disableFcntlLock = NIL;

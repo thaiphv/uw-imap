@@ -1,0 +1,24 @@
+#!/bin/sh -e
+
+if [ "$1" = "configure" ]; then
+	# Source debconf library.
+	. /usr/share/debconf/confmodule
+	db_version 2.0
+
+	db_get libc-client/plaintext
+	if [ "$RET" = "true" ]; then
+		printf "\nI accept the risk\n" >> /etc/c-client.cf
+		perl -ni -e '$n++; print "I accept the risk\nset disable-plaintext nil\n" if $n==1; \
+			print && next unless /^($|I accept the risk|set\s*disable-plaintext)/i;' /etc/c-client.cf
+	else
+		if [ -f /etc/c-client.cf ]; then
+			printf "\nI accept the risk\n" >> /etc/c-client.cf
+			perl -ni -e '$n++; print "I accept the risk\n" if $n==1; \
+				print && next unless /^($|I accept the risk|set\s*disable-plaintext)/i;' /etc/c-client.cf
+		fi
+	fi
+fi
+
+#DEBHELPER#
+
+exit 0

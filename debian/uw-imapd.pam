@@ -1,7 +1,10 @@
-#%PAM-1.0
+#
+# The PAM configuration file for the UW IMAPd `imap' service
+#
 
-auth     required       pam_unix_auth.so
-account	 required	pam_unix_acct.so
-password required	pam_unix_passwd.so
-session  required	pam_unix_session.so
-
+# The standard Unix authentication modules, used with
+# NIS (man nsswitch) as well as normal /etc/passwd and
+# /etc/shadow entries.
+@include common-auth
+@include common-account
+@include common-session

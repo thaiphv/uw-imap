@@ -2,11 +2,32 @@
 
 set -e
 
+# Source debconf library.
+. /usr/share/debconf/confmodule
+db_version 2.0
+
 ##
 ## Remove POP daemons from inetd.conf
 ##
-update-inetd --remove '/usr/sbin/ipop3d$'
-update-inetd --remove '/usr/sbin/ipop2d$'
+db_get ipopd/protocol
+for i in `echo "$RET" | sed 's/,/ /g'`; do
+	if [ "$i" = "pop2" ]; then
+		update-inetd --remove pop2;
+	elif [ "$i" = "pop3" ]; then
+		update-inetd --remove pop3;
+	elif [ "$i" = "pop3s" ]; then
+		update-inetd --remove pop3s;
+	fi
+done
+
+if [ "$1" = "purge" -a -f /etc/ssl/certs/ipop3d.pem ]; then
+#        cd /etc/ssl/certs
+#        PATH=$PATH:/usr/bin/ssl
+#        rm -f `openssl x509 -noout -hash < ipop3d.pem`.0 || true
+#	if [ -f ipop3d.pem ]; then rm -f ipop3d.pem; fi
+	echo "SSL certificate /etc/ssl/certs/ipop3d.pem is NOT removed."
+	echo "Please remove the file manually."
+fi
 
 #DEBHELPER#
 

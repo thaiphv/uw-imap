@@ -1,0 +1,150 @@
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-02-28 16:43+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: multiselect
+#. Choices
+#: ../ipopd.templates.master:3
+msgid "pop2, pop3, pop3s"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
+msgid "Which ports should the server listen on?"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop3  = POP 3 on TCP port 110 with TLS support."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop3s = POP 3 on TCP port 995 with SSL support."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "If in doubt, choose pop3 and pop3s."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid "Allow insecure authentication using plaintext passwords?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid ""
+"The use of unencrypted plaintext passwords is generally insecure, and the "
+"current version of libc-client by default only allows network access through "
+"either TLS or SSL connections.  This affects uw-imapd, ipopd and any other "
+"programs that use libc-client for mail access through the network.  However, "
+"this functionality can be changed by using the semi-official /etc/c-client."
+"cf configuration file.  Read more about this in /usr/share/doc/libc-"
+"client__VER__/README.Debian."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid ""
+"Do you want to allow email access authentication using insecure plaintext "
+"passwords?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:21
+msgid "Continue installing libc-client without Maildir support?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:21
+msgid ""
+"Libc-client earlier than version 2002d (and development versions of 2003) "
+"included an unofficial and no longer maintained patch to support Maildirs. "
+"By default Maildirs were not used by uw-imapd or ipopd, but if you have "
+"changed your system configuration or other installed programs depend on libc-"
+"client then upgrading may result in broken mail handling."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:21
+msgid ""
+"Do you want to continue installing a libc-client without Maildir support?"
+msgstr ""
+
+#. Type: multiselect
+#. Choices
+#: ../uw-imapd.templates.master:3
+msgid "imap2, imap3, imaps"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid ""
+"imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
+"support."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "If in doubt, pick imap2 and imaps."
+msgstr ""

@@ -1,0 +1,102 @@
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2003-08-25 01:08+0200\n"
+"PO-Revision-Date: 2003-12-21 22:03+0900\n"
+"Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
+"Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=EUC-JP\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Choices
+#: ../ipopd.templates.master:3
+msgid "pop2, pop3, pop3s"
+msgstr "pop2, pop3, pop3s"
+
+#. Description
+#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
+msgid "Which ports should the server listen on?"
+msgstr "サーバでどのポートをリスンしますか?"
+
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
+msgstr "pop2  = TCP ポート 109 で動作する TLS サポート付き POP 2。これはもう時代遅れのものです。"
+
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop3  = POP 3 on TCP port 110 with TLS support."
+msgstr "pop3  = TCP ポート 110 で動作する TLS サポート付き POP 3。"
+
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop3s = POP 3 on TCP port 995 with SSL support."
+msgstr "pop3s = TCP ポート 995 で動作する SSL サポート付き POP 3。"
+
+#. Description
+#: ../ipopd.templates.master:5
+msgid "If in doubt, choose pop3 and pop3s."
+msgstr "よくわからなければ、pop3 と pop3s を選んでください。"
+
+#. Description
+#: ../libc-client2002ddebian.templates.master:21
+msgid "Continue installing libc-client without Maildir support?"
+msgstr "Maildir サポートなしで libc-client のインストールを続けますか?"
+
+#. Description
+#: ../libc-client2002ddebian.templates.master:21
+msgid ""
+"Libc-client earlier than version 2002d (and development versions of 2003) "
+"included an unofficial and no longer maintained patch to support Maildirs. "
+"By default Maildirs where not used by uw-imapd or ipopd, but if you have "
+"changed your system configuration or other installed programs depend on libc-"
+"client then upgrading may result in broken mail handling."
+msgstr "libc-client のバージョン 2002d 以下 (および 2003 の開発バージョン) では Maildirs をサポートする非公式でもうメンテナンスされていないパッチが含まれていました。デフォルトでは uw-imapd や ipopd では Maildirs を使いませんが、システム設定を変更していたり、その他のインストール済みプログラムが libc-client に依存しているのであれば、この更新はメール操作に障害をもたらす結果となります。"
+
+#. Description
+#: ../libc-client2002ddebian.templates.master:21
+msgid ""
+"Do you want to continue installing a libc-client without Maildir support?"
+msgstr "Maildir サポートなしで libc-client のインストールを続けますか?"
+
+#. Choices
+#: ../uw-imapd.templates.master:3
+msgid "imap2, imap3, imaps"
+msgstr "imap2, imap3, imaps"
+
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid ""
+"imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
+"support."
+msgstr "imap2 = TCP ポート 143 で動作する TLS サポート付き IMAP 4Rev1 (奇妙なことですが 2 ではありません)。"
+
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
+msgstr "imap3 = TCP ポート 220 で動作する TLS サポート付き IMAP 3。これはもう時代遅れのものです。"
+
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
+msgstr "imaps = TCP ポート 993 で動作する SSL サポート付き IMAP 4Rev1。"
+
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "If in doubt, pick imap2 and imaps."
+msgstr "よくわからなければ、imap2 と imaps を選んでください。"

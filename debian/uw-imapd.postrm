@@ -2,10 +2,33 @@
 
 set -e
 
+# Source debconf library.
+. /usr/share/debconf/confmodule
+db_version 2.0
+
 ##
 ## Remove imapd from inetd.conf
 ##
-update-inetd --remove '/usr/sbin/imapd$'
+
+db_get uw-imapd/protocol
+for i in `echo "$RET" | sed 's/,/ /g'`; do
+	if [ "$i" = "imap2" ]; then
+		update-inetd --remove imap2;
+	elif [ "$i" = "imap3" ]; then
+		update-inetd --remove imap3;
+	elif [ "$i" = "imaps" ]; then
+		update-inetd --remove imaps;
+	fi
+done
+
+if [ "$1" = "purge" -a -f /etc/ssl/certs/imapd.pem ]; then
+	echo "SSL certificate /etc/ssl/certs/imapd.pem is NOT removed."
+	echo "Please remove manually if required."
+#	cd /etc/ssl/certs
+#	PATH=$PATH:/usr/bin/ssl
+#	rm -f `openssl x509 -noout -hash < imapd.pem`.0 || true
+#	if [ -f imapd.pem ]; then rm -f imapd.pem; fi
+fi
 
 #DEBHELPER#
 

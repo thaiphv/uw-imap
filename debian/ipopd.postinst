@@ -2,9 +2,46 @@
 
 set -e
 
-update-inetd --group mail --add "pop-2	 stream	tcp	nowait	root	/usr/sbin/tcpd	/usr/sbin/ipop2d"
-update-inetd --group mail --add "pop-3	 stream	tcp	nowait	root	/usr/sbin/tcpd	/usr/sbin/ipop3d"
+# Source debconf library.
+. /usr/share/debconf/confmodule
+db_version 2.0
+
+db_get ipopd/protocol
+for i in `echo "$RET" | sed 's/,/ /g'`; do
+
+	if [ "$i" = "pop2" ]; then
+		update-inetd --group mail --add "pop2	stream	tcp	nowait	root	/usr/sbin/tcpd /usr/sbin/ipop2d"
+	elif [ "$i" = "pop3" ]; then
+		update-inetd --group mail --add "pop3	stream	tcp	nowait	root	/usr/sbin/tcpd /usr/sbin/ipop3d"
+	elif [ "$i" = "pop3s" ]; then
+		update-inetd --group mail --add "pop3s	stream	tcp	nowait	root	/usr/sbin/tcpd /usr/sbin/ipop3d"
+	fi
+done
+
+cd /etc/ssl/certs
+PATH=$PATH:/usr/bin/ssl
+if [ -f ipop3d.pem ]; then
+	echo "You already have /etc/ssl/certs/ipop3d.pem"
+else
+	echo "Creating generic self-signed certificate: /etc/ssl/certs/ipop3d.pem"
+	echo "(replace with hand-crafted or authorized one if needed)."
+	HOSTNAME=`hostname -s`
+	FQDN=`hostname -f`
+	MAILNAME=`cat /etc/mailname 2> /dev/null || hostname -f`
+	openssl req -new -x509 -days 365 -nodes -out ipop3d.pem -keyout ipop3d.pem > /dev/null 2>&1 <<+
+.
+.
+.
+University of Washington POP3 daemon
+$HOSTNAME
+$FQDN
+root@$MAILNAME
++
+	ln -sf ipop3d.pem `openssl x509 -noout -hash < ipop3d.pem`.0
+	chown root.root /etc/ssl/certs/ipop3d.pem
+	chmod 0640 /etc/ssl/certs/ipop3d.pem
+fi
 
 #DEBHELPER#
-exit 0
 
+exit 0

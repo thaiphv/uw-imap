@@ -1,0 +1,40 @@
+Template: ipopd/protocol
+Type: multiselect
+Choices: pop2, pop3, pop3s
+Choices-da: pop2, pop3, pop3s
+Choices-ja: pop2, pop3, pop3s
+Choices-pt_BR: pop2, pop3, pop3s
+Default: pop3, pop3s
+Description: Which ports should the server listen on?
+ pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete.
+ .
+ pop3  = POP 3 on TCP port 110 with TLS support.
+ .
+ pop3s = POP 3 on TCP port 995 with SSL support.
+ .
+ If in doubt, choose pop3 and pop3s.
+Description-da: Hvilke porte skal serveren lytte på?
+ pop2 = POP 2 på TCP port 109 med TLS-understøttelse. Dette er forældet.
+ .
+ pop3 = POP 3 på TCP port 110 med TLS-understøttelse.
+ .
+ pop3s = POP 3 på TCP port 995 med SSL-understøttelse.
+ .
+ Er du i tvivl så vælg pop3 og pop3s.
+Description-ja: ¥µ¡¼¥Ð¤Ç¤É¤Î¥Ý¡¼¥È¤ò¥ê¥¹¥ó¤·¤Þ¤¹¤«?
+ pop2  = TCP ¥Ý¡¼¥È 109 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥Ý¡¼¥ÈÉÕ¤­ POP
+ 2¡£¤³¤ì¤Ï¤â¤¦»þÂåÃÙ¤ì¤Î¤â¤Î¤Ç¤¹¡£
+ .
+ pop3  = TCP ¥Ý¡¼¥È 110 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥Ý¡¼¥ÈÉÕ¤­ POP 3¡£
+ .
+ pop3s = TCP ¥Ý¡¼¥È 995 ¤ÇÆ°ºî¤¹¤ë SSL ¥µ¥Ý¡¼¥ÈÉÕ¤­ POP 3¡£
+ .
+ ¤è¤¯¤ï¤«¤é¤Ê¤±¤ì¤Ð¡¢pop3 ¤È pop3s ¤òÁª¤ó¤Ç¤¯¤À¤µ¤¤¡£
+Description-pt_BR: Em quais portas o servidor deve ouvir ?
+ pop2 = POP 2 na porta TCP 109 com suporte TLS. Isto é obsoleto.
+ .
+ pop3 = POP 3 na porta TCP 110 com suporte TLS.
+ .
+ pop3s = POP 3 na porta TCP 995 com suporte SSL.
+ .
+ Em caso de dúvidas, escolha pope 3 pop3s.

@@ -1,85 +1,569 @@
-uw-imap (4:2001adebian-6) unstable; urgency=high
+uw-imap (7:2002edebian1-3) unstable; urgency=low
 
-  * libc-client2001: Fix potential segmentation fault.  Thanks Hadmut Danisch.  
+  * Have libc-client-dev be priority optional.
+  * Add japanese debconf localisation. Closes: Bug#224766 (thanks to
+    Kenshi Muto <kmuto@debian.org>).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 22 Mar 2004 17:14:32 +0100
+
+uw-imap (7:2002edebian1-2) unstable; urgency=low
+
+  * Change order of po2debconf and local version hack, for the packaging
+    l12n to look more sane from the outside. Closes: Bug#235172, thanks
+    to Martin Quinson <Martin.Quinson@tuxfamily.org>.
+  * Correctly check for a debconf response of "true" (not "yes") to the
+    question of enabling plaintext passwords. Closes: Bug#227709,
+    231115 (thanks to John McMonagle <johnm@advocap.org> and Stefan
+    Andersson <stefan@ryo-ohki.mine.nu>).
+  * The above also closes: Bug#190727 (thanks to Ryan Sinn
+    <ryan@sinn.org>). In fact it only resolves the problem mentioned
+    last - the main part is unreproducible and not due to purging the
+    replaced package as I first suspected).
+  * Recommend exim4 instead of exim. Closes: Bug# 228566 (thanks to Marc
+    Haber <mh+debian-packages@zugschlus.de>).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 22 Mar 2004 15:46:41 +0100
+
+uw-imap (7:2002edebian1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Remove patches applied upstream (without mentioning their origin!!):
+  * Adapt patches to the new release (some patches adopted upstream -
+    the rest is disliked upstream, but at least name them well for
+    others to adopt):
+    + 01_shlib.diff: Several updates/corrections:
+      - Correctly read "ARCHIVENAME" (not "$ARCHIVENAME"), and make a
+        note in TODO about checking if this allows for further cleanup
+      - Have new target lnps match changes to old target lnp
+      - Add new target ldbs to toplevel Makefile, as BUILDTYPE is not
+        overridable in ldb target.
+      - Remove unused compile option "-DNFSKLUDGE"
+    + 02_mailutils.diff: Rename to 02_mailutils_use_shlib.diff
+    + 03_portability.diff: Dropped (applied upstream)
+    + 04_cppfix.diff: Dropped. Instead a note is added to README.Debian
+      in the libc-client-dev package recommending to use compile flag
+      "-fno-operator-names" when compiling with g++ (as suggested - in a
+      tiny note buried in the source - by upstream)
+    + 05_debian-customization.diff: Split in three parts:
+      - Drop compile tweaks in favor of using new "ldb" make target.
+      - Rename relevant parts into 03_avoid_hardcoded_optimizaion.diff
+      - Rename remains into 04_no_binaries_below_etc.diff
+    + 06_limited_advertise.diff: Dropped (applied upstream)
+    + 08_ssl.diff: Dropped (as intended in 7:2002ddebian1-3)
+    + 09_kerberos.diff: Droped in favor of enabling Kerberos V support
+      at compile time (as suggested by upstream in Makefile comment).
+    + 99_needed_for_pine_smime_support.diff: Dropped (applied upstream)
+    + 99_separate_ssl_key_dir.diff: Dropped (applied upstream)
+  * Update TODO.Debian.
+  * Change libc-client-dev to section=extra (to match libkrb5-dev and
+    comerr-dev).
+  * Correct pointers to libc-client in README.Debian of uw-imapd and
+    ipopd.
+  * Only warn once about dropped Maildir support. Closes: Bug#214508.
+  * Correct typo in debconf question (thanks to Andreas Rottmann
+    <rotty@debian.org>). Closes: Bug#208571.
+  * Update danish translation.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 10 Dec 2003 03:27:41 +0100
+
+uw-imap (7:2002ddebian1-4) unstable; urgency=medium
+
+  * Remove RCS directory causing trouble on autobuilders (closes:
+    Bug#212209).
+  * Setting urgency=medium as the above should change nothing in the
+    result packages, and is holding them from reaching testing.
+  * Correction: 08_ssl.diff is not yet removed, as stated below for
+    7:2002ddebian1-3 (it is only cosmetic, and requires changes to
+    99_separate_ssl_key_dir.diff which will be removed on next upstream
+    release anyway).
+  * change -dev package to the generic libc-client-dev, and replace
+    libc-client4.7-dev (this should hopefully make life easier again for
+    build-dependencies of other packages - sorry for the mess).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 26 Sep 2003 10:31:34 +0200
+
+uw-imap (7:2002ddebian1-3) unstable; urgency=low
+
+  * Adapt to new PAM structure, and depend on libpam-runtime (>= 0.76-
+    13.1).
+  * Fix watch file to compare with non-debian version number.
+  * Debian Policy 3.6.1.
+  * Build using the gcc option -D_REENTRANT (required by Debian Policy
+    chapter 10.2.).
+  * Build using the gcc option -Wl,-z,defs (suggested by Debian Policy
+    chapter 10.2.).
+  * Patch cleanups as recommended by Mark Crispin (upstream author) and
+    Jaldhar H. Vyas (former maintainer):
+    + time.h inclusion in auth_md5.c (no longer needed).
+    + NETSCAPE_BRAIN_DAMAGE and ENTOURAGE_BRAIN_DAMAGE ("Should not be
+      necessary, and disables an important client debugging feature").
+    + tmp array and myHomeDir paranoia (relates to old fixed bugs).
+    + SSLTYPE=unix.nopwd (no longer relevant).
+    + 08_ssl.diff removed (options added to toplevel Makefile instead)
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 25 Aug 2003 04:11:06 +0200
+
+uw-imap (7:2002ddebian1-2) unstable; urgency=high
+
+  * enable compile-time option restrictedBox to disallow paths beginning
+    with .. or / (closes: Bug#198560). Set urgency=high.
+  * Correct watch file, and include it in version update semi-
+    automation.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri,  4 Jul 2003 20:01:38 +0200
+
+uw-imap (7:2002ddebian1-1) unstable; urgency=low
+
+  * New upstream stable release.
+  * Seems the 2003 branch will stay unstable, so use yet another epoch
+    and get back to the stable branch (which is in fact identical to
+    newest unstable release except for the nntp code).
+  * Drop Maildir patch. The code has always been buggy, is unsupported
+    upstream and hasn't been maintained for several years. In addition,
+    it may be the cause of security issues. Closes: Bug#159871, 188351.
+    The code and texts related to Maildir is kept in the source package
+    for those interested in recompiling locally, but is no longer
+    officially supported by Debian.
+  * Warn on upgrade about dropped Maildir support.
+  * Tweak po2debconf handling to support backporting to woody (thanks to
+    Colin Watson for similar tweaks to openssh).
+  * Make both libc-client questions boolean, lower debconf dependency to
+    only a recommendation, and fallback to simple echo'ing when not
+    available. Override lintian warning about it.
+  * Drop using {misc:Depends}, as it dublicates the po2debconf hack.
+  * Drop irrelevant use of ${shlibs:Depends} for -dev package as well.
+  * Recommend mail-transport-agent for ipopd (as done with uw-imapd).
+  * Lower libc-client dependency on uw-mailutils to suggests (not
+    recommends).
+  * Improve wording in libc-client debconf template and README about
+    plaintext authentication.
+  * Fix cbs snippet to unpatch in reverse order. Closes: Bug#180701
+    (thanks to Kenshi Muto).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sat, 31 May 2003 17:51:35 +0200
+
+uw-imap (6:2003debian0.0304182231-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+    + Fix recognizing INBOX in mbox driver.
+    + Fix resolving myMailboxDir (Setting mail-subdirectory in
+      /etc/c-client.cf is now fully respected, so closes: Bug#153120).
+    + Documentation update: rfc3516 is no longer a draft (not packaged).
+    + Misc. small changes to non-Debian-related operating systems.
+  * Use and buildepend on official d-shlibs again.
+  * Build-depend on newer dephelper that properly supports (and itself
+    pulls in build-dependency on) po-debconf.
+  * Update 01_shlib.diff.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 21 Apr 2003 15:55:59 +0200
+
+uw-imap (6:2003debian0.0304071905-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Make sure /etc/c-client.cf is always initiated correctly if there.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed,  9 Apr 2003 02:26:52 +0200
+
+uw-imap (6:2003debian0.0303251143-1) unstable; urgency=low
+
+  * New upstream development snapshot
+    + Update to internal documentation (not packaged).
+    + Correctly check for INBOX, not just any ?NBOX.
+    + Check for length of strings several places.
+  * Move libc-client2003debian-dev to section libdevel.
+  * Claim compliance with Policy 3.5.9 (no changes needed).
+  * Add pt_BR debconf translation provided by André Luís Lopes
+    <andrelop@ig.com.br>. This closes: Bug#185892.
+  * Enable translation of even verbatim copied debhelper choices to
+    please lintian.
+  * Correctly translate *.template.in files. Provide debian/update-po
+    script to do it semi-automatically later on.
+  * Install source of mtest as example and drop building the binary at
+    all. This closes: Bug#184638 (thanks to turgon@debian.org).
+  * Switch debhelper hint from DH_COMPAT to debian/compat.
+  * Correctly add plaintext hint to already existing /etc/c-client.cf.
+    This closes: Bug#182779 (thanks to Robert CHERAMY
+    <robert@cheramy.net>).
+  * There's been no name clash since the cleanup in
+    6:2003debian0.0302102043-1. This closes Bug#180755.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue,  8 Apr 2003 02:09:55 +0200
+
+uw-imap (6:2003debian0.0303051641-2) unstable; urgency=low
+
+  * Avoid removing /etc/c-client.cf on purge as the file is shared
+    between all libc-clientXXX packages.
+  * Rewrite documentation:
+    + Add notes about manual removal of /etc/c-client.cf to
+      README.Debian and debconf template.
+    + Tweak layout of README.Debian files to be "conformant" with
+      txt2html style.
+    + Copy README.Debian notes about PAM and CRAM-MD5 from ipopd to
+      imapd.
+    + Clarify POP2 topic.
+    + Rewrite libc-client debconf template to not talk about the past,
+      and refer to the documentation for details.
+  * Change recommended ipopd choices from pop3 to both pop3 and pop3s,
+    and similarly with imap2 and imaps.
+  * Use (and build-depend on) po-debconf. Add danish debconf l10n file.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 16 Mar 2003 03:03:59 +0100
+
+uw-imap (6:2003debian0.0303051641-1) unstable; urgency=low
+
+  * New upstream developer snapshot.
+  * Add kerberos LDFLAGS to debian/patches/01_shlib.diff (and add a note
+    in TODO.Debian about the lack of testing) and correct path to
+    kerberos libraries in debian/patches/05_debian-customization.diff.
+    This closes: Bug#183926 (thanks to Sergio Talens-Oliag
+    <sto@debian.org>).
+  * Use a local hacked copy of d-devlibdeps to properly deal with
+    libkrb5-dev and comerr-dev.
+  * Move optimization CFLAGS from upstream Makefile to debian/rules to
+    support DEB_BUILD_OPTIONS.
+  * Restore old changelog entries lost in the -ssl fork (include it in
+    the source package only).
+  * Add general introduction to c-client in extended description of
+    c-client-related packages.
+  * Claim compliance with Debian Policy 3.5.9.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 14 Mar 2003 20:05:56 +0100
+
+uw-imap (6:2003debian0.0302202017-1) unstable; urgency=low
+
+  * New upstream developer snapshot.
+  * Have libc-clientXXX-dev depend on libc-clientXXX (closes:
+    Bug#183036, thanks to Adam Conrad <adconrad@0c3.net>).
+  * Tighten debhelper sed magic to only deal with files.
+  * Relax build-dependency on d-shlibs a bit (to leave room for
+    unooficial bacports).
+  * Remove bogus comments in debian/rules about revision numbers.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun,  2 Mar 2003 00:52:20 +0100
+
+uw-imap (6:2003debian0.0302102043-1) unstable; urgency=low
+
+  * New upstream snapshot.
+  * New epoch: Interpret "version number" (for which the license has
+    special demands) as only the first segment of the longer string used
+    with snapshots and betas (as is done in the documentation).
+    This is to allow naming snapshots and other irregular releases
+    consistently with regular releases ones.
+    It does not excuse my recent stupidity in packaging a developer
+    snapshot (although one could argue that it provoked cleaning up for
+    next sane excuse).
+  * Change debian/rules to correctly recognize VERSION (including
+    appending alphabetic character(s)).
+  * Add a REVISION field for dealing with snapshots changing the library
+    (no excuse for my current stupidity, but may come in handy if
+    security cases like 2002a.dev.snap.0212051126 happens again, and
+    library changes between snapshots).
+  * Correct symlink in libc-client2003debian0 package.
+    (Closes: Bug#180699).
+  * Use the common debconf area "libc-client" instead of versioned
+    string (only question is about a file shared among all versions of
+    libc-client anyway).
+  * Sync with latest CBS: avoid non-POSIX test syntax.
+  * Use sed again to handle VERSION more automatic, and check for
+    changes to debian/control (but still avoid editing it
+    automatically!).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 13 Feb 2003 00:48:25 +0100
+
+uw-imap (5:2003.dev.snap.0301311011debian-2) unstable; urgency=low
+
+  * Have uw-mailutils conflict with older uw-imapd and uw-imapd-ssl to
+    ease upgrades from woody (thanks to Zed Pobre <zed@debian.org>).
+    Closes: Bug#180512.
+  * Fix watchfile (it still doesn't work however, but that's another
+    story).
+  * Remove a TODO about dynamic linking - it works correctly now :-).
+  * Update copyright (only changes are the version and years covered).
+  * Remove README.debian for libc-client2003-dev, as it speaks only
+    about enabling SSL which is now enabled by default.
+  * Debhelper files renamed for the c-client2002 -> c-client2003 shift
+    (how embarrasing).
+  * Replace 2002 -> 2003 in various Debian documentation and packaging
+    files.
+  * Refer to /var/mail in debian/mlock.pod, generate mlock.1 from that
+    and build-depend on perl.
+  * Install mtest only as example file as it according to the FAQ is
+    "not something that you would install".
+  * Remove obsolete dh_undocumented from debian/rules.
+  * Add linda overrides.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 11 Feb 2003 02:50:03 +0100
+
+uw-imap (5:2003.dev.snap.0301311011debian-1) unstable; urgency=low
+
+  * New upstream snapshot.
+  * Libc-client changed, so bump up its name.
+  * Fix ipopd postinst to generate proper certificate (thanks to Nikita
+    V. Youshchenko <yoush@cs.msu.su>). This closes: Bug#179993, 180314.
+  * Use official d-shlibdeps again, and bump up build-dependency.
+  * Improve resolving  in debian/rules (upstream uses no dots but
+    sometimes characters).
+  * Update ipopd logcheck entries (ignore more errors due to lost
+    connections from clients).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun,  9 Feb 2003 05:42:42 +0100
+
+uw-imap (5:2002b.debian-5) unstable; urgency=low
+
+  * Update local d-devlibdeps (and send a d-shlibs bugreport regarding
+    the openssl errors). Closes: Bug#178629 (thanks to James Troup
+    <james@nocrew.org>).
+  * Correct symlinks to ipopd manpage. Closes: Bug#178208 (thanks to
+    Remco Blaakmeer <j.blaakmeer@chello.nl>).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 28 Jan 2003 04:02:29 +0100
+
+uw-imap (5:2002b.debian-4) unstable; urgency=low
+
+  * Fix linking against openssl (thanks to Adam Conrad
+    <adconrad@0c3.net>). Closes: Bug#177719.
+  * New hack to d-devlibdeps to support the above (also thanks to Adam
+    Conrad). Bugreport filed against d-shlibs.
+  * build-depend temporarily on bash (needed by d-devlibdeps).
+  * Fix ipopd logcheck strings (match pop3 instead of pop).
+  * Improve dialog regarding plaintext passwords to explicitly mention
+    cramd-md5 passwords (thanks to Tom Allison <tallison@tacocat.net>).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 22 Jan 2003 20:48:23 +0100
+
+uw-imap (5:2002b.debian-3) unstable; urgency=low
+
+  * Really teach logcheck about APOP (added it to the wrong string).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 19 Jan 2003 19:17:59 +0100
+
+uw-imap (5:2002b.debian-2) unstable; urgency=low
+
+  * Correct permisions for mlock.
+  * Teach logcheck about APOP login (thanks to Carlos Perelló Marín
+    <carlos@gnome-db.org>). Closes: Bug#177268.
+  * Hack to maildir patch hopefully fixing Bug#108719 (please test).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 19 Jan 2003 18:24:11 +0100
+
+uw-imap (5:2002b.debian-1) unstable; urgency=low
+
+  * New upstream release.
+  * Repackage using debhelper v4, d-shlibs and (for now only patching
+    rules from) Colin's Build System (instead of DBS and debhelper v2).
+  * Avoid automatic update of debian/control during build (fail instead
+    if libc-client-dev version is out of sync).
+  * Copyright updates:
+    + Use non-symlinked source URL
+    + Remove irrelevant (and outdated) info on version contained
+    + Add note that source was repackaged from upstream .tar.Z archive
+    + Add credit notes about Maildir patch
+    + Add Upstream Author (without email address)
+    + Add links to additional info
+    + Update license to refer to version 2002a of IMAP toolkit
+  * Add TODO about improved certificate handling.
+  * Updated logcheck files (thanks to Ivan Baldo <ibaldo@conatel.com.uy>
+    for reminding me). Closes: Bug#176884.
+  * Only change certificate permissions when creating them.
+  * Remove libc-client2002 dependency on libssl and libkrb (it seems it
+    is not dynamic linked to the library after all. Add an investigation
+    to the TODO as well.
+  * Use a local hacked copy of d-devlibdeps to properly deal with libpam
+    and e2fsprogs.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sat, 18 Jan 2003 20:42:24 +0100
+
+uw-imap (5:2002a.dev.snap.0212051126debian-5) unstable; urgency=low
+
+  * Really change Maintainer field.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun,  5 Jan 2003 14:27:20 +0100
+
+uw-imap (5:2002a.dev.snap.0212051126debian-4) unstable; urgency=low
+
+  * Remove .orig and other cruft from patches.
+  * Enable workaround for Entourage (better safe than sorry - it does no
+    harm to conforming IMAP clients (or to Enourage).
+  * Change Netscape workaround to redirect to page below my own Debian
+    home (same content, tidy'ed and Jaldhar credited in source).
+  * Improve auto-generated certificates, and be noisy about creating
+    them (Encourage replacing them).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 27 Dec 2002 17:50:06 +0100
+
+uw-imap (5:2002a.dev.snap.0212051126debian-3) unstable; urgency=low
+
+  * Package adopted, closes bug#174094. Thanks, Jaldhar, for doing such
+    a great job (i'll wait a bit switching to dovecot myself).
+  * Changing maintainer field.
+  * Correct SSLCERTS path (The wrong path is symlink'ed by openssl to
+    the right location, so it is only cosmetic: it shows up in logfiles.
+  * Add patch to locate SSL keys in /etc/ssl/private (with fallback to
+    the old location for self signed keys).
+  * Add patch to support body cleanup in c-client (c-client part of Pine
+    S/MIME patch needed when linking dynamically).
+  * Avoid removing certificate on purge, just warn if it exists (we have
+    no way of knowing wether it is ours to remove). Closes bug#161212
+    (thanks to Chris Brown <chrisb@chibi.ca>).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 27 Dec 2002 07:54:47 +0100
+
+uw-imap (5:2002a.dev.snap.0212051126debian-2) unstable; urgency=low
+
+  * libc-client2002-dev: libkrb5-dev added to depends.
+
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 16 Dec 2002 10:09:05 -0500
+
+uw-imap (5:2002a.dev.snap.0212051126debian-1) unstable; urgency=high
+
+  * New upstream version.
+  * [SECURITY] fixes buffer overflow that could result in an authenticated 
+    user getting a shell.
+  * ipopd-ssl: Corrected typos in description (Closes: #167874)
+  * Added documentation for POP2 not supporting plaintext logins
+    (Closes: #169318)
+
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri, 13 Dec 2002 10:25:01 -0500
+
+uw-imap (4:2002rc10debian-1) unstable; urgency=low
+
+  * Ok this is the release which will be uploaded to Debian.
+  * New upstream version.
+  * I've changed my mind again.  plaintext authentication will be disabled
+    by default but libc-client2002 will ask you via debconf if you want to
+    use the config file to allow it (See
+    /usr/share/doc/libc-client2002/README.Debian.)
+  * proper dependencies for kerberos stuff added.
+  * Closes: #152219, #150190, #164943, #164454, #16785
+    see previous changelog entries for details.
+
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri,  1 Nov 2002 15:23:28 -0500
+
+uw-imap (4:2002rc8debian-1) unstable; urgency=low
+
+  * New upstream version.
+  * Fixed segfault in maildir driver.  Thanks Christoph Martin.
+    (Closes: #152219)
+  * Mailboxes should no longer be reported twice.  Thanks Bas Van Sisseren
+    (Closes: #150190)
+  * arch-independent packages built the right way. (Closes: #164943)
+  * Documentation added for configuring various mail clients with SSL/TLS.
+
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 21 Oct 2002 01:37:52 -0400
+
+uw-imap (4:2002rc7debian-1) unstable; urgency=low
+
+  * New upstream version.  SSL/TLS functionality is now built in so the
+    old -ssl packages are obsolete.
+  * WARNING: plaintext logins have been disabled for non SSL/TLS
+    connections.  See /usr/share/doc/libc-client2002/README.Debian for
+    further information. (Closes: #164454)
+  * uw-imapd, ipopd: Kerberos support added. (Closes: #160785)
+  * uw-imapd: The old chkmail, imapcopy, imapmove, imapxfer, mbxcopy,
+    mbxcreat, and mbxcvt programs have been replaced by mailutil in a new
+    package called uw-mailutils which also contains tmail and dmail.
+
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 15 Oct 2002 14:01:34 -0400
+
+uw-imap-ssl (4:2001adebian-7) unstable; urgency=low
+
+  * Recompiled with the latest libssl
+  * Some additional rules to quiet logcheck output.  Thanks Paul Traina.
+    (Closes: #145958)
+  * Added a note to README.Debian about IDLE support (or lack of it.)
+    (Closes: #146733)
+
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Sun, 16 Jun 2002 01:30:47 -0400
+
+uw-imap-ssl (4:2001adebian-6) unstable; urgency=low
+
+  * source re-uploaded and transferred to main.
+  * uw-imapd-ssl:  Fixed typo in certificate creation in postinst.
+    (Closes: #137196)
+
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Sat, 23 Mar 2002 23:49:45 -0500
+
+uw-imap-ssl (4:2001adebian-5) unstable; urgency=low
+
+  * libc-client-ssl2001: Fix potential segmentation fault.  Thanks Hadmut Danisch.
     (Closes:  #128830)
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Sun, 13 Jan 2002 14:59:36 -0500
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Sun, 13 Jan 2002 15:10:04 -0500
 
-uw-imap (4:2001adebian-5) unstable; urgency=low
-
-  * mlock:  added stdlib.h include to mlock.c to avoid possible segfaults
-    on IA64 platform.  Thanks John R. Daily.  (Closes: #126622)
-  * Remove task: from control as it isn't used anymore.
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu, 27 Dec 2001 13:48:38 -0500
-
-uw-imap (4:2001adebian-4) unstable; urgency=low
+uw-imap-ssl (4:2001adebian-4) unstable; urgency=high
 
   * Change location of mail spool to /var/mail as per policy.
-  * libc-client2001: Fix speeling mistake in description.
-    (Closes: #124903)
-  * The text which contained another spellink mistake doesn't exist
-    anymore.  (Closes: #125449)
+    (Closes: #125314)
+  * libc-client-ssl2001: Fix speeling mistake in description.
+    (Closes: #124902)
+  * The text which contained another spellink mistake doesn't exist 
+    anymore.  (Closes: #125450)
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 18 Dec 2001 06:20:14 -0500
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 17 Dec 2001 23:26:08 -0500
 
-uw-imap (4:2001adebian-3) unstable; urgency=high
+uw-imap-ssl (4:2001adebian-3) unstable; urgency=high
 
   * The "Woodwards' Gripe Water" release.
-  * synchronized patches with uw-imap-ssl
-  * uw-imapd: Removed pine from Suggests as it is no longer an official
-    Debian package.
+  * Redid the patches.  This should fix the shared library problems
+    (Closes: #121720, #121768, #121230)
+  * uw-imapd-ssl: Removed pine from Suggests as it is no longer an
+    official Debian package.
+  * Changed occurences of /usr/doc to /usr/share/doc in READMEs.
+    (Closes: #124081)
+  * uw-imapd-ssl, ipopd-ssl: Fixed bad common name in autogenerated 
+    certificate (Closes: #124115)
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 17 Dec 2001 13:22:27 -0500
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 17 Dec 2001 13:49:08 -0500
 
-uw-imap (4:2001adebian-2) unstable; urgency=low
+uw-imap-ssl (4:2001adebian-2.1) unstable; urgency=low
 
-  * uw-imapd: Added imap3 service to inetd.conf for those clients that
-    need it.  See /usr/share/doc/uw-imapd/README.Debian for info on
-    turning it off if you don't need it.
+  * Test to see if we have fixed the shared library problems.
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu, 22 Nov 2001 12:57:07 -0500
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 10 Dec 2001 15:05:11 -0500
 
-uw-imap (4:2001adebian-1) unstable; urgency=low
+uw-imap-ssl (4:2001adebian-2) unstable; urgency=low
 
-  * New upstream release 
+  * uw-imapd-ssl: Added imap3 service to inetd.conf for those clients that 
+    need it.  See /usr/share/doc/uw-imapd-ssl/README.Debian for info on 
+    turning it off if you don't need it.  (Closes: #120524)
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 19 Nov 2001 02:54:15 -0500
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu, 22 Nov 2001 12:51:13 -0500
 
-uw-imap (3:2001a.rc4debian-1) unstable; urgency=low
+uw-imap-ssl (4:2001adebian-1) unstable; urgency=low
 
-  * New upstream release
+  * New upstream release.
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 13 Nov 2001 14:34:16 -0500
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 19 Nov 2001 03:09:17 -0500
 
-uw-imap (3:2001a.rc2debian-1) unstable; urgency=low
+uw-imap-ssl (2:2001a.rc4debian-1) unstable; urgency=high
 
-  * New upstream release
+  * New upstream release.
+  * libc-client-ssl2001-dev:  Dependency on libssl-dev added.
+    (Closes: #118953)
+  * libc-client-2001: making of shlibs improved.
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 23 Oct 2001 23:27:23 -0400
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu, 15 Nov 2001 22:31:59 -0500
 
-uw-imap (2:2001debian-1) unstable; urgency=low
+uw-imap-ssl (2:2001a.rc2debian-1) unstable; urgency=low
 
-  * This is the official 2001 release
-  * No changes, just a version number change really
-  * Some lintian warnings cleaned up
+  * New upstream release.
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 23 Oct 2001 15:02:45 -0400
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 23 Oct 2001 23:45:51 -0400
 
-uw-imap (1:2001rc1debian-1) unstable; urgency=high
+uw-imap-ssl (1:2001rc1debian-1) unstable; urgency=high
 
-  * New upstream release
+  * New upstream release.
   * Source reworked to use dbs.  There wasn't much in the way of
     documentation so let me know if there were any errors with this.
   * Brand new all-singing, all-dancing, maildir patch from Miquel Van
-    Smoorenburg.  (Closes: #111435, #105542 and hopefully the other maildir
-    bug reports.)
+    Smoorenburg.
   * Also a patch from Miquel for just advertising private and shared
-    namespaces.  See /usr/share/doc/libc-client2001/README.Debian for details.
+    namespaces.  See /usr/share/doc/libc-client-ssl2001/README.Debian for 
+    details.
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri, 28 Sep 2001 06:14:23 -0400
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri, 28 Sep 2001 06:03:55 -0400
 
-uw-imap (1:2001beta010722debian-4) unstable; urgency=high
+uw-imap-ssl (1:2001beta010722debian-4) unstable; urgency=high
 
   * shared libs need to be linked with gcc, not ld. (Closes: #108091)
   * for maildirs INBOX should be ~/Maildir.
@@ -87,353 +571,130 @@ uw-imap (1:2001beta010722debian-4) unstable; urgency=high
     (Closes: #46557, #59546, #97432, #104208) Maildir users please test
     and if there are still issues reopen the bugs or file new ones.
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri, 10 Aug 2001 11:32:49 -0400
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri, 10 Aug 2001 10:58:07 -0400
 
-uw-imap (1:2001beta010722debian-3) unstable; urgency=high
+uw-imap-ssl (1:2001beta010722debian-3) unstable; urgency=high
 
-  * uw-imapd: Fixed wrapped lines in logcheck filter (Closes: #107726) 
+  * uw-imapd-ssl: Fixed wrapped lines in logcheck filter (Closes: #107726)
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon,  6 Aug 2001 01:41:38 -0400
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon,  6 Aug 2001 01:34:13 -0400
 
-uw-imap (1:2001beta010722debian-2) unstable; urgency=low
+uw-imap-ssl (1:2001beta010722debian-2) unstable; urgency=low
 
-  * libc-client2001: sysinbox() was only looking at ~/Mailbox not
+  * libc-client-ssl2001: sysinbox() was only looking at ~/Mailbox not 
     /var/mail/$USER.
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 31 Jul 2001 11:40:57 -0400
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 31 Jul 2001 11:19:37 -0400
 
-uw-imap (1:2001beta010722debian-1) unstable; urgency=low
+uw-imap-ssl (1:2001beta010722debian-1) unstable; urgency=low
 
-  * New upstream version.  Apologies for the hideous version number.Despite
-    the 'beta' this is actually the current stable version. (Go figure.)
-  * uw-imapd: Added Task: header to control file for new tasks scheme.
-  * uw-imapd: linked imapcopy.1 to imapmove.1 (Closes: #99574)
-  * uw-imapd: You shouldn't get the message "Can't create mailbox node
+  * New upstream version.  Apologies for the hideous version number.
+    Despite the 'beta' this is actually the current stable version. (Go figure.)
+  * uw-imapd-ssl: linked imapcopy.1 to imapmove.1 (Closes: #99574)
+  * uw-imapd-ssl: You shouldn't get the message "Can't create mailbox node
     ~/mbox: File exists." anymore (Closes: #66605, #71111)
-  * uw-imapd: New feature in this version should fix problems with Outlook,
-    Outlook Express (Closes: #73017, #80574)
-  * libc-client2001: fixed up struct SEARCHPGM member names so they work
-    in ANSI C++. (Closes: #102844)
-  * ipopd: Added a filter for logcheck (Closes #100899)
+  * uw-imapd-ssl: New feature in this version should fix problems with
+    Outlook, Outlook Express (Closes: #73017, #80574)
+  * libc-client-ssl2001: fixed up struct SEARCHPGM member names so they
+    work in ANSI C++. (Closes: #102844)
+  * ipopd-ssl: Added a filter for logcheck (Closes #100899)
+  * uw-imapd-ssl:  Added a note warning the provided certificate  will expire 
+    in a year.  (Closes: #99072)
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 30 Jul 2001 10:37:12 -0400
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 30 Jul 2001 10:20:02 -0400
 
-uw-imap (1:2000cdebian-4) unstable; urgency=low
+uw-imap-ssl (1:2000cdebian-6) unstable; urgency=low
 
-  * libc-client2000:  Changed shared lib build method (Closes: #98649)
+  * libc-client-ssl2000:  Changed shared lib build method (Closes: #98649)
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu, 24 May 2001 19:55:32 -0400
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu, 24 May 2001 20:17:13 -0400
 
-uw-imap (1:2000cdebian-3) unstable; urgency=low
+uw-imap-ssl (1:2000cdebian-5) unstable; urgency=high
 
-  * uw-imapd: Added a filter for logcheck (Closes: #97742)
-  * uw-imapd,ipopd: Now we just update inetd entries not remove and then
-    readd them (Closes: #98444)
-  * 
+  * uw-imapd-ssl:  Fixed typo in postinst which prevented certificate from
+    being generated. (Closes: #97286)
+  * uw-imapd-ssl: Added a filter for logcheck (Closes: #97742)
+  * uw-imapd-ssl,ipopd-ssl: Now we just update inetd entries not remove 
+    and then readd them (Closes: #98444)
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu, 24 May 2001 00:08:31 -0400
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu, 24 May 2001 00:25:11 -0400
 
-uw-imap (1:2000cdebian-2) unstable; urgency=low
+uw-imap-ssl (1:2000cdebian-4) unstable; urgency=low
 
   * I've not had time to do all the work on this package that I want to
-    but I thought I'd at least fix some of the easier bugs in the
-    meantime.
-  * libc-client2000-dev: conflicts with libc-client4.7-dev (closes: #81527)
-  * libc-client2000:  Hopefully fixed, . and .. showing up as mail in
+     but I thought I'd at least fix some of the easier bugs in the
+     meantime.
+  * libc-client-ssl2000-dev: conflicts with libc-client4.7-dev
+    (Closes: #92426)
+  * uw-imapd-ssl,ipopd-ssl: added dependency on openssl (Closes: #93257,#93690)
+  * uw-imapd-ssl,ipopd-ssl: generated certificate now expires after 365 days
+    instead of 30 (Closes: #95585)
+  * libc-client-ssl2000:  Hopefully fixed, . and .. showing up as mail in
     maildirs
   * New maildir patch from http://greboguru.org/qmail/
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue,  8 May 2001 10:02:49 -0400
+ -- Jaldhar H. Vyas <jaldhar@jyoti.braincells.com>  Tue,  8 May 2001 10:00:32 -0400
 
-uw-imap (1:2000cdebian-1) unstable; urgency=low
+uw-imap-ssl (1:2000cdebian-3) unstable; urgency=high
+
+  * Backed out Tollefs' patch while I investigate why it isn't working
+    for some people.  Unfortunately my mail server has chosen this moment
+    to blow up so I have no email and can't respond to the bug submitters.
+    Rest assured I will do so as soon as I can.  Meanwhile this should at
+    least solve your immediate problems.  If it doesn't please mail the 
+    debian-devel mailing list.  I'll read it through the web interface.
+
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Sat, 31 Mar 2001 00:07:08 -0500
+
+uw-imap-ssl (1:2000cdebian-2) unstable; urgency=low
+
+  * uw-imapd-ssl,ipod-ssl: Added a dependancy for openssl so we have
+    /etc/ssl/certs (closes: #90175)
+  * libc-client-ssl2000:  Add patch to make it respect $MAIL when
+    returning mailbox (Thanks Tollef Fog Heen) (Closes: #55206)
+  * Updated to latest policy version/build dependencies.
+
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri, 23 Mar 2001 02:14:01 -0500
+
+uw-imap-ssl (1:2000cdebian-1) unstable; urgency=low
 
   * New upstream release
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon, 12 Feb 2001 23:44:51 -0500
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 13 Feb 2001 01:13:09 -0500
 
-uw-imap (1:2000bdebian-1) unstable; urgency=low
+uw-imap-ssl (1:2000bdebian-2) unstable; urgency=high
+
+  * ipopd-ssl: fixed broken line in postrm (Gaah! I've got to stop using pico) 
+    (closes: #84023)
+  * remove -L/usr/lib from Makefile.ssl which caused problems for autobuilders
+    (closes: #83792, #84001)
+ -- Jaldhar H. Vyas <jaldhar@jyoti.braincells.com>  Mon, 29 Jan 2001 10:21:23 -0500
+
+uw-imap-ssl (1:2000bdebian-1) unstable; urgency=high
 
   * New upstream release
-  * Corrected wrong paths in man pages (Closes: #81598)
-  * libc-client2000-dev:  Added dependency on libpam0g-dev (Closes:  #78765)
+  * linked against the latest SSL libraries (Closes: #82191, #82274)
+  * removed extra newline in postrm (Closes: #82936)
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Sun, 21 Jan 2001 01:15:31 -0500
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Sun, 21 Jan 2001 01:01:23 -0500
 
-uw-imap (2000debian-2) unstable; urgency=low
+uw-imap-ssl (2000debian-3) unstable; urgency=low
 
-  * Fixed bad dependency for libc-client2000-dev
+  * I will get these dependencies correct one day dammit
+  * Properly link to SSL libraries now.
+  * Corrected error in shlibs file for libc-client-ssl2000
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Wed, 15 Nov 2000 08:57:27 -0500
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Sat, 25 Nov 2000 02:40:19 -0500
 
-uw-imap (2000debian-1) unstable; urgency=low
+uw-imap-ssl (2000debian-2) unstable; urgency=low
 
-  * New Upstream version.
-  * Package name has changed.
-  * corrupted mailbox problem fixed upstream.  (Closes: #70647, #70608)
-  * Fixed inability to recognize charsets with long names (Closes: #67864)
-  * Fixed inaccurate ipop[23]d man page. (Closes: #76642)
-  * Does not have spurious dependency on ldso now (Closes: #76228)
-  * maildir driver no longer complains if maildir begins with a dot.
-    (Closes: #69746)
+  * Fixed bad dependencies 
 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Sun, 12 Nov 2000 02:09:16 -0500
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Wed, 15 Nov 2000 09:47:17 -0500
 
-imap (4.7c-2) unstable; urgency=high
- 
-  * problem with MD5 passwords made clearer.  (Thanks Craig Small)
-    (Closes: #64149)
-  * libc-client4.7:  Maybe fix buffer overflow that could corrupt
-    mailboxes.  We still need to test this.
- 
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri,  1 Sep 2000 16:15:53 -0400
+uw-imap-ssl (2000debian-1) unstable; urgency=low
 
-imap (4.7c-1) frozen unstable; urgency=high
+  * New package with SSL support compiled in.
 
-  * New upstream patch release.
-  * SECURITY: addresses buffer overflow problems mentioned on BugTraq
-  * mlock: saner permissions on /usr/bin/mlock. (Closes: #58791, #59527)
-  * Some fixes to documentation of how to compile for slink.  It should
-    work correctly now. (Thanks to Christian Worm Mortensen for his
-    assistance with this.)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri, 27 Oct 2000 00:50:03 -0400
-
-imap (4.7b-1) unstable; urgency=low
-
-  * New upstream patch release.  No new features.
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Sat, 22 Apr 2000 00:40:41 -0500
-
-imap (4.7a-1) unstable; urgency=low
-
-  * upstream  patch release which corrects crashes caused by certain
-    unusual tokens in message headers.  There are no new features.
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri,  3 Mar 2000 10:19:51 -0500
-
-imap (4.7-7) frozen unstable; urgency=high
-
-  * libc-client4.7: incorrect dependency for PAM which could affect people
-    upgading from slink corrected.
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Sat, 15 Jan 2000 15:28:41 -0500
-
-imap (4.7-6) unstable; urgency=high
-
-  * libc-client4.7-dev: symlinked /usr/lib/c-client.a to
-    /usr/lib/libc-client.a (Closes: #54647)
-  * mlock: changed to priority optional like the rest of
-    the packages(Closes: #53508)
-  * Debut of my new GPG key.
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 11 Jan 2000 22:37:44 -0500
-
-imap (4.7-5) unstable; urgency=high
-
-  * mlock:  Oops messed up the conflicts.  Fixed for real this time.
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Sun,  2 Jan 2000 08:40:36 -0500
-
-imap (4.7-4) unstable; urgency=high
-
-  * mlock: added conflicts to older versions of libc-client so there are
-    no overwrite problems.  (Closes: #53727)
-  * mlock: wrote a man page so there is at least *some* documentation as
-    to what the heck it does.  (Closes: #53509)
-  * libc-client4.7:  More documentation added to package. (Closes: #53369)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri, 31 Dec 1999 16:19:36 -0500
-
-imap (4.7-3) unstable; urgency=high
-
-  * Documentation about MD5 authentication made much clearer so people can
-    understand why their IMAP server suddenly doesn't seem to authenticate
-    any more.  (Closes:  #50319, #51923, #53189, #53190)
-  * mlock spun out into it's own package which libc-client4.7 depends on.
-    This will allow multiple versions of libc-client to be installed.
-    (Closes: #52975)
-  * Correct build dependencies. (Closes: #52296)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu, 23 Dec 1999 17:49:42 -0500
-
-imap (4.7-2) unstable; urgency=low
-
-  * Fixed broken source dependencies (Closes: #51710)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Wed,  1 Dec 1999 15:12:41 -0500
-
-imap (4.7-1) unstable; urgency=low
-
-  * New upstream version
-  * changed name of package libc-client-dev to libc-client4.7-dev
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Sat, 20 Nov 1999 01:23:44 -0500
-
-imap (4.6-4) unstable; urgency=low
-
-  * imap: dmail can now deliver mail to symlinked mailboxes (Closes: #49552)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon,  8 Nov 1999 18:46:54 -0500
-
-imap (4.6-3) unstable; urgency=low
-
-  * libc-client4.6: /etc/cram-md5.pwd is no longer a conffile and not
-    included in the package.  Thus md5 authentication is no longer the default.
-    Read the docs to find out how to enable this.  (Closes:  #48800)
-  * ipopd: corrected name of PAM configuration file (Closes: #48935)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon,  1 Nov 1999 19:18:21 -0500
-
-imap (4.6-2) unstable; urgency=low
-
-  * libc-client-dev:  Added linkage.c which is needed to compile pine
-  * libc-client4.6 Removed bogus -lpam link flag from slx target in Makefile.
-    This was preventing compilation under slink. 
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri, 29 Oct 1999 18:44:43 -0400
-
-imap (4.6-1) unstable; urgency=low
-
-  * New upstream version (Closes: #48319)
-  * Includes imap-utils (Closes: #47969)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Wed, 27 Oct 1999 20:22:23 -0400
-
-imap (4.5-8) unstable; urgency=low
-
-  * all: WARNING: mailbox root has been changed back to $HOME again.  It
-    is no longer $HOME/mail. Please carefully reviw your setup to see if
-     this will affect you in any way.  See README.Debian for additional info.
-    (closes: #33780, #34056, #41731, #43171, #44781, #45624)
-  * imap: postrm specifically removes imapd from inet.conf not just 
-    anything that happens to have the imap port.  (closes: #42786)
-  * libc-client4.5:  Added David Harrises patches for maildir support so
-    you can properly delete maildir folders.  (Closes: #44607) Thanks
-    to Jens Jorgensen.
-  * libc-client4.5: patched the maildir patch to also look for folders in
-    /var/spool/mail/username.  (closes: #47201) Thanks to Miquel Van
-    Smoorenburg for the patch.
-  * Ok, really fix non-PIC code in shared lib this time (closes: #42390)
-    Thanks to Madarasz Gergely for the patch.
-  * Based on suggestion by Mike Bilow, added the ability to compile under
-    slink which previously could not be done due to differences in
-    libraries etc.
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Wed, 20 Oct 1999 20:55:57 -0400
-
-imap (4.5-7) unstable; urgency=low
-
-  * libc-client4.5: compiled with MD5 support.  This means both imapd and 
-    ipop[23]d have MD5 support and ipop[23]d can do APOP.  
-    (fixes: #41213, 41214)
-  * ipopd: provides and conflicts with virtual package pop3-server 
-    (fixes: #38523, #42410)
-  * libc-client-dev: library no longer contains PIC code (fixes: #42390)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon,  9 Aug 1999 23:33:46 -0400
-
-imap (4.5-6) unstable; urgency=low
-
-  * made a c-client shared library (Thanks to Madarasz Gergely for the
-    patch) the c-client packages have been renamed to libc-client4.5 and
-    libc-client4.5-dev to be more in line with Debian conventions. 
-    (closes #48033)
-  * Added new maildir patch (Thanks Chris Bond) which should hopefully fix
-    some of the remaining problems.  (closes #39375)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu,  8 Jul 1999 01:16:59 -0400
-
-imap (4.5-5) unstable; urgency=low
-
-  * Reworded parts of imaps README.Debian.  Thanks to Brock Rozen. 
-    (closes #38840)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Thu, 10 Jun 1999 13:16:08 -0400
-
-imap (4.5-4) unstable; urgency=low
-
-  * Die! folder creation bug die!
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Wed,  9 Jun 1999 17:04:08 -0400
-
-imap (4.5-3) unstable; urgency=low
-
-  * Readded maildir support 
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Wed,  9 Jun 1999 06:53:29 -0400
-
-imap (4.5-2) unstable; urgency=low
-
-  * A dumb typo on my part meant that 4.5-1 looked in $HOME for folders 
-    instead of $HOME/mail.  This has been put right (fixes #39094, #39138)
-    This should also Fix the problems people are having creating folders.
-    (fixes #39010)
-  * Backed out old maildir patch.  It seemed to be causing more problems
-    than it solved.  (fixes #39017) I have received a new one from Chris
-    Bond but owing to the SNAFU I have described above, I just want to
-    get this release out quickly.  maildir  will be back in -3 I promise :-)
-  * Added PAM configuration file for ipopd (fixes #38787)
-  * Added old entries back to debian/changelog (fixes #38871)
-  * Uses pristine source (fixes #38870)
-  * You shouldn't get the mailbox vulnerable error anymore.  It wasn't
-    valid for Debian anyway.  (fixes #36108)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue,  8 Jun 1999 15:24:40 -0400
-
-imap (4.5-1) unstable; urgency=low
-
-  * Upload of latest stable upstream version (fixes #38355).  I had hoped
-    to fix some of the outstanding bugs but I haven't yet and people are
-    getting restless so I thought I'd better get this out quickly.
-  * New upstream version
-  * Contains fix for potential security problems in ipop2d
-  * Now has maildir support (closes #33373). Thanks to Marcelo Magallon
-  * Now has PAM support.
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Wed,  26 May 1999 20:41:29 -0400
-
-imap (4.4-5) unstable; urgency=low
-
-  * Added some documentation to the c-client-dev package (fixes #30619)
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Fri, 18 Dec 1998 11:01:52 -0500
-
-imap (4.4-4) unstable; urgency=low
-
-  * Missing some extra header files in c-client-dev
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue,  6 Oct 1998 14:42:25 -0400
-
-imap (4.4-3) unstable; urgency=low
-
-  * Included instructions for changing the mailbox root directory in
-    README.Debian and included instructions for imaprc.  (fixes #27241)
-  * Seperated out c-client.a and its headers into a seperate
-    c-client-dev package.  There will be a shared libc-client.so at
-    some point but not yet.
-  * Cleaned up remnants of former typos indebian directory
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue,  6 Oct 1998 03:52:56 -0400
-
-imap (4.4-2) unstable; urgency=low
-
-  * Didn't realize multiple binary packages don't need their own
-    changelogs. changelog for ipopd is gone now.  (fixes #23786)
-  * ipopd now conflicts with older version of imap that contained the
-    ipop[23]d binaries so dpkg won't complain about overwrites.
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Mon,  5 Oct 1998 03:10:58 -0400
-
-imap (4.4-1) unstable; urgency=low
-
-  * New upstream version
-  * added define of _XOPEN_SOURCE and _BSD_SOURCE for crypt() prototype
-    (fixes #26130)
-  * uses $HOME/mail as mailbox root instead of $HOME (fixes #26185)
-  * finally got around to fixing ipopd and rimap references in imapd man
-    page.  (fixes #17812 at last!)
-  * ipop2d and ipop3d split out into their own package
-  * A little more in the way of documentation
-
- -- Jaldhar H. Vyas <jaldhar@debian.org>  Sun, 27 Sep 1998 22:40:45 -0400
+ -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 14 Nov 2000 15:46:35 -0500
 

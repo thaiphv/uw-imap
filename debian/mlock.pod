@@ -12,7 +12,7 @@ If B<libc-client.so> is unable to create a mailbox lock file, it will call
 this program.  This makes using the mailbox safe over i.e. NFS. There is
 no reason to call B<mlock> yourself or through another program.  It is
 setgid mail so there is no need to change the permissions of
-I</var/spool/mail> to 1777.
+I</var/mail> to 1777.
 
 =head1 BUGS
 

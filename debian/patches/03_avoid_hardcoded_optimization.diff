@@ -1,0 +1,21 @@
+diff -ruN imap-2003.DEV.SNAP-0303051641.orig/src/osdep/unix/Makefile imap-2003.DEV.SNAP-0303051641/src/osdep/unix/Makefile
+--- imap-2003.DEV.SNAP-0303051641.orig/src/osdep/unix/Makefile	2003-03-08 20:21:31.000000000 +0100
++++ imap-2003.DEV.SNAP-0303051641/src/osdep/unix/Makefile	2003-03-08 20:28:24.000000000 +0100
+@@ -445,7 +445,7 @@
+ 	 SPOOLDIR=/var/spool MAILSPOOL=/var/mail \
+ 	 ACTIVEFILE=/var/lib/news/active \
+ 	 RSHPATH=/usr/bin/rsh \
+-	 BASECFLAGS="-g -fno-omit-frame-pointer -O6" \
++	 BASECFLAGS="-g -fno-omit-frame-pointer" \
+ 	 BASELDFLAGS="../c-client/c-client.a -lpam -ldl"
+ 
+ lnps:	# Linux Pluggable Authentication modules (c-client as shared lib)
+@@ -454,7 +454,7 @@
+ 	 SPOOLDIR=/var/spool MAILSPOOL=/var/mail \
+ 	 ACTIVEFILE=/var/lib/news/active \
+ 	 RSHPATH=/usr/bin/rsh \
+-	 BASECFLAGS="-fPIC -g -fno-omit-frame-pointer -O6" \
++	 BASECFLAGS="-fPIC -g -fno-omit-frame-pointer" \
+ 	 ARCHIVE="libc-client.so" \
+ 	 BASELDFLAGS="-L../c-client -lc-client -lpam -ldl -lc" \
+ 	 ARRC="gcc --shared -Wl,-soname,libc-client.so.$(VERSION) -lpam -ldl -lc $(EXTRALDFLAGS) $(SSLLDFLAGS) -o" \
