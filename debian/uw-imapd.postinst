@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+update-inetd --group mail --add "imap2  stream  tcp     nowait\
+        root    /usr/sbin/tcpd  /usr/sbin/imapd"
+
+update-inetd --group mail --add "imap3  stream  tcp     nowait\
+        root    /usr/sbin/tcpd  /usr/sbin/imapd"
+
+#DEBHELPER#
+exit 0
+

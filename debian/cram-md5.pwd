@@ -1,0 +1,16 @@
+# CRAM-MD5 authentication database
+# Entries are in form <user><tab><password>
+# Lines starting with "#" are comments
+#
+# NOTE: FAILURE TO PROTECT THIS FILE AGAINST UNAUTHORIZED
+# ACCESS WILL COMPROMISE CRAM-MD5 AND APOP AUTHENTICATION
+# FOR ALL USERS LISTED IN THIS DATABASE.  GIVE THIS PERMS
+# OF 0400!
+
+# bill	hubba-hubba
+# hillary	mspresident
+# monica	beret
+# tripp		wired
+# kenstarr	inquisitor
+# reno	waco
+# billgates	ruleworld

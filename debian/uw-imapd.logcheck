@@ -1,0 +1,15 @@
+imapd\[.*\]: connect from
+imapd\[.*\]: port 143 service init from
+imapd\[.*\]: Authenticated user=.* host=.* \[.*\]
+imapd\[.*\]: Autologout user=.* host=.* \[.*\]
+imapd\[.*\]: Login user=.* host=.* \[.*\]
+imapd\[.*\]: Logout user=.* host=.* \[.*\]
+imapd\[.*\]: command stream end of file, while reading line user=.* host=.* \[.*\]
+imapd\[.*\]: command stream end of file, while reading char user=.* host=.* \[.*\]
+imapd\[.*\]: Command stream end of file, while reading line user=.* host=.*\[.*\]
+imapd\[.*\]: Connection reset by peer, while reading line user.* host=.*
+imapd\[.*\]: Transport endpoint is not connected, while writing text user=.* host=.*
+imapd\[.*\]: No route to host, while reading line user=.* host=.* \[.*\]
+imapd\[.*\]: Killed \(lost mailbox lock\) user=.* host=.* \[.*\]
+imapd\[.*\]: Logout user=.* host=.*
+imapd\[.*\]: Preauthenticated user=.* host=.*

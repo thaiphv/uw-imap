@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+##
+## Remove POP daemons from inetd.conf
+##
+update-inetd --remove '/usr/sbin/ipop3d$'
+update-inetd --remove '/usr/sbin/ipop2d$'
+
+#DEBHELPER#
+
+exit 0

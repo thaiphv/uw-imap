@@ -1,0 +1,45 @@
+diff -ruN imap-2001a.orig/src/osdep/unix/env_unix.c imap-2001a/src/osdep/unix/env_unix.c
+--- imap-2001a.orig/src/osdep/unix/env_unix.c	Wed Oct 17 23:27:59 2001
++++ imap-2001a/src/osdep/unix/env_unix.c	Thu Dec 13 14:30:34 2001
+@@ -58,6 +58,8 @@
+ 				 * filesystems (AFS and old NFS).  Don't do
+ 				 * this unless you really have to!
+ 				 */
++ 				/* only advertise own mailboxes and #shared */
++static short limitedadvertise = NIL;
+ 				/* allow user config files */
+ static short allowuserconfig = NIL;
+ 				/* 1 = disable plaintext, 2 = if not SSL */
+@@ -110,6 +112,8 @@
+ static NAMESPACE nsshared = {"#shared/",'/',NIL,&nsftp};
+ 				/* world namespace */
+ static NAMESPACE nsworld = {"/",'/',NIL,&nsshared};
++				/* ONLY shared (no anonymous) namespace */
++static NAMESPACE nsonlyshared = {"#shared/",'/',NIL,NIL};
+ 
+ #include "write.c"		/* include safe writing routines */
+ #include "crexcl.c"		/* include exclusive create */
+@@ -663,8 +667,12 @@
+ 	}
+       }
+       nslist[0] = &nshome;	/* home namespace */
+-      nslist[1] = blackBox ? &nsblackother : &nsunixother;
+-      nslist[2] = (advertisetheworld && !blackBox) ? &nsworld : &nsshared;
++      nslist[1] = limitedadvertise ?
++		  NIL: (blackBox ? &nsblackother : &nsunixother);
++      if (!limitedadvertise)
++        nslist[2] = (advertisetheworld && !blackBox) ? &nsworld : &nsshared;
++      else
++	nslist[2] = &nsonlyshared;
+     }
+     else {			/* anonymous user */
+       nslist[0] = nslist[1] = NIL,nslist[2] = &nsftp;
+@@ -1474,6 +1482,8 @@
+ 	    closedBox = atoi (k);
+ 	  else if (!compare_cstring (s,"set advertise-the-world"))
+ 	    advertisetheworld = atoi (k);
++	  else if (!compare_cstring (s,"set limited-advertise"))
++	    limitedadvertise = atoi (k);
+ 	  else if (!compare_cstring
+ 		   (s,"set disable-automatic-shared-namespaces"))
+ 	    noautomaticsharedns = atoi (k);

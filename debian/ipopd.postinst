@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+update-inetd --group mail --add "pop-2	 stream	tcp	nowait	root	/usr/sbin/tcpd	/usr/sbin/ipop2d"
+update-inetd --group mail --add "pop-3	 stream	tcp	nowait	root	/usr/sbin/tcpd	/usr/sbin/ipop3d"
+
+#DEBHELPER#
+exit 0
+

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+##
+## Remove imapd from inetd.conf
+##
+update-inetd --remove '/usr/sbin/imapd$'
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,19 @@
+ipopd for DEBIAN
+----------------------
+
+[Note: imap uses the c-client library for most of the actual work of
+handling mail.  So you should read the documentation in
+/usr/share/doc/libc-client2001/ too.]
+
+Comments regarding the Package
+
+This package uses PAM for authentication.  The configuration file is 
+/etc/pam.d/pop
+
+It has also been compiled with MD5 and APOP support.  
+See /usr/share/doc/libc-client2001/md5.txt for additional information.
+NOTE:  If your users seem to have problems logging in, this is the first
+thing to check.
+
+Jaldhar H. Vyas <jaldhar@debian.org>, Sat, 21 Jul 2001 17:01:00 -0400
+

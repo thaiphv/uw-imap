@@ -1,0 +1,12 @@
+diff -ruN imap-2001a.orig/src/osdep/unix/env_unix.c imap-2001a/src/osdep/unix/env_unix.c
+--- imap-2001a.orig/src/osdep/unix/env_unix.c	Wed Oct 17 23:27:59 2001
++++ imap-2001a/src/osdep/unix/env_unix.c	Thu Dec 13 14:17:25 2001
+@@ -848,6 +848,8 @@
+ 				/* if restricted, canonicalize name of INBOX */
+     if (anonymous || blackBox || closedBox) name = "INBOX";
+     else return dst;		/* else driver selects the INBOX name */
++    if (blackBox || closedBox) dir = myHomeDir;
++				/* INBOX is in home, not in mymailboxdir() */
+   }
+ 				/* restricted name? */
+   else if ((*name == '#') || anonymous || blackBox) {

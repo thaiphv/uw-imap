@@ -1,0 +1,5963 @@
+diff -ruN imap-2001a.orig/src/chkmail/Makefile imap-2001a/src/chkmail/Makefile
+--- imap-2001a.orig/src/chkmail/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/chkmail/Makefile	Thu Dec 13 13:54:42 2001
+@@ -0,0 +1,56 @@
++# Program:	chkmail Makefile
++#
++# Author:	Mark Crispin
++#		Networks and Distributed Computing
++#		Computing & Communications
++#		University of Washington
++#		Administration Building, AG-44
++#		Seattle, WA  98195
++#		Internet: MRC@CAC.Washington.EDU
++#
++# Date:		8 December 1995
++# Last Edited:	12 October 1999
++#
++# Copyright 1999 by the University of Washington
++#
++#  Permission to use, copy, modify, and distribute this software and its
++# documentation for any purpose and without fee is hereby granted, provided
++# that the above copyright notice appears in all copies and that both the
++# above copyright notice and this permission notice appear in supporting
++# documentation, and that the name of the University of Washington not be
++# used in advertising or publicity pertaining to distribution of the software
++# without specific, written prior permission.  This software is made
++# available "as is", and
++# THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++# WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++# NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++# (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++
++
++C = ../../c-client
++CCLIENTLIB = $C/`cat $C/$ARCHIVENAME`
++
++# Get local definitions from c-client directory
++
++CC = `cat $C/CCTYPE`
++CFLAGS = -I$C `cat $C/CFLAGS`
++LDFLAGS = -L$C `cat $C/LDFLAGS`
++
++chkmail: $(CCLIENTLIB) chkmail.o
++	$(CC) $(CFLAGS) -o chkmail chkmail.o $(LDFLAGS)
++
++chkmail.o: $C/mail.h $C/misc.h $C/osdep.h
++
++$(CCLIENTLIB):
++	cd $C;make
++
++clean:
++	rm -f *.o chkmail
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/chkmail/chkmail.1 imap-2001a/src/chkmail/chkmail.1
+--- imap-2001a.orig/src/chkmail/chkmail.1	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/chkmail/chkmail.1	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,68 @@
++.TH chkmail LOCAL "23 October 1996" 
++.SH NAME
++chkmail \- check for new mail
++.nh
++.SH SYNTAX
++.B chkmail
++.I [-debug] [-verbose] mailbox
++.SH DESCRIPTION
++.I chkmail 
++determines whether new mail exists in the given mailbox.  The number
++of new messages is defined as the number of messages that have
++"Recent" status set.
++.PP
++If the mailbox contains no new messages, 
++.I chkmail
++will indicate that no new mail is present;
++otherwise, it will report the number of new messages.  In either case,
++it will also indicate the canonical form of the name of the mailbox.
++.PP
++The
++.B -debug
++flag prints full debugging telemetry including protocol operations.  The
++.B -verbose
++flag prints verbose (non-error) telemetry.
++.PP
++The mailbox name argument is a standard c-client mailbox name.  A
++variety of mailbox name formats and types of mailboxes are supported
++by c-client; examples of the most common forms of names are:
++.PP
++.I
++.IP Name 15
++.I Meaning
++.IP INBOX
++primary incoming mail folder on the local system
++.IP archive/tx-project
++mail folder named "tx-project" in "archive" subdirectory of local
++filesystem home directory
++.IP {imapserver.foo.com}INBOX
++primary incoming mail folder on IMAP server system
++"imapserver.foo.com"
++.IP {imapserver.foo.com}archive/tx-project
++mail folder named "tx-project" in "archive" subdirectory on IMAP
++server system "imapserver.foo.com"
++.IP #news.comp.mail.misc
++newsgroup "comp.mail.misc" on local filesystem
++.IP {newserver.foo.com/nntp}comp.mail.misc
++newsgroup "comp.mail.misc" on NNTP server system "newserver.foo.com"
++.IP {popserver.foo.com/pop3}
++mail folder on POP3 server system "popserver.foo.com"
++.LP
++See your system manager for more information about the types of
++mailboxes which are available on your system.
++.SH RESTRICTIONS
++You must surround a
++.I {host}mailbox
++form mailbox name with quotation marks if you run
++.I chkmail
++from
++.IR csh (1)
++or another shell for which braces have special meaning.
++.SH AUTHOR
++Mark Crispin, MRC@CAC.Washington.EDU
++.SH "SEE ALSO"
++imapcopy (1)
++.br
++mbxcopy (1)
++.br
++mbxcvt (1)
+diff -ruN imap-2001a.orig/src/chkmail/chkmail.c imap-2001a/src/chkmail/chkmail.c
+--- imap-2001a.orig/src/chkmail/chkmail.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/chkmail/chkmail.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,267 @@
++/*
++ * Program:	Check for new mail
++ *
++ * Author:	Mark Crispin
++ *		Networks and Distributed Computing
++ *		Computing & Communications
++ *		University of Washington
++ *		Administration Building, AG-44
++ *		Seattle, WA  98195
++ *		Internet: MRC@CAC.Washington.EDU
++ *
++ * Date:	8 December 1995
++ * Last Edited:	6 January 2000
++ *
++ * Copyright 2000 by the University of Washington
++ *
++ *  Permission to use, copy, modify, and distribute this software and its
++ * documentation for any purpose and without fee is hereby granted, provided
++ * that the above copyright notice appears in all copies and that both the
++ * above copyright notice and this permission notice appear in supporting
++ * documentation, and that the name of the University of Washington not be
++ * used in advertising or publicity pertaining to distribution of the software
++ * without specific, written prior permission.  This software is made
++ * available "as is", and
++ * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++ * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++ * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++ * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <stdio.h>
++#include <errno.h>
++extern int errno;		/* just in case */
++#include "mail.h"
++#include "osdep.h"
++#include "misc.h"
++#include "linkage.h"
++char *getpass ();		/* let's all do the cretin hop */
++
++int critical = NIL;		/* flag saying in critical code */
++int debugp = NIL;		/* flag saying debugging */
++int verbosep = NIL;		/* flag saying verbose */
++
++
++/* Function prototypes */
++
++int main (int argc,char *argv[]);
++
++
++/* Main program */
++
++int main (int argc,char *argv[])
++{
++  int nargs = argc ? argc - 1 : 0;
++  char **args = argv + 1;
++#include "linkage.c"
++				/* parse switches */
++  while (nargs && (**args == '-')) {
++    if (!(strcmp (*args,"-d") && strcmp (*args,"-debug"))) debugp = T;
++    else if (!(strcmp (*args,"-v") && strcmp (*args,"-verbose")))
++      verbosep = T;
++    else nargs = 1;		/* error -- make sure we stop here */
++    args++; nargs--;		/* snap away an argument */
++  }
++  if (nargs != 1) {		/* make sure correct number of arguments */
++    puts ("usage: chkmail [-debug] [-verbose] \"{host}mailbox\"");
++    _exit (1);
++  }
++  if (!mail_status (NIL,*args,SA_MESSAGES | SA_RECENT))
++    puts ("Can't get mailbox status");
++  return 0;
++}
++
++/* Co-routines from MAIL library */
++
++
++/* Message matches a search
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_searched (MAILSTREAM *stream,unsigned long msgno)
++{
++  fatal ("impossible mm_searched() call");
++}
++
++
++/* Message exists (i.e. there are that many messages in the mailbox)
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_exists (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++
++/* Message expunged
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_expunged (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++
++/* Message flags update seen
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_flags (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++/* Mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_list (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Subscribe mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_lsub (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Mailbox status
++ * Accepts: MAIL stream
++ *	    mailbox name
++ *	    mailbox status
++ */
++
++void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
++{
++  if (status->recent) printf ("%lu new message(s),",status->recent);
++  else fputs ("No new messages,",stdout);
++  printf (" %lu total in %s\n",status->messages,mailbox);
++}
++
++/* Notification event
++ * Accepts: MAIL stream
++ *	    string to log
++ *	    error flag
++ */
++
++void mm_notify (MAILSTREAM *stream,char *string,long errflg)
++{
++  mm_log (string,errflg);	/* just do mm_log action */
++}
++
++
++/* Log an event for the user to see
++ * Accepts: string to log
++ *	    error flag
++ */
++
++void mm_log (char *string,long errflg)
++{
++  switch (errflg) {  
++  case BYE:			/* server sayonara */
++  case NIL:			/* no error */
++    if (verbosep) printf ("[%s]\n",string);
++    break;
++  case PARSE:			/* parsing problem */
++  case WARN:			/* warning */
++    fprintf (stderr,"%%%s\n",string);
++    break;
++  case ERROR:			/* error */
++  default:
++    fprintf (stderr,"?%s\n",string);
++    break;
++  }
++}
++
++
++/* Log an event to debugging telemetry
++ * Accepts: string to log
++ */
++
++void mm_dlog (char *string)
++{
++  fprintf (stderr,"%s\n",string);
++}
++
++/* Get user name and password for this host
++ * Accepts: parse of network mailbox name
++ *	    where to return user name
++ *	    where to return password
++ *	    trial count
++ */
++
++void mm_login (NETMBX *mb,char *username,char *password,long trial)
++{
++  if (*mb->user) strcpy (username,mb->user);
++  else {
++    printf ("{%s/%s} username: ",mb->host,mb->service);
++    gets (username);
++  }
++  strcpy (password,getpass ("password: "));
++}
++
++
++/* About to enter critical code
++ * Accepts: stream
++ */
++
++void mm_critical (MAILSTREAM *stream)
++{
++  critical = T;			/* note in critical code */
++}
++
++
++/* About to exit critical code
++ * Accepts: stream
++ */
++
++void mm_nocritical (MAILSTREAM *stream)
++{
++  critical = NIL;		/* note not in critical code */
++}
++
++
++/* Disk error found
++ * Accepts: stream
++ *	    system error code
++ *	    flag indicating that mailbox may be clobbered
++ * Returns: T if user wants to abort
++ */
++
++long mm_diskerror (MAILSTREAM *stream,long errcode,long serious)
++{
++  return T;
++}
++
++
++/* Log a fatal error event
++ * Accepts: string to log
++ */
++
++void mm_fatal (char *string)
++{
++  fprintf (stderr,"?%s\n",string);
++}
+diff -ruN imap-2001a.orig/src/dmail/Makefile imap-2001a/src/dmail/Makefile
+--- imap-2001a.orig/src/dmail/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/dmail/Makefile	Thu Dec 13 13:54:42 2001
+@@ -0,0 +1,56 @@
++# Program:	dmail Makefile
++#
++# Author:	Mark Crispin
++#		Networks and Distributed Computing
++#		Computing & Communications
++#		University of Washington
++#		Administration Building, AG-44
++#		Seattle, WA  98195
++#		Internet: MRC@CAC.Washington.EDU
++#
++# Date:		5 April 1993
++# Last Edited:	12 October 1999
++#
++# Copyright 1999 by the University of Washington
++#
++#  Permission to use, copy, modify, and distribute this software and its
++# documentation for any purpose and without fee is hereby granted, provided
++# that the above copyright notice appears in all copies and that both the
++# above copyright notice and this permission notice appear in supporting
++# documentation, and that the name of the University of Washington not be
++# used in advertising or publicity pertaining to distribution of the software
++# without specific, written prior permission.  This software is made
++# available "as is", and
++# THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++# WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++# NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++# (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++
++
++C = ../../c-client
++CCLIENTLIB = $C/`cat $C/$ARCHIVENAME` 
++
++# Get local definitions from c-client directory
++
++CC = `cat $C/CCTYPE`
++CFLAGS = -I$C `cat $C/CFLAGS`
++LDFLAGS = -L$C `cat $C/LDFLAGS`
++
++dmail: $(CCLIENTLIB) dmail.o
++	$(CC) $(CFLAGS) -o dmail dmail.o $(LDFLAGS)
++
++dmail.o: $C/mail.h $C/misc.h $C/osdep.h
++
++$(CCLIENTLIB):
++	cd $C;make
++
++clean:
++	rm -f *.o dmail
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/dmail/dmail.1 imap-2001a/src/dmail/dmail.1
+--- imap-2001a.orig/src/dmail/dmail.1	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/dmail/dmail.1	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,95 @@
++.TH DMAIL LOCAL "Version 4.1"
++.SH NAME
++dmail \- procmail Mail Delivery Module
++.nh
++.SH SYNOPSIS
++.B dmail
++.I [\-D] [\-f from_name] [user][+folder]
++.SH DESCRIPTION
++.I dmail
++delivers mail to a user's INBOX or a designated folder.
++.I dmail
++may be configured as a drop-in replacement for
++.IR binmail (1),
++.IR mail.local (1)
++for use with a mail delivery filter such as
++.IR procmail (1) .
++.PP
++Because of security considerations (see below)
++.I dmail
++is not intended to be used for direct delivery by the mailer daemon;
++.IR tmail (1)
++is the preferred tool for this purpose.  If
++.I dmail
++is used for mailer daemon delivery, the mailer daemon must invoke
++.I dmail
++with the
++.I dmail
++process' user id set to the recipient's user id.
++.PP
++When
++.I dmail
++exits, it returns exit status values to enable
++.IR procmail (1)
++to determine whether a message was delivered successfully or had a
++temporary (requeue for later delivery) or permanent (return to sender)
++failure.
++.PP
++If the
++.I user
++name is present, it must be the same as the logged-in user name.
++.PP
++If the 
++.I +folder
++extension is included in the user argument (or appears by itself if there
++is no user argument), 
++.I dmail
++will attempt to deliver to the designated folder.  If the folder does not 
++exist or the extension is not included, the message is delivered to the 
++user's INBOX.
++If delivery is to INBOX and no INBOX currently exists,
++.I dmail
++will create a new INBOX, using the \fB-I\fR flag if specified.
++.I dmail
++recognizes the format of an existing INBOX or folder, and appends the new
++message in that format.
++.PP
++The \fB-D\fR flag specifies debugging; this enables additional message
++telemetry.
++.PP
++The \fB-f\fR or \fB-r\fR flag is used to specify a Return-Path.  The header
++.br
++   Return-Path: <\fIfrom_name\fR> 
++.br 
++is prepended to the message before delivery.  
++.SH RESTRICTIONS
++Absolute pathnames and 
++.I ~user
++specifications are not permitted in
++.I +folder
++extensions.
++.SH SECURITY CONSIDERATIONS
++Unlike
++.I tmail
++you can use
++.I dmail
++to deliver to IMAP4 namespace names via
++.I +folder
++extensions.  This means that it is possible to deliver to
++.IR mh (1)
++format mailboxes.
++.PP
++However, this can also include such namespaces as #shared, #public,
++and #ftp.  In most cases, it is undesirable to allow anybody sending
++mail to the user to deliver to these namespaces.  Consequently, there
++needs to be a rule in place in the configuration of either
++.IR sendmail (8)
++or
++.IR procmail (1)
++to prevent such abuse.
++.SH AUTHOR
++Mark Crispin, MRC@CAC.Washington.EDU
++.SH "SEE ALSO"
++binmail(1)
++.br
++procmail(1)
+diff -ruN imap-2001a.orig/src/dmail/dmail.c imap-2001a/src/dmail/dmail.c
+--- imap-2001a.orig/src/dmail/dmail.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/dmail/dmail.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,640 @@
++/*
++ * Program:	Mail Delivery Module
++ *
++ * Author:	Mark Crispin
++ *		Networks and Distributed Computing
++ *		Computing & Communications
++ *		University of Washington
++ *		Administration Building, AG-44
++ *		Seattle, WA  98195
++ *		Internet: MRC@CAC.Washington.EDU
++ *
++ * Date:	5 April 1993
++ * Last Edited:	9 December 2000
++ *
++ * Copyright 2000 by the University of Washington
++ *
++ *  Permission to use, copy, modify, and distribute this software and its
++ * documentation for any purpose and without fee is hereby granted, provided
++ * that the above copyright notice appears in all copies and that both the
++ * above copyright notice and this permission notice appear in supporting
++ * documentation, and that the name of the University of Washington not be
++ * used in advertising or publicity pertaining to distribution of the software
++ * without specific, written prior permission.  This software is made
++ * available "as is", and
++ * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++ * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++ * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++ * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <stdio.h>
++#include <pwd.h>
++#include <errno.h>
++extern int errno;		/* just in case */
++#include <sysexits.h>
++#include <sys/file.h>
++#include <sys/stat.h>
++#include <sys/syslog.h>
++#include "mail.h"
++#include "osdep.h"
++#include "misc.h"
++#include "linkage.h"
++
++
++/* Globals */
++
++char *version = "2000(11)";	/* dmail release version */
++int debug = NIL;		/* debugging (don't fork) */
++int trycreate = NIL;		/* flag saying gotta create before appending */
++int critical = NIL;		/* flag saying in critical code */
++char *sender = NIL;		/* message origin */
++
++
++/* Function prototypes */
++
++void file_string_init (STRING *s,void *data,unsigned long size);
++char file_string_next (STRING *s);
++void file_string_setpos (STRING *s,unsigned long i);
++int main (int argc,char *argv[]);
++int deliver (FILE *f,unsigned long msglen,char *user);
++long ibxpath (MAILSTREAM *ds,char **mailbox,char *path);
++int deliver_safely (MAILSTREAM *prt,STRING *st,char *mailbox,char *path,
++		    char *tmp);
++int delivery_unsafe (char *path,struct stat *sbuf,char *tmp);
++int fail (char *string,int code);
++
++
++/* File string driver for file stringstructs */
++
++STRINGDRIVER file_string = {
++  file_string_init,		/* initialize string structure */
++  file_string_next,		/* get next byte in string structure */
++  file_string_setpos		/* set position in string structure */
++};
++
++
++/* Cache buffer for file stringstructs */
++
++#define CHUNKLEN 16384
++char chunk[CHUNKLEN];
++
++/* Initialize file string structure for file stringstruct
++ * Accepts: string structure
++ *	    pointer to string
++ *	    size of string
++ */
++
++void file_string_init (STRING *s,void *data,unsigned long size)
++{
++  s->data = data;		/* note fd */
++  s->size = size;		/* note size */
++  s->chunk = chunk;
++  s->chunksize = (unsigned long) CHUNKLEN;
++  SETPOS (s,0);			/* set initial position */
++}
++
++
++/* Get next character from file stringstruct
++ * Accepts: string structure
++ * Returns: character, string structure chunk refreshed
++ */
++
++char file_string_next (STRING *s)
++{
++  char c = *s->curpos++;	/* get next byte */
++  SETPOS (s,GETPOS (s));	/* move to next chunk */
++  return c;			/* return the byte */
++}
++
++
++/* Set string pointer position for file stringstruct
++ * Accepts: string structure
++ *	    new position
++ */
++
++void file_string_setpos (STRING *s,unsigned long i)
++{
++  if (i > s->size) i = s->size;	/* don't permit setting beyond EOF */
++  s->offset = i;		/* set new offset */
++  s->curpos = s->chunk;		/* reset position */
++				/* set size of data */
++  if (s->cursize = min (s->chunksize,SIZE (s))) {
++				/* move to that position in the file */
++    fseek ((FILE *) s->data,s->offset,SEEK_SET);
++    fread (s->curpos,sizeof (char),(unsigned int) s->cursize,(FILE *) s->data);
++  }
++}
++
++/* Main program */
++
++int main (int argc,char *argv[])
++{
++  FILE *f = NIL;
++  int c,ret = 0;
++  unsigned long msglen;
++  char *s,tmp[MAILTMPLEN];
++  uid_t ruid = getuid ();
++  struct passwd *pwd = ruid ? getpwnam ("daemon") : NIL;
++  openlog ("dmail",LOG_PID,LOG_MAIL);
++				/* must not be root or daemon! */
++  if (!ruid || (pwd && (pwd->pw_uid == ruid)))
++    _exit (fail ("dmail may not be invoked by root or daemon",EX_USAGE));
++#include "linkage.c"
++				/* process all flags */
++  for (--argc; argc && (*(s = *++argv)) == '-'; argc--) switch (s[1]) {
++  case 'D':			/* debug */
++    debug = T;			/* extra debugging */
++    break;
++  case 'f':
++  case 'r':			/* flag giving return path */
++    if (argc--) sender = cpystr (*++argv);
++    else _exit (fail ("missing argument to -r",EX_USAGE));
++    break;
++  default:			/* anything else */
++    _exit (fail ("unknown switch",EX_USAGE));
++  }
++
++  if (argc > 1) _exit (fail ("too many recipients",EX_USAGE));
++  else if (!(f = tmpfile ())) _exit(fail ("can't make temp file",EX_TEMPFAIL));
++				/* build delivery headers */
++  if (sender) fprintf (f,"Return-Path: <%s>\015\012",sender);
++				/* start Received line: */
++  fprintf (f,"Received: via dmail-%s for %s; ",version,
++	   (argc == 1) ? *argv : myusername ());
++  rfc822_date (tmp);
++  fputs (tmp,f);
++  fputs ("\015\012",f);
++				/* copy text from standard input */
++  if (!fgets (tmp,MAILTMPLEN-1,stdin) || !(s = strchr (tmp,'\n')) ||
++      (s == tmp) || s[1]) _exit (fail ("bad first message line",EX_USAGE));
++  else if (s[-1] == '\015') {	/* nuke leading "From " line */
++    if ((tmp[0] != 'F') || (tmp[1] != 'r') || (tmp[2] != 'o') ||
++	(tmp[3] != 'm') || (tmp[4] != ' ')) fputs (tmp,f);
++    while ((c = getchar ()) != EOF) putc (c,f);
++  }
++  else {
++    if ((tmp[0] != 'F') || (tmp[1] != 'r') || (tmp[2] != 'o') ||
++	(tmp[3] != 'm') || (tmp[4] != ' ')) {
++      *s++ = '\015';		/* overwrite NL with CRLF */
++      *s++ = '\012';
++      *s = '\0';		/* tie off string */
++      fputs (tmp,f);		/* write line */
++    }
++  }
++				/* copy text from standard input */
++  while ((c = getchar ()) != EOF) {
++				/* add CR if needed */
++    if (c == '\012') putc ('\015',f);
++    putc (c,f);
++  }
++  msglen = ftell (f);		/* size of message */
++  fflush (f);			/* make sure all changes written out */
++  if (ferror (f)) ret = fail ("error writing temp file",EX_TEMPFAIL);
++  else if (!msglen) ret = fail ("empty message",EX_TEMPFAIL);
++				/* single delivery */
++  else ret = deliver (f,msglen,argc ? *argv : myusername ());
++  fclose (f);			/* all done with temporary file */
++  _exit (ret);			/* normal exit */
++  return 0;			/* stupid gcc */
++}
++
++/* Deliver message to recipient list
++ * Accepts: file description of message temporary file
++ *	    size of message temporary file in bytes
++ *	    recipient name
++ * Returns: NIL if success, else error code
++ */
++
++int deliver (FILE *f,unsigned long msglen,char *user)
++{
++  MAILSTREAM *ds = NIL;
++  char *s,*mailbox,tmp[MAILTMPLEN],path[MAILTMPLEN];
++  STRING st;
++  struct stat sbuf;
++				/* have a mailbox specifier? */
++  if (mailbox = strchr (user,'+')) {
++    *mailbox++ = '\0';		/* yes, tie off user name */
++    if (!*mailbox || !strcmp ("INBOX",ucase (strcpy (tmp,mailbox))))
++      mailbox = NIL;		/* user+ and user+INBOX same as user */
++  }
++  if (!*user) user = myusername ();
++  else if (strcmp (user,myusername ()))
++    return fail ("can't deliver to other user",EX_CANTCREAT);
++  sprintf (tmp,"delivering to %.80s+%.80s",user,mailbox ? mailbox : "INBOX");
++  mm_dlog (tmp);
++				/* prepare stringstruct */
++  INIT (&st,file_string,(void *) f,msglen);
++  if (mailbox) {		/* non-INBOX name */
++    switch (mailbox[0]) {	/* make sure a valid name */
++    default:			/* other names, try to deliver if not INBOX */
++      if (!strstr (mailbox,"..") && !strstr (mailbox,"//") &&
++	  !strstr (mailbox,"/~") && mailboxfile (path,mailbox) && path[0] &&
++	  !deliver_safely (NIL,&st,mailbox,path,tmp)) return NIL;
++    case '%': case '*':		/* wildcards not valid */
++    case '/':			/* absolute path names not valid */
++    case '~':			/* user names not valid */
++      sprintf (tmp,"invalid mailbox name %.80s+%.80s",user,mailbox);
++      mm_log (tmp,WARN);
++      break;
++    }
++    mm_dlog ("retrying delivery to INBOX");
++    SETPOS (&st,0);		/* rewind stringstruct just in case */
++  }
++
++				/* no -I, resolve "INBOX" into path */
++  if (mailboxfile (path,mailbox = "INBOX") && !path[0]) {
++				/* clear box, get generic INBOX prototype */
++    if (!(ds = mail_open (NIL,"INBOX",OP_PROTOTYPE)))
++      fatal ("no INBOX prototype");
++				/* standard system driver? */
++    if (!strcmp (ds->dtb->name,"unix") || !strcmp (ds->dtb->name,"mmdf")) {
++      strcpy (path,sysinbox ());/* use system INBOX */
++      if (!lstat (path,&sbuf))	/* deliver to existing system INBOX */
++	return deliver_safely (ds,&st,mailbox,path,tmp);
++    }
++    else {			/* other driver, try ~/INBOX */
++      if ((mailboxfile (path,"&&&&&") == path) &&
++	  (s = strstr (path,"&&&&&")) && strcpy (s,"INBOX") &&
++	  !lstat (path,&sbuf)){	/* deliver to existing ~/INBOX */
++	sprintf (tmp,"#driver.%s/INBOX",ds->dtb->name);
++	return deliver_safely (ds,&st,cpystr (tmp),path,tmp);
++      }
++    }
++				/* not dummy, deliver to driver imputed path */
++    if (strcmp (ds->dtb->name,"dummy"))
++      return (ibxpath (ds,&mailbox,path) && !lstat (path,&sbuf)) ?
++	deliver_safely (ds,&st,mailbox,path,tmp) :
++	  fail ("unable to resolve INBOX path",EX_CANTCREAT);
++				/* dummy, empty imputed append path exist? */
++    if (ibxpath (ds = default_proto (T),&mailbox,path) &&
++	!lstat (path,&sbuf) && !sbuf.st_size)
++      return deliver_safely (ds,&st,mailbox,path,tmp);
++				/* impute path that we will create */
++    if (!ibxpath (ds = default_proto (NIL),&mailbox,path))
++      return fail ("unable to resolve INBOX",EX_CANTCREAT);
++  }
++				/* black box, must create, get create proto */
++  else if (lstat (path,&sbuf)) ds = default_proto (NIL);
++  else {			/* black box, existing file */
++				/* empty file, get append prototype */
++    if (!sbuf.st_size) ds = default_proto (T);
++				/* non-empty, get prototype from its data */
++    else if (!(ds = mail_open (NIL,"INBOX",OP_PROTOTYPE)))
++      fatal ("no INBOX prototype");
++				/* error if unknown format */
++    if (!strcmp (ds->dtb->name,"phile"))
++      return fail ("unknown format INBOX",EX_UNAVAILABLE);
++				/* otherwise can deliver to it */
++    return deliver_safely (ds,&st,mailbox,path,tmp);
++  }
++  sprintf (tmp,"attempting to create mailbox %.80s path %.80s",mailbox,path);
++  mm_dlog (tmp);
++				/* supplicate to the Evil One */
++  if (!path_create (ds,path)) return fail ("can't create INBOX",EX_CANTCREAT);
++  sprintf (tmp,"created %.80s",path);
++  mm_dlog (tmp);
++				/* deliver the message */
++  return deliver_safely (ds,&st,mailbox,path,tmp);
++}
++
++/* Resolve INBOX from driver prototype into mailbox name and filesystem path
++ * Accepts: driver prototype
++ * 	    pointer to mailbox name string pointer
++ *	    buffer to return mailbox path
++ * Returns: T if success, NIL if error
++ */
++
++long ibxpath (MAILSTREAM *ds,char **mailbox,char *path)
++{
++  char *s,tmp[MAILTMPLEN];
++  long ret = T;
++  if (!strcmp (ds->dtb->name,"unix") || !strcmp (ds->dtb->name,"mmdf"))
++    strcpy (path,sysinbox ());	/* use system INBOX for unix and MMDF */
++  else if (!strcmp (ds->dtb->name,"tenex"))
++    ret = (mailboxfile (path,"mail.txt") == path) ? T : NIL;
++  else if (!strcmp (ds->dtb->name,"mtx"))
++    ret = (mailboxfile (path,"INBOX.MTX") == path) ? T : NIL;
++  else if (!strcmp (ds->dtb->name,"mbox"))
++    ret = (mailboxfile (path,"mbox") == path) ? T : NIL;
++				/* better not be a namespace driver */
++  else if (ds->dtb->flags & DR_NAMESPACE) return NIL;
++				/* INBOX in home directory */
++  else ret = ((mailboxfile (path,"&&&&&") == path) &&
++	      (s = strstr (path,"&&&&&")) && strcpy (s,"INBOX")) ? T : NIL;
++  if (ret) {			/* don't bother if lossage */
++    sprintf (tmp,"#driver.%s/INBOX",ds->dtb->name);
++    *mailbox = cpystr (tmp);	/* name of INBOX in this namespace */
++  }
++  return ret;
++}
++
++/* Deliver safely
++ * Accepts: prototype stream to force mailbox format
++ *	    stringstruct of message temporary file or NIL for check only
++ *	    mailbox name
++ *	    filesystem path name
++ *	    scratch buffer for messages
++ * Returns: NIL if success, else error code
++ */
++
++int deliver_safely (MAILSTREAM *prt,STRING *st,char *mailbox,char *path,
++		    char *tmp)
++{
++  struct stat sbuf;
++  int i = delivery_unsafe (path,&sbuf,tmp);
++  if (i) return i;		/* give up now if delivery unsafe */
++				/* directory, not file */
++  if ((sbuf.st_mode & S_IFMT) == S_IFDIR) {
++    if (sbuf.st_mode & 0001) {	/* listable directories may be worrisome */
++      sprintf (tmp,"WARNING: directory %.80s is listable",path);
++      mm_log (tmp,WARN);
++    }
++  }
++  else {			/* file, not directory */
++    if (sbuf.st_nlink != 1) {	/* multiple links may be worrisome */
++      sprintf (tmp,"WARNING: multiple links to file %.80s",path);
++      mm_log (tmp,WARN);
++    }
++    if (sbuf.st_mode & 0111) {	/* executable files may be worrisome */
++      sprintf (tmp,"WARNING: file %.80s is executable",path);
++      mm_log (tmp,WARN);
++    }
++  }
++  if (sbuf.st_mode & 0002) {	/* public-write files may be worrisome */
++    sprintf (tmp,"WARNING: file %.80s is publicly-writable",path);
++    mm_log (tmp,WARN);
++  }
++  if (sbuf.st_mode & 0004) {	/* public-write files may be worrisome */
++    sprintf (tmp,"WARNING: file %.80s is publicly-readable",path);
++    mm_log (tmp,WARN);
++  }
++				/* so far, so good */
++  sprintf (tmp,"%s appending to %.80s (%s %.80s)",
++	   prt ? prt->dtb->name : "default",mailbox,
++	   ((sbuf.st_mode & S_IFMT) == S_IFDIR) ? "directory" : "file",path);
++  mm_dlog (tmp);
++				/* do the append now! */
++  if (!mail_append (prt,mailbox,st)) {
++    sprintf (tmp,"message delivery failed to %.80s",path);
++    return fail (tmp,EX_CANTCREAT);
++  }
++				/* note success */
++  sprintf (tmp,"delivered to %.80s",path);
++  mm_log (tmp,NIL);
++				/* make sure nothing evil this way comes */
++  return delivery_unsafe (path,&sbuf,tmp);
++}
++
++/* Verify that delivery is safe
++ * Accepts: path name
++ *	    stat buffer
++ *	    scratch buffer for messages
++ * Returns: NIL if delivery is safe, error code if unsafe
++ */
++
++int delivery_unsafe (char *path,struct stat *sbuf,char *tmp)
++{
++  u_short type;
++  sprintf (tmp,"Verifying safe delivery to %.80s",path);
++  mm_dlog (tmp);
++				/* prepare message just in case */
++  sprintf (tmp,"delivery to %.80s unsafe: ",path);
++				/* unsafe if can't get its status */
++  if (lstat (path,sbuf)) strcat (tmp,strerror (errno));
++				/* unsafe if not a regular file */
++  else if (((type = sbuf->st_mode & (S_IFMT | S_ISUID | S_ISGID)) != S_IFREG)&&
++	   (type != S_IFDIR)) {
++    strcat (tmp,"can't deliver to ");
++				/* unsafe if setuid */
++    if (type & S_ISUID) strcat (tmp,"setuid file");
++				/* unsafe if setgid */
++    else if (type & S_ISGID) strcat (tmp,"setgid file");
++    else switch (type) {
++    case S_IFCHR: strcat (tmp,"character special"); break;
++    case S_IFBLK: strcat (tmp,"block special"); break;
++    case S_IFLNK: strcat (tmp,"symbolic link"); break;
++    case S_IFSOCK: strcat (tmp,"socket"); break;
++    default:
++      sprintf (tmp + strlen (tmp),"file type %07o",(unsigned int) type);
++    }
++  }
++  else return NIL;		/* OK to deliver */
++  return fail (tmp,EX_CANTCREAT);
++}
++
++/* Report an error
++ * Accepts: string to output
++ */
++
++int fail (char *string,int code)
++{
++  mm_log (string,ERROR);	/* pass up the string */
++#if T
++  switch (code) {
++  case EX_USAGE:
++  case EX_OSERR:
++  case EX_SOFTWARE:
++  case EX_NOUSER:
++  case EX_CANTCREAT:
++    code = EX_TEMPFAIL;		/* coerce these to TEMPFAIL */
++  default:
++    break;
++  }
++#endif
++  return code;			/* error code to return */
++}
++
++/* Co-routines from MAIL library */
++
++
++/* Message matches a search
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_searched (MAILSTREAM *stream,unsigned long msgno)
++{
++  fatal ("mm_searched() call");
++}
++
++
++/* Message exists (i.e. there are that many messages in the mailbox)
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_exists (MAILSTREAM *stream,unsigned long number)
++{
++  fatal ("mm_exists() call");
++}
++
++
++/* Message expunged
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_expunged (MAILSTREAM *stream,unsigned long number)
++{
++  fatal ("mm_expunged() call");
++}
++
++
++/* Message flags update seen
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_flags (MAILSTREAM *stream,unsigned long number)
++{
++}
++
++/* Mailbox found
++ * Accepts: MAIL stream
++ *	    delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_list (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++  fatal ("mm_list() call");
++}
++
++
++/* Subscribed mailbox found
++ * Accepts: MAIL stream
++ *	    delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_lsub (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++  fatal ("mm_lsub() call");
++}
++
++
++/* Mailbox status
++ * Accepts: MAIL stream
++ *	    mailbox name
++ *	    mailbox status
++ */
++
++void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
++{
++  fatal ("mm_status() call");
++}
++
++/* Notification event
++ * Accepts: MAIL stream
++ *	    string to log
++ *	    error flag
++ */
++
++void mm_notify (MAILSTREAM *stream,char *string,long errflg)
++{
++  char tmp[MAILTMPLEN];
++  tmp[11] = '\0';		/* see if TRYCREATE */
++  if (!strcmp (ucase (strncpy (tmp,string,11)),"[TRYCREATE]")) trycreate = T;
++  mm_log (string,errflg);	/* just do mm_log action */
++}
++
++
++/* Log an event for the user to see
++ * Accepts: string to log
++ *	    error flag
++ */
++
++void mm_log (char *string,long errflg)
++{
++  if (trycreate)mm_dlog(string);/* debug logging only if trycreate in effect */
++  else {			/* ordinary logging */
++    fprintf (stderr,"%s\n",string);
++    switch (errflg) {  
++    case NIL:			/* no error */
++      syslog (LOG_INFO,"%s",string);
++      break;
++    case PARSE:			/* parsing problem */
++    case WARN:			/* warning */
++      syslog (LOG_WARNING,"%s",string);
++      break;
++    case ERROR:			/* error */
++    default:
++      syslog (LOG_ERR,"%s",string);
++      break;
++    }
++  }
++}
++
++
++/* Log an event to debugging telemetry
++ * Accepts: string to log
++ */
++
++void mm_dlog (char *string)
++{
++  if (debug) fprintf (stderr,"%s\n",string);
++  syslog (LOG_DEBUG,"%s",string);
++}
++
++/* Get user name and password for this host
++ * Accepts: parse of network mailbox name
++ *	    where to return user name
++ *	    where to return password
++ *	    trial count
++ */
++
++void mm_login (NETMBX *mb,char *username,char *password,long trial)
++{
++  fatal ("mm_login() call");
++}
++
++
++/* About to enter critical code
++ * Accepts: stream
++ */
++
++void mm_critical (MAILSTREAM *stream)
++{
++  critical = T;			/* note in critical code */
++}
++
++
++/* About to exit critical code
++ * Accepts: stream
++ */
++
++void mm_nocritical (MAILSTREAM *stream)
++{
++  critical = NIL;		/* note not in critical code */
++}
++
++
++/* Disk error found
++ * Accepts: stream
++ *	    system error code
++ *	    flag indicating that mailbox may be clobbered
++ * Returns: T if user wants to abort
++ */
++
++long mm_diskerror (MAILSTREAM *stream,long errcode,long serious)
++{
++  return T;
++}
++
++
++/* Log a fatal error event
++ * Accepts: string to log
++ */
++
++void mm_fatal (char *string)
++{
++  printf ("?%s\n",string);	/* shouldn't happen normally */
++}
+diff -ruN imap-2001a.orig/src/icat/Makefile imap-2001a/src/icat/Makefile
+--- imap-2001a.orig/src/icat/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/icat/Makefile	Thu Dec 13 13:54:42 2001
+@@ -0,0 +1,26 @@
++# Program:	ICAT Makefile
++
++C = ../../c-client
++CCLIENTLIB = $C/`cat $C/$ARCHIVENAME`
++SHELL = /bin/sh
++
++# Get local definitions from c-client directory
++
++CC = `cat $C/CCTYPE`
++CFLAGS = -I$C `cat $C/CFLAGS`
++LDFLAGS = -L$C `cat $C/LDFLAGS`
++
++icat: $(CCLIENTLIB) icat.o
++	$(CC) $(CFLAGS) -o icat icat.o $(LDFLAGS)
++
++icat.o: $C/mail.h $C/misc.h $C/osdep.h $C/rfc822.h $C/smtp.h $C/nntp.h
++
++$(CCLIENTLIB):
++	cd $C;make
++
++clean:
++	rm -f *.o icat
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/icat/icat.1 imap-2001a/src/icat/icat.1
+--- imap-2001a.orig/src/icat/icat.1	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/icat/icat.1	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,116 @@
++.TH ICAT LOCAL
++.SH NAME
++icat \- "cat" a mailbox from an IMAP source
++.SH SYNOPSIS
++.B icat
++[
++.B \-a
++] [
++.B \-d[bos]
++.I date
++] [
++.B \-f[adfno]
++] [
++.B \-m[tscfbx]
++.I string
++] [
++.B \-d
++ ] [
++.B \-h
++]
++.I mailbox
++.SH DESCRIPTION
++The 
++.I icat
++program reads a remote mailbox using the IMAP protocol and prints it in standard Unix mailbox format on the standard output.  
++.I Icat
++is intended for use in scripting or interactive Unix sessions to provide a bridge between a remote mail store and traditional Unix tools.
++.PP
++The 
++.I mailbox
++argument is required and can be any valid c-client IMAP mailbox specification
++(see the examples below).
++.PP
++.SH OPTIONS
++The options are used to filter the output to only those message matching specified criteria.
++.TP 5
++.B \-a 
++Prints all messages.  This is the default.
++.TP 0
++The various \-d options filter based on date.  In all cases the date
++must be in DD-MMM-YYYY (e.g. 24-JAN-1988) format.
++.PP
++.TP 5
++.I \-db
++Print messages dated before the date specified.
++.TP
++.B \-do
++Print messages dated on the date specified.
++.TP
++.B \-ds
++Print messages dated since the date specified.
++.TP 0
++The various \-f options filter based on message flags.
++.PP
++.TP 5
++.B \-fa
++Print messages marked as answered.
++.TP
++.B \-fd
++Print messages marked as deleted.
++.TP
++.B \-ff
++Print messages marked as flagged.
++.TP
++.B \-fn
++Print messages marked as new.
++.TP
++.B \-fo
++Print messages not marked as new (old).
++.TP 0
++The various \-m options will perform a case\-insensitive substring match
++on the indicated region.  The string cannot be a regular expression.
++.PP
++.TP 5
++.B \-mt
++Print messages with the specified string in the To: header line.
++.TP
++.B \-ms
++Print messages with the specified string in the Subject: header line.
++.TP
++.B \-mc
++Print messages with the specified string in the Cc: header line.
++.TP
++.B \-mf
++Print messages with the specified string in the From: header line.
++.TP
++.B \-mb
++Print messages with the specified string in the body of the message.
++.TP
++.B \-mx
++Print messages with the specified string in the full text (header and body) of the message.
++.TP
++.PP
++.SH EXAMPLES
++
++Print all messages from your inbox on yourms.imap.org that are new and to root:
++.br
++	icat -fn -mt root '{yourms.imap.org}inbox'
++.br
++.PP
++Print all messages from Robert Morris dated November 2, 1988:
++.br
++	icat -do 2-nov-1988 -mf "Robert Morris" '{yourms.imap.org}inbox'
++.br
++.PP
++Note that in both cases the quotes are required to protect the braces from the shell.
++.PP
++.SH BUGS
++The "From " separator lines of the Unix mailbox format output do not reflect the "From:" line of the forthcoming message.
++.PP
++Most likely there are others.
++.SH AUTHOR
++Eric Horst, erich@cac.washington.edu
++.SH "SEE ALSO"
++cat(1), pine(1)
++.PP
+diff -ruN imap-2001a.orig/src/icat/icat.c imap-2001a/src/icat/icat.c
+--- imap-2001a.orig/src/icat/icat.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/icat/icat.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,374 @@
++/*
++ * Program:	Cat a mailbox from an IMAP source
++ *
++ * Author:	Eric Horst
++ *		Networks and Distributed Computing
++ *		University of Washington
++ *		Internet: erich@CAC.Washington.EDU
++ *
++ * Date:	19 February 1998
++ * Last Edited:	03 June 1998
++ *
++ */
++
++#include <stdio.h>
++#include <ctype.h>
++#include <signal.h>
++#include <pwd.h>
++#include "mail.h"
++#include "osdep.h"
++#include "rfc822.h"
++#include "smtp.h"
++#include "nntp.h"
++#include "misc.h"
++
++#define OPT_A 1
++#define OPT_FA 2
++#define OPT_FD 4
++#define OPT_FF 8
++#define OPT_FN 16
++#define OPT_FO 32
++
++char *curhst = NIL;		/* currently connected host */
++char *curusr = NIL;		/* current login user */
++char personalname[MAILTMPLEN];	/* user's personal name */
++int nostatus = NIL, nomsgno = NIL, nodate = NIL,  /* flags */
++  notime = NIL, altffmt = NIL, nolimit = NIL;
++char *since,*before,*ondate;
++char sstr[MAILTMPLEN];
++
++int main (int argc,char *argv[]);
++void mm (MAILSTREAM *stream,long debug);
++void prompt (char *msg,char *txt);
++int fail (char *string,int code);
++char *getpass ();
++int validdatefmt (char *d);
++
++/* Main program - initialization */
++
++int main (int argc,char *argv[])
++{
++  MAILSTREAM *stream = NIL;
++  char *s,tmp[MAILTMPLEN];
++  char *help = "usage: icat [-a] [-d[bos] <date>] [-f[adfno]] [-m[tscfbx] <string> [-h|?] mailbox";
++  char *sword;
++  long debug;
++  int options = 0;
++#include "linkage.c"
++
++  /* make sure have some arguments */
++  if (--argc < 1) _exit (fail (help,1));
++  /* process all flags */
++  while (argc && *(s = *++argv) == '-') {
++    argc--;                     /* gobble this argument */
++    switch (s[1])		/* what is this flag? */
++      {             
++      case 'a':                 /* spew all messages */
++	if (!(options & OPT_A) && (options |= OPT_A))
++	  strcat(sstr, "ALL ");
++	break;
++      case 'd':                   /* spew matching date */
++	switch(s[2])
++	  {
++	  case 'b':  sword = "BEFORE";  break;
++	  case 'o':  sword = "ON";      break;
++	  case 's':  sword = "SINCE";   break;
++	  default:
++	    sprintf(tmp, "unknown option %s", s);
++	    _exit (fail (tmp,1));
++	  }
++
++	if (argc--) {
++	  if (validdatefmt(*(++argv))) {
++	    sprintf(tmp,"%s %s ", sword, *argv);
++	    strcat(sstr, tmp);
++	  }
++	  else {
++	    sprintf(tmp, "bad date format in %s, must be DD-MMM-YYYY", s);
++	    _exit (fail (tmp,1));
++	  }
++	}
++	else {
++	  sprintf(tmp, "missing argument to %s", s);
++	  _exit (fail (tmp,1));
++	}
++
++	break;
++
++      case 'f':                   /* spew those flagged */
++	switch(s[2])              /* i'm punting on the NOTs, xcept new/old */
++	      {
++	      case 'a':
++		if (!(options & OPT_FA) && (options |= OPT_FA))
++		  strcat(sstr, "ANSWERED ");
++		break;
++	      case 'd':
++		if (!(options & OPT_FD) && (options |= OPT_FD))
++		  strcat(sstr, "DELETED ");
++		break;
++	      case 'f':
++		if (!(options & OPT_FF) && (options |= OPT_FF))
++		  strcat(sstr, "FLAGGED ");
++		break;
++	      case 'n': 
++		if (!(options & OPT_FN) && (options |= OPT_FN))
++		  strcat(sstr, "UNSEEN ");  /* NEW prob not what user wants */
++		break;
++	      case 'o':
++		if (!(options & OPT_FO) && (options |= OPT_FO))
++		  strcat(sstr, "SEEN ");    /* OLD prob not what user wants */
++		break;
++	      default:
++		sprintf(tmp, "unknown option %s", s );
++		_exit (fail (tmp,1));
++	      }
++	    break;
++
++      case 'm':                   /* spew matching a string */
++	switch(s[2])
++	  {
++	  case 't':  sword = "TO";      break;
++	  case 'f':  sword = "FROM";    break;
++	  case 'c':  sword = "CC";      break;
++	  case 's':  sword = "SUBJECT"; break;
++	  case 'b':  sword = "BODY";    break;
++	  case 'x':  sword = "TEXT";    break;
++	  default:   
++	    sprintf(tmp, "unknown option %s", s);
++	    _exit (fail (tmp,1));
++	  }
++	      
++	if (argc--) {
++	  sprintf(tmp,"%s \"%s\" ", sword, *++argv);
++	  strcat(sstr, tmp);
++	}
++	else {
++	  sprintf(tmp, "missing argument to %s", s);
++	  _exit (fail (tmp,1));
++	}
++	break;
++
++      case '?':                   /* give usage */
++      case 'h':
++	_exit (fail (help,1));
++	break;
++
++      default:                    /* anything else */
++	_exit (fail ("unknown switch",1));
++      }
++  }
++
++  if (!(argc--)) {
++    _exit (fail ("missing mailbox specification",1));
++  }
++
++  curusr = cpystr(myusername()); /* current user is this name */
++  {
++    char *suffix;
++    struct passwd *pwd = getpwnam (curusr);
++    if (pwd) {
++      strcpy (tmp,pwd->pw_gecos);
++      /* dyke out the office and phone poop */
++      if (suffix = strchr (tmp,',')) suffix[0] = '\0';
++      strcpy (personalname,tmp);/* make a permanent copy of it */
++    }
++    else personalname[0] = '\0';
++  }
++
++  curhst = cpystr (mylocalhost ());
++  if (!*personalname) prompt ("Personal name: ",personalname);
++  debug =  NIL;
++  stream = mail_open (stream,*argv,OP_READONLY);
++  if (stream) mm (stream,debug);	  /* run user interface if opened */
++
++  return NIL;
++}
++
++/* Report an error
++ * Accepts: string to output
++ */
++int fail (char *string,int code)
++{
++  mm_log (string,ERROR);        /* pass up the string */
++  return code;                  /* error code to return */
++}
++
++/* Check a date for correct format
++ * Accepts: string somebody thinks looks like a date
++ * Note: This is really rough.  c-client already checks better but 
++ * has a horrible error message so we just make sure that it is at
++ * least the correct form
++ */
++int validdatefmt (char *d)
++{
++  int day, year;
++  char month[4];
++  
++  return ( sscanf(d, "%2d%*[-]%3s%*[-]%4d", &day, month, &year) == 3
++	   && day > 0 && day < 32 
++	   && year > 1900 && year < 9999
++	   );
++}
++
++/* MM command loop
++ * Accepts: MAIL stream
++ */
++
++void mm (MAILSTREAM *stream,long debug)
++{
++  unsigned long i;
++  char tmp[MAILTMPLEN];
++  char *m;
++  int msg = 0;
++
++  mail_search(stream, sstr);
++  for (i = 1; i <= stream->nmsgs; ++i) {
++    if (mail_elt (stream,i)->searched) {
++      mail_cdate (tmp,mail_elt (stream,i));
++
++      if (msg) printf("\n"); else msg = 1;
++      printf ("From %s@%s %s",myusername (),mylocalhost (), tmp);
++
++      m = mail_fetchheader (stream,i);
++      while (*m != 0) {
++	if (*m != '\r')
++	  fwrite(m, 1, 1, stdout);
++	m++;
++      }
++      m = mail_fetchtext (stream,i);
++      while (*m != 0) {
++	if (*m != '\r')
++	  fwrite(m, 1, 1, stdout);
++	m++;
++      }
++    }
++  }
++
++  mail_close (stream);
++  stream = NIL;
++
++  return;
++}
++
++/* Prompt user for input
++ * Accepts: pointer to prompt message
++ *          pointer to input buffer
++ */
++
++void prompt (char *msg,char *txt)
++{
++  printf ("%s",msg);
++  gets (txt);
++}
++
++/* Interfaces to C-client */
++
++
++void mm_searched (MAILSTREAM *stream,unsigned long number)
++{
++}
++
++
++void mm_exists (MAILSTREAM *stream,unsigned long number)
++{
++}
++
++
++void mm_expunged (MAILSTREAM *stream,unsigned long number)
++{
++}
++
++
++void mm_flags (MAILSTREAM *stream,unsigned long number)
++{
++}
++
++
++void mm_notify (MAILSTREAM *stream,char *string,long errflg)
++{
++  mm_log (string,errflg);
++}
++
++
++void mm_list (MAILSTREAM *stream,int delimiter,char *mailbox,long attributes)
++{
++}
++
++
++void mm_lsub (MAILSTREAM *stream,int delimiter,char *mailbox,long attributes)
++{
++}
++
++
++void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
++{
++}
++
++
++void mm_log (char *string,long errflg)
++{
++  switch ((short) errflg) {
++  case NIL:
++    break;
++  case PARSE:
++    break;
++  case WARN:
++    fprintf (stderr, "%%%s\n",string);
++    break;
++  case ERROR:
++    fprintf (stderr, "?%s\n",string);
++    break;
++  }
++}
++
++
++void mm_dlog (char *string)
++{
++  fprintf (stderr, "%s\n",string);
++}
++
++
++void mm_login (NETMBX *mb,char *user,char *pwd,long trial)
++{
++  char tmp[MAILTMPLEN];
++  if (curhst) fs_give ((void **) &curhst);
++  curhst = (char *) fs_get (1+strlen (mb->host));
++  strcpy (curhst,mb->host);
++  if (*mb->user) {
++    strcpy (user,mb->user);
++    sprintf (tmp,"{%s/%s/user=%s} password: ",mb->host,mb->service,mb->user);
++  }
++  else {
++    sprintf (tmp,"{%s/%s} username: ",mb->host,mb->service);
++    prompt (tmp,user);
++    strcpy (tmp,"Password: ");
++  }
++  if (curusr) fs_give ((void **) &curusr);
++  curusr = cpystr (user);
++  strcpy (pwd,getpass (tmp));
++}
++
++
++void mm_critical (MAILSTREAM *stream)
++{
++}
++
++
++void mm_nocritical (MAILSTREAM *stream)
++{
++}
++
++
++long mm_diskerror (MAILSTREAM *stream,long errcode,long serious)
++{
++  kill (getpid (),SIGSTOP);
++  return NIL;
++}
++
++
++void mm_fatal (char *string)
++{
++  fprintf (stderr,"?%s\n",string);
++}
++
++
+diff -ruN imap-2001a.orig/src/ifrom/Makefile imap-2001a/src/ifrom/Makefile
+--- imap-2001a.orig/src/ifrom/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/ifrom/Makefile	Thu Dec 13 13:54:42 2001
+@@ -0,0 +1,24 @@
++# Program:	IFROM Makefile
++
++C = ../../c-client
++CCLIENTLIB = $C/`cat $C/$ARCHIVENAME`
++SHELL = /bin/sh
++
++# Get local definitions from c-client directory
++
++CC = `cat $C/CCTYPE`
++CFLAGS = -I$C `cat $C/CFLAGS`
++LDFLAGS = -L$C `cat $C/LDFLAGS`
++
++ifrom: $(CCLIENTLIB) ifrom.o
++	$(CC) $(CFLAGS) -o ifrom ifrom.o $(LDFLAGS)
++
++$(CCLIENTLIB):
++	cd $C;make
++
++clean:
++	rm -f *.o ifrom
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/ifrom/ifrom.1 imap-2001a/src/ifrom/ifrom.1
+--- imap-2001a.orig/src/ifrom/ifrom.1	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/ifrom/ifrom.1	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,62 @@
++.TH IFROM LOCAL
++.SH NAME
++ifrom \- one line per message summary of IMAP mailbox
++.SH SYNOPSIS
++.B ifrom
++.I [\-l][\-s][\-n][\-t][\-f][\-d][\-h] mailbox
++.SH DESCRIPTION
++.I ifrom
++is a program which produces a one-line-per-message summary of a mailbox
++using the IMAP protocol.  The summary line contains:
++.br
++	Msg# Status:		From:		Date		Subject:
++.br
++.PP
++The
++.I mailbox
++argument is required and can be any valid IMAP mailbox specification.
++Typically one would use:
++.I {imapserver.domain}inbox
++to summarize their inbox.  The specification:
++.I {newshost.domain/nntp}comp.os.unix
++can be used to summarize the contents of a newsgroup.
++.PP
++If the -h flag is given, some very crude usage is supplied.
++.PP
++If the -l flag is given, the From: and Subject: fields are not
++truncated to fit an 80 column terminal display.  This makes
++.I ifrom
++output suitable for piping to
++.I grep.
++.PP
++If the -s flag is given, the Status field is omitted making the from field longer.
++.PP
++If the -n flag is given, the Msg# field is omitted making the subject field
++longer.
++.PP
++If the -d flag is given, the date field is omitted (including the time) making the subject field longer.
++.PP
++If the -t flag is given, the time portion of the date field is omitted making the subject field longer.
++.PP
++If the -f flag is given, From: Real Name <email> is re-written as
++email (Real Name).
++.PP
++.SH EXAMPLES
++.PP
++Check most recent mail:
++.br
++	ifrom '{mailserver}inbox' | tail
++.br
++Note that the quotes are required to protect the braces from the shell.
++.PP
++Look for news postings with summary lines matching 'search-pattern':
++.br
++	ifrom -l '{news/nntp}comp.os.pine' | grep search-pattern
++.br
++.SH BUGS
++.PP
++Most likely there are some.
++.SH AUTHOR
++Eric Horst, erich@cac.washington.edu
++.SH "SEE ALSO"
++grep(1)
+diff -ruN imap-2001a.orig/src/ifrom/ifrom.c imap-2001a/src/ifrom/ifrom.c
+--- imap-2001a.orig/src/ifrom/ifrom.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/ifrom/ifrom.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,353 @@
++/*
++ * Program:	An IMAP replacement for the ``from'' utility.
++ *
++ * Author:	Eric Horst
++ *		Networks and Distributed Computing
++ *		University of Washington
++ *		Internet: erich@CAC.Washington.EDU
++ *
++ * Date:	12 April 1996
++ * Last Edited:	17 July 1998
++ *
++ */
++
++#include <stdio.h>
++#include <ctype.h>
++#include <signal.h>
++#include <pwd.h>
++#include "mail.h"
++#include "osdep.h"
++#include "rfc822.h"
++#include "smtp.h"
++#include "nntp.h"
++#include "misc.h"
++
++/* Field sizes and formats */
++
++#define MSGN_FIELD 5
++#define STAT_FIELD 5
++#define FROM_FIELD 23
++#define DATE_FIELD 11
++#define TIME_FIELD 5
++#define SUBJ_FIELD 23
++#define SEPARATOR  2
++#define ADDR_FMT     "%s%s<%s%s%s>  "
++#define ALT_ADDR_FMT "%s%s%s (%s)  "
++#define MT_FIELD     "                         "
++
++char *curhst = NIL;		/* currently connected host */
++char *curusr = NIL;		/* current login user */
++char personalname[MAILTMPLEN];	/* user's personal name */
++int nostatus = NIL, nomsgno = NIL, nodate = NIL,  /* flags */
++  notime = NIL, altffmt = NIL, nolimit = NIL;
++int sfrom = FROM_FIELD, ssubj = SUBJ_FIELD;     /* var column widths */
++char *afmt = ADDR_FMT;
++
++int main (int argc,char *argv[]);
++void mm (MAILSTREAM *stream,long debug);
++void prompt (char *msg,char *txt);
++int fail (char *string,int code);
++void fetch_print (MAILSTREAM *stream, unsigned long i);
++char *getpass ();
++
++/* Main program - initialization */
++
++int main (int argc,char *argv[])
++{
++  MAILSTREAM *stream = NIL;
++  char *s,tmp[MAILTMPLEN];
++  char *help = "usage: ifrom [-s] [-n] [-d] [-t] [-f] [-l] [-h|?] mailbox";
++  long debug;
++#include "linkage.c"
++
++                                /* make sure have some arguments */
++  if (--argc < 1) _exit (fail (help,1));
++                                /* process all flags */
++  while (argc && (*(s = *++argv)) == '-') {
++    argc--;                     /* gobble this argument */
++    switch (s[1]) {             /* what is this flag? */
++    case 's':                   /* suppress status */
++      nostatus = T;
++      sfrom += (STAT_FIELD + 1);
++      break;
++    case 'n':                   /* suppress msgno */
++      nomsgno = T;
++      ssubj += (MSGN_FIELD + SEPARATOR);
++      break;
++    case 'd':                   /* suppress date */
++      nodate = T;
++      break;
++    case 't':                   /* suppress time */
++      notime = T;
++      break;
++    case 'f':                   /* alt from format */
++      altffmt = T;
++      afmt = ALT_ADDR_FMT;
++      break;
++    case 'l':                   /* no field limits */
++      nolimit = T;
++      break;
++    case '?':                   /* give usage */
++    case 'h':
++      _exit (fail (help,1));
++      break;
++    default:                    /* anything else */
++      _exit (fail ("unknown switch",1));
++    }
++  }
++
++  if (nodate) {
++    ssubj += (DATE_FIELD + TIME_FIELD + SEPARATOR +1);
++  } 
++  else if (notime) {
++    ssubj += (TIME_FIELD);
++  }
++
++  curusr = cpystr(myusername());/* current user is this name */
++  {
++    char *suffix;
++    struct passwd *pwd = getpwnam (curusr);
++    if (pwd) {
++      strcpy (tmp,pwd->pw_gecos);
++				/* dyke out the office and phone poop */
++      if (suffix = strchr (tmp,',')) suffix[0] = '\0';
++      strcpy (personalname,tmp);/* make a permanent copy of it */
++    }
++    else personalname[0] = '\0';
++  }
++
++  curhst = cpystr (mylocalhost ());
++  if (!*personalname) prompt ("Personal name: ",personalname);
++  debug =  NIL;
++  stream = mail_open (stream,*argv,OP_READONLY);
++  if (stream) mm (stream,debug);	  /* run user interface if opened */
++
++  return NIL;
++}
++
++/* Report an error
++ * Accepts: string to output
++ */
++int fail (char *string,int code)
++{
++  mm_log (string,ERROR);        /* pass up the string */
++  return code;                  /* error code to return */
++}
++
++/* MM command loop
++ * Accepts: MAIL stream
++ */
++
++void mm (MAILSTREAM *stream,long debug)
++{
++  unsigned long i;
++
++  for (i = 1; i <= stream->nmsgs; ++i)
++    fetch_print (stream,i);
++
++  mail_close (stream);
++  stream = NIL;
++
++  return;
++}
++
++/* Fetch message, format and print
++ * Accepts: stream
++ *          message number
++ */
++
++void fetch_print (MAILSTREAM *stream, unsigned long i)
++{
++  static char sout[MAILTMPLEN],tmp[MAILTMPLEN];
++  static MESSAGECACHE *elt;
++  static ENVELOPE *env;
++  int c = NIL;
++
++  sout[0] = '\0';
++  elt = mail_elt (stream,i);
++  env = mail_fetchenvelope (stream,i);
++
++  if (!nomsgno) {
++    sprintf (tmp,"%5ld  ",elt->msgno);
++    strcat (sout, tmp);
++  }
++
++  if (!nostatus) {
++    tmp[0] = elt->recent ? (elt->seen ? 'R': 'N') : ' ';
++    tmp[1] = (elt->recent | elt->seen) ? ' ' : 'U';
++    tmp[2] = elt->flagged ? 'F' : ' '; 
++    tmp[3] = elt->answered ? 'A' : ' ';
++    tmp[4] = elt->deleted ? 'D' : ' ';
++    tmp[5] = ' ';
++    tmp[6] = '\0';
++    strcat (sout, tmp);
++  }
++
++  if (env->from) {
++    if (!altffmt) {
++      sprintf(tmp, afmt, 
++	      (env->from->personal ? env->from->personal : ""), 
++	      (env->from->personal ? " "                 : ""), 
++	      (env->from->mailbox  ? env->from->mailbox  : ""), 
++	      (env->from->host     ? "@"                 : ""), 
++	      (env->from->host     ? env->from->host     : ""));
++    }
++    else {
++      sprintf(tmp, afmt, 
++	      (env->from->mailbox  ? env->from->mailbox  : ""), 
++	      (env->from->host     ? "@"                 : ""), 
++	      (env->from->host     ? env->from->host     : ""),
++	      (env->from->personal ? env->from->personal : "")); 
++    }
++  }
++  else {
++    strcpy(tmp, MT_FIELD);
++  }
++  if (!nolimit) {
++    tmp[sfrom] = ' ';
++    tmp[sfrom+1] = ' ';
++    tmp[sfrom+2] = '\0';
++  }
++  strcat (sout, tmp);
++
++  if (!nodate) {
++    mail_date (tmp,elt);
++    if (notime) {
++      tmp[12] = ' '; tmp[13] = '\0';
++    }
++    else {
++      tmp[17] = ' '; tmp[18] = ' '; tmp[19] = '\0';
++    }
++    strcat (sout,tmp);
++  }      
++
++  if (env->subject) {
++    strcpy (tmp, env->subject);
++    if (!nolimit) tmp[ssubj] = '\0';
++    strcat (sout, tmp);
++  }
++  puts(sout);
++}
++
++/* Prompt user for input
++ * Accepts: pointer to prompt message
++ *          pointer to input buffer
++ */
++
++void prompt (char *msg,char *txt)
++{
++  printf ("%s",msg);
++  gets (txt);
++}
++
++/* Interfaces to C-client */
++
++
++void mm_searched (MAILSTREAM *stream,unsigned long number)
++{
++}
++
++
++void mm_exists (MAILSTREAM *stream,unsigned long number)
++{
++}
++
++
++void mm_expunged (MAILSTREAM *stream,unsigned long number)
++{
++}
++
++
++void mm_flags (MAILSTREAM *stream,unsigned long number)
++{
++}
++
++
++void mm_notify (MAILSTREAM *stream,char *string,long errflg)
++{
++  mm_log (string,errflg);
++}
++
++
++void mm_list (MAILSTREAM *stream,int delimiter,char *mailbox,long attributes)
++{
++}
++
++
++void mm_lsub (MAILSTREAM *stream,int delimiter,char *mailbox,long attributes)
++{
++}
++
++
++void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
++{
++}
++
++
++void mm_log (char *string,long errflg)
++{
++  switch ((short) errflg) {
++  case NIL:
++    break;
++  case PARSE:
++    break;
++  case WARN:
++    printf ("%%%s\n",string);
++    break;
++  case ERROR:
++    printf ("?%s\n",string);
++    break;
++  }
++}
++
++
++void mm_dlog (char *string)
++{
++  fprintf (stderr, "%s\n",string);
++}
++
++
++void mm_login (NETMBX *mb,char *user,char *pwd,long trial)
++{
++  char tmp[MAILTMPLEN];
++  if (curhst) fs_give ((void **) &curhst);
++  curhst = (char *) fs_get (1+strlen (mb->host));
++  strcpy (curhst,mb->host);
++  if (*mb->user) {
++    strcpy (user,mb->user);
++    sprintf (tmp,"{%s/%s/user=%s} password: ",mb->host,mb->service,mb->user);
++  }
++  else {
++    sprintf (tmp,"{%s/%s} username: ",mb->host,mb->service);
++    prompt (tmp,user);
++    strcpy (tmp,"Password: ");
++  }
++  if (curusr) fs_give ((void **) &curusr);
++  curusr = cpystr (user);
++  strcpy (pwd,getpass (tmp));
++}
++
++
++void mm_critical (MAILSTREAM *stream)
++{
++}
++
++
++void mm_nocritical (MAILSTREAM *stream)
++{
++}
++
++
++long mm_diskerror (MAILSTREAM *stream,long errcode,long serious)
++{
++  kill (getpid (),SIGSTOP);
++  return NIL;
++}
++
++
++void mm_fatal (char *string)
++{
++  fprintf (stderr,"?%s\n",string);
++}
++
++
+diff -ruN imap-2001a.orig/src/imapcopy/Makefile imap-2001a/src/imapcopy/Makefile
+--- imap-2001a.orig/src/imapcopy/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/imapcopy/Makefile	Thu Dec 13 13:54:42 2001
+@@ -0,0 +1,58 @@
++# Program:	imapcopy Makefile
++#
++# Author:	Mark Crispin
++#		Networks and Distributed Computing
++#		Computing & Communications
++#		University of Washington
++#		Administration Building, AG-44
++#		Seattle, WA  98195
++#		Internet: MRC@CAC.Washington.EDU
++#
++# Date:		17 April 1994
++# Last Edited:	12 October 1999
++#
++# Copyright 1999 by the University of Washington
++#
++#  Permission to use, copy, modify, and distribute this software and its
++# documentation for any purpose and without fee is hereby granted, provided
++# that the above copyright notice appears in all copies and that both the
++# above copyright notice and this permission notice appear in supporting
++# documentation, and that the name of the University of Washington not be
++# used in advertising or publicity pertaining to distribution of the software
++# without specific, written prior permission.  This software is made
++# available "as is", and
++# THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++# WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++# NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++# (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++
++
++C = ../../c-client
++CCLIENTLIB = $C/`cat $C/$ARCHIVENAME`
++
++# Get local definitions from c-client directory
++
++CC = `cat $C/CCTYPE`
++CFLAGS = -I$C `cat $C/CFLAGS`
++LDFLAGS = -L$C `cat $C/LDFLAGS`
++
++imapcopy: $(CCLIENTLIB) imapcopy.o
++	$(CC) $(CFLAGS) -o imapcopy imapcopy.o $(LDFLAGS)
++	rm -f imapmove
++	ln imapcopy imapmove
++
++imapcopy.o: $C/mail.h $C/misc.h $C/osdep.h
++
++$(CCLIENTLIB):
++	cd $C;make
++
++clean:
++	rm -f *.o imapcopy imapmove
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/imapcopy/imapcopy.1 imap-2001a/src/imapcopy/imapcopy.1
+--- imap-2001a.orig/src/imapcopy/imapcopy.1	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/imapcopy/imapcopy.1	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,80 @@
++.TH imapcopy LOCAL "23 October 1996" 
++.SH NAME
++imapcopy, imapmove \- copy or move messages from an IMAP inbox to a local mailbox
++.nh
++.SH SYNTAX
++.B imapcopy
++.I [-debug] [-verbose] host [mailbox]
++.sp 1
++.B imapmove
++.I [-debug] [-verbose] host [mailbox]
++.SH DESCRIPTION
++.I imapcopy 
++and
++.I imapmove
++establish an IMAP connection with the named
++.I host
++and transfer messages from the IMAP INBOX on that
++.I host
++to the named
++destination
++.I mailbox .
++If the
++.I mailbox
++is not specified, the default is the local INBOX.
++.PP
++.I imapmove
++removes (deletes and expunges) the messages the messages from the
++IMAP INBOX on
++.I host
++after transferring them to the destination
++.I mailbox .
++.PP
++.I imapcopy
++and 
++.I imapmove
++require that the destination
++.I mailbox
++exist; otherwise they will print an error message and exit without
++transferring any messages.
++.PP
++The
++.B -debug
++flag prints full debugging telemetry including protocol operations.  The
++.B -verbose
++flag prints verbose (non-error) telemetry.
++.PP
++The mailbox name argument is a standard c-client mailbox name.  A
++variety of mailbox name formats and types of mailboxes are supported
++by c-client; examples of the most common forms of names are:
++.PP
++.I
++.IP Name 15
++.I Meaning
++.IP INBOX
++primary incoming mail folder on the local system
++.IP archive/tx-project
++mail folder named "tx-project" in "archive" subdirectory of local
++filesystem home directory
++.IP {imapserver.foo.com}archive/tx-project
++mail folder named "tx-project" in "archive" subdirectory on IMAP
++server system "imapserver.foo.com"
++.LP
++See your system manager for more information about the types of
++mailboxes which are available on your system.
++.SH RESTRICTIONS
++You must surround a
++.I {host}mailbox
++form mailbox name with quotation marks if you run
++.I imapcopy
++from
++.IR csh (1)
++or another shell for which braces have special meaning.
++.SH AUTHOR
++Mark Crispin, MRC@CAC.Washington.EDU
++.SH "SEE ALSO"
++chkmail (1)
++.br
++mbxcopy (1)
++.br
++mbxcvt (1)
+diff -ruN imap-2001a.orig/src/imapcopy/imapcopy.c imap-2001a/src/imapcopy/imapcopy.c
+--- imap-2001a.orig/src/imapcopy/imapcopy.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/imapcopy/imapcopy.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,432 @@
++/*
++ * Program:	Copy mailbox from IMAP server
++ *
++ * Author:	Mark Crispin
++ *		Networks and Distributed Computing
++ *		Computing & Communications
++ *		University of Washington
++ *		Administration Building, AG-44
++ *		Seattle, WA  98195
++ *		Internet: MRC@CAC.Washington.EDU
++ *
++ * Date:	17 April 1994
++ * Last Edited:	14 August 2000
++ *
++ * Copyright 2000 by the University of Washington
++ *
++ *  Permission to use, copy, modify, and distribute this software and its
++ * documentation for any purpose and without fee is hereby granted, provided
++ * that the above copyright notice appears in all copies and that both the
++ * above copyright notice and this permission notice appear in supporting
++ * documentation, and that the name of the University of Washington not be
++ * used in advertising or publicity pertaining to distribution of the software
++ * without specific, written prior permission.  This software is made
++ * available "as is", and
++ * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++ * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++ * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++ * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <stdio.h>
++#include <errno.h>
++extern int errno;		/* just in case */
++#include "mail.h"
++#include "osdep.h"
++#include "misc.h"
++#include "linkage.h"
++char *getpass ();		/* let's all do the cretin hop */
++
++int critical = NIL;		/* flag saying in critical code */
++int debugp = NIL;		/* flag saying debugging */
++int verbosep = NIL;		/* flag saying verbose */
++
++
++/* Function prototypes */
++
++void msg_string_init (STRING *s,void *data,unsigned long size);
++char msg_string_next (STRING *s);
++void msg_string_setpos (STRING *s,unsigned long i);
++int main (int argc,char *argv[]);
++long imapcopy_append (MAILSTREAM *stream,void *data,char **flags,char **date,
++		      STRING **message);
++
++/* Append package */
++
++typedef struct append_package {
++  MAILSTREAM *stream;		/* source stream */
++  unsigned long msgno;		/* current message number */
++  char *flags;			/* current flags */
++  char *date;			/* message internal date */
++  STRING *message;		/* stringstruct of message */
++} APPENDPACKAGE;
++
++
++/* Message string driver for message stringstructs */
++
++STRINGDRIVER msg_string = {
++  msg_string_init,		/* initialize string structure */
++  msg_string_next,		/* get next byte in string structure */
++  msg_string_setpos		/* set position in string structure */
++};
++
++/* Initialize file string structure for file stringstruct
++ * Accepts: string structure
++ *	    pointer to message data structure
++ *	    size of string
++ */
++
++void msg_string_init (STRING *s,void *data,unsigned long size)
++{
++  APPENDPACKAGE *md = (APPENDPACKAGE *) data;
++  s->data = data;		/* note stream/msgno and header length */
++  mail_fetchheader_full (md->stream,md->msgno,NIL,&s->data1,FT_PREFETCHTEXT);
++#if 0
++  s->size = size;		/* message size */
++#else	/* This kludge is necessary because of broken IMAP servers (sigh!) */
++  mail_fetchtext_full (md->stream,md->msgno,&s->size,NIL);
++  s->size += s->data1;		/* header + body size */
++#endif
++  SETPOS (s,0);
++}
++
++
++/* Get next character from file stringstruct
++ * Accepts: string structure
++ * Returns: character, string structure chunk refreshed
++ */
++
++char msg_string_next (STRING *s)
++{
++  char c = *s->curpos++;	/* get next byte */
++  SETPOS (s,GETPOS (s));	/* move to next chunk */
++  return c;			/* return the byte */
++}
++
++
++/* Set string pointer position for file stringstruct
++ * Accepts: string structure
++ *	    new position
++ */
++
++void msg_string_setpos (STRING *s,unsigned long i)
++{
++  APPENDPACKAGE *md = (APPENDPACKAGE *) s->data;
++  if (i < s->data1) {		/* want header? */
++    s->chunk = mail_fetchheader (md->stream,md->msgno);
++    s->chunksize = s->data1;	/* header length */
++    s->offset = 0;		/* offset is start of message */
++  }
++  else if (i < s->size) {	/* want body */
++    s->chunk = mail_fetchtext (md->stream,md->msgno);
++    s->chunksize = s->size - s->data1;
++    s->offset = s->data1;	/* offset is end of header */
++  }
++  else {			/* off end of message */
++    s->chunk = NIL;		/* make sure that we crack on this then */
++    s->chunksize = 1;		/* make sure SNX cracks the right way... */
++    s->offset = i;
++  }
++				/* initial position and size */
++  s->curpos = s->chunk + (i -= s->offset);
++  s->cursize = s->chunksize - i;
++}
++
++/* Main program */
++
++int main (int argc,char *argv[])
++{
++  char *t,*dest,tmp[MAILTMPLEN];
++  APPENDPACKAGE ap;
++  STRING st;
++  int nargs = argc ? argc - 1 : 0;
++  char *pgm = argc ? ((t = (strrchr (argv[0],'/'))) ? t + 1 : argv[0]) :
++    "imapcopy";
++  char **args = argv + 1;
++  int move = !strcmp (pgm,"imapmove");
++#include "linkage.c"
++				/* parse switches */
++  while (nargs && (**args == '-')) {
++    if (!(strcmp (*args,"-d") && strcmp (*args,"-debug"))) debugp = T;
++    else if (!(strcmp (*args,"-v") && strcmp (*args,"-verbose")))
++      verbosep = T;
++    else nargs = 1;		/* error -- make sure we stop here */
++    args++; nargs--;		/* snap away an argument */
++  }
++  if (nargs < 1 || nargs > 2) {	/* make sure correct number of arguments */
++    printf ("usage: %s [-debug] [-verbose] host [destination]\n",pgm);
++    _exit (1);
++  }
++				/* source mailbox name */
++  sprintf (tmp,"{%s}INBOX",args[0]);
++				/* destination mailbox name */
++  dest = (nargs == 2) ? args[1] : "INBOX";
++				/* open source mailbox */
++  if (ap.stream = mail_open (NIL,tmp,(debugp ? OP_DEBUG:NIL) +
++			     (move ? NIL:OP_READONLY))) {
++    if (!ap.stream->nmsgs) {	/* forget empty mailbox */
++      printf ("Mailbox %s is empty\n",ap.stream->mailbox);
++      mail_close (ap.stream);
++      _exit (0);
++    }
++    printf ("%s [%lu message(s)] => %s\n",ap.stream->mailbox,ap.stream->nmsgs,
++	    dest);
++    sprintf (tmp,"1:%lu",ap.stream->nmsgs);
++				/* make sure we have all messages */
++    mail_fetchfast (ap.stream,tmp);
++    ap.msgno = 0;		/* prepare package */
++    ap.flags = ap.date = NIL;
++    ap.message = &st;
++				/* copy messages */
++    if (!mail_append_multiple (NIL,dest,imapcopy_append,(void *) &ap)) {
++      fprintf (stderr,"?Can't append to mailbox %s\n",dest);
++      mail_close (ap.stream);
++      _exit (1);
++    }
++    if (move) {			/* if deletion requested */
++      mail_setflag (ap.stream,tmp,"\\Deleted");
++      mail_expunge (ap.stream);	/* flush moved messages */
++    }
++    puts ("[Ok]");		/* make sure user knows it won */
++    mail_close (ap.stream);	/* close off mailbox */
++  }
++  return 0;
++}
++
++/* Append callback
++ * Accepts: mail stream
++ *	    append package
++ *	    pointer to return flags
++ *	    pointer to return date
++ *	    pointer to return message stringstruct
++ * Returns: T on success
++ */
++
++long imapcopy_append (MAILSTREAM *stream,void *data,char **flags,char **date,
++		      STRING **message)
++{
++  char *t,*t1,tmp[MAILTMPLEN];
++  unsigned long u;
++  MESSAGECACHE *elt;
++  APPENDPACKAGE *ap = (APPENDPACKAGE *) data;
++  if (ap->flags) fs_give ((void **) &ap->flags);
++  if (ap->date) fs_give ((void **) &ap->date);
++  mail_gc (ap->stream,GC_TEXTS);
++  if (++ap->msgno <= ap->stream->nmsgs) {
++				/* initialize flag string */
++    memset (t = tmp,0,MAILTMPLEN);
++				/* output system flags */
++    if ((elt = mail_elt (ap->stream,ap->msgno))->seen) strcat (t," \\Seen");
++    if (elt->deleted) strcat (t," \\Deleted");
++    if (elt->flagged) strcat (t," \\Flagged");
++    if (elt->answered) strcat (t," \\Answered");
++    if (elt->draft) strcat (t," \\Draft");
++    if (u = elt->user_flags) do	/* any user flags? */
++      if ((MAILTMPLEN - ((t += strlen (t)) - tmp)) >
++	  (2 + strlen
++	   (t1 = ap->stream->user_flags[find_rightmost_bit (&u)]))) {
++	*t++ = ' ';		/* space delimiter */
++	strcpy (t,t1);		/* copy the user flag */
++      }
++    while (u);			/* until no more user flags */
++    *flags = ap->flags = cpystr (tmp + 1);
++    *date = ap->date = cpystr (mail_date (tmp,elt));
++    *message = ap->message;	/* message stringstruct */
++    INIT (ap->message,msg_string,(void *) ap,elt->rfc822_size);
++  }
++  else *message = NIL;		/* all done */
++  return LONGT;
++}
++
++/* Co-routines from MAIL library */
++
++
++/* Message matches a search
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_searched (MAILSTREAM *stream,unsigned long msgno)
++{
++  fatal ("impossible mm_searched() call");
++}
++
++
++/* Message exists (i.e. there are that many messages in the mailbox)
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_exists (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++
++/* Message expunged
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_expunged (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++
++/* Message flags update seen
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_flags (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++/* Mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_list (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Subscribe mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_lsub (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Mailbox status
++ * Accepts: MAIL stream
++ *	    mailbox name
++ *	    mailbox status
++ */
++
++void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
++{
++				/* dummy routine */
++}
++
++/* Notification event
++ * Accepts: MAIL stream
++ *	    string to log
++ *	    error flag
++ */
++
++void mm_notify (MAILSTREAM *stream,char *string,long errflg)
++{
++  mm_log (string,errflg);	/* just do mm_log action */
++}
++
++
++/* Log an event for the user to see
++ * Accepts: string to log
++ *	    error flag
++ */
++
++void mm_log (char *string,long errflg)
++{
++  switch (errflg) {  
++  case BYE:			/* server sayonara */
++  case NIL:			/* no error */
++    if (verbosep) printf ("[%s]\n",string);
++    break;
++  case PARSE:			/* parsing problem */
++  case WARN:			/* warning */
++    fprintf (stderr,"%%%s\n",string);
++    break;
++  case ERROR:			/* error */
++  default:
++    fprintf (stderr,"?%s\n",string);
++    break;
++  }
++}
++
++
++/* Log an event to debugging telemetry
++ * Accepts: string to log
++ */
++
++void mm_dlog (char *string)
++{
++  fprintf (stderr,"%s\n",string);
++}
++
++/* Get user name and password for this host
++ * Accepts: parse of network mailbox name
++ *	    where to return user name
++ *	    where to return password
++ *	    trial count
++ */
++
++void mm_login (NETMBX *mb,char *username,char *password,long trial)
++{
++  if (*mb->user) strcpy (username,mb->user);
++  else {
++    printf ("{%s/%s} username: ",mb->host,mb->service);
++    gets (username);
++  }
++  strcpy (password,getpass ("password: "));
++}
++
++
++/* About to enter critical code
++ * Accepts: stream
++ */
++
++void mm_critical (MAILSTREAM *stream)
++{
++  critical = T;			/* note in critical code */
++}
++
++
++/* About to exit critical code
++ * Accepts: stream
++ */
++
++void mm_nocritical (MAILSTREAM *stream)
++{
++  critical = NIL;		/* note not in critical code */
++}
++
++
++/* Disk error found
++ * Accepts: stream
++ *	    system error code
++ *	    flag indicating that mailbox may be clobbered
++ * Returns: T if user wants to abort
++ */
++
++long mm_diskerror (MAILSTREAM *stream,long errcode,long serious)
++{
++  return T;
++}
++
++
++/* Log a fatal error event
++ * Accepts: string to log
++ */
++
++void mm_fatal (char *string)
++{
++  fprintf (stderr,"?%s\n",string);
++}
+diff -ruN imap-2001a.orig/src/imapxfer/Makefile imap-2001a/src/imapxfer/Makefile
+--- imap-2001a.orig/src/imapxfer/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/imapxfer/Makefile	Thu Dec 13 13:54:42 2001
+@@ -0,0 +1,56 @@
++# Program:	imapxfer Makefile
++#
++# Author:	Mark Crispin
++#		Networks and Distributed Computing
++#		Computing & Communications
++#		University of Washington
++#		Administration Building, AG-44
++#		Seattle, WA  98195
++#		Internet: MRC@CAC.Washington.EDU
++#
++# Date:		2 February 1993
++# Last Edited:	12 October 1999
++#
++# Copyright 1999 by the University of Washington
++#
++#  Permission to use, copy, modify, and distribute this software and its
++# documentation for any purpose and without fee is hereby granted, provided
++# that the above copyright notice appears in all copies and that both the
++# above copyright notice and this permission notice appear in supporting
++# documentation, and that the name of the University of Washington not be
++# used in advertising or publicity pertaining to distribution of the software
++# without specific, written prior permission.  This software is made
++# available "as is", and
++# THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++# WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++# NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++# (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++
++
++C = ../../c-client
++CCLIENTLIB = $C/`cat $C/$ARCHIVENAME`
++
++# Get local definitions from c-client directory
++
++CC = `cat $C/CCTYPE`
++CFLAGS = -I$C `cat $C/CFLAGS`
++LDFLAGS = -L$C `cat $C/LDFLAGS`
++
++imapxfer: $(CCLIENTLIB) imapxfer.o
++	$(CC) $(CFLAGS) -o imapxfer imapxfer.o $(LDFLAGS)
++
++imapxfer.o: $C/mail.h $C/misc.h $C/osdep.h
++
++$(CCLIENTLIB):
++	cd $C;make
++
++clean:
++	rm -f *.o imapxfer
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/imapxfer/imapxfer.1 imap-2001a/src/imapxfer/imapxfer.1
+--- imap-2001a.orig/src/imapxfer/imapxfer.1	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/imapxfer/imapxfer.1	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,48 @@
++.TH imapxfer LOCAL "23 December 1998" 
++.SH NAME
++imapxfer - copy mailboxes between IMAP servers
++.nh
++.SH SYNTAX
++.B imapxfer
++.I "{source_host}prefix" "{destination_host}prefix"
++.SH DESCRIPTION
++.I imapxfer 
++copies entire mailboxes from the named
++.I source_host
++IMAP server to the named
++.I destination_host
++IMAP server.  Mailboxes are created on the
++.I destination_host
++as needed.  If a
++.I prefix
++is specified after the
++.I source_host
++then only mailboxes which begin with that 
++.I prefix
++are copied.  If a
++.I prefix
++is specified after the
++.I destination_host
++that
++.I prefix
++is pre-pended in front of the mailbox name on the destination.
++.PP
++The arguments are in standard c-client mailbox name format.
++See your system manager for more information about the types of
++mailboxes which are available on your system.
++.SH RESTRICTIONS
++You must surround a
++.I {host}prefix
++argument with quotation marks if you run
++.I imapxfer
++from
++.IR csh (1)
++or another shell for which braces have special meaning.
++.SH AUTHOR
++Mark Crispin, MRC@CAC.Washington.EDU
++.SH "SEE ALSO"
++imapcopy (1)
++.br
++mbxcopy (1)
++.br
++mbxcvt (1)
+diff -ruN imap-2001a.orig/src/imapxfer/imapxfer.c imap-2001a/src/imapxfer/imapxfer.c
+--- imap-2001a.orig/src/imapxfer/imapxfer.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/imapxfer/imapxfer.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,471 @@
++/*
++ * Program:	IMAP transfer mailboxes
++ *
++ * Author:	Mark Crispin
++ *		Networks and Distributed Computing
++ *		Computing & Communications
++ *		University of Washington
++ *		Administration Building, AG-44
++ *		Seattle, WA  98195
++ *		Internet: MRC@CAC.Washington.EDU
++ *
++ * Date:	2 February 1994
++ * Last Edited:	8 February 2000
++ *
++ * Copyright 2000 by the University of Washington
++ *
++ *  Permission to use, copy, modify, and distribute this software and its
++ * documentation for any purpose and without fee is hereby granted, provided
++ * that the above copyright notice appears in all copies and that both the
++ * above copyright notice and this permission notice appear in supporting
++ * documentation, and that the name of the University of Washington not be
++ * used in advertising or publicity pertaining to distribution of the software
++ * without specific, written prior permission.  This software is made
++ * available "as is", and
++ * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++ * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++ * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++ * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <stdio.h>
++#include <errno.h>
++extern int errno;		/* just in case */
++#include "mail.h"
++#include "osdep.h"
++#include "misc.h"
++#include "linkage.h"
++char *getpass ();		/* let's all do the cretin hop */
++
++int critical = NIL;		/* flag saying in critical code */
++int ddelim = -1;		/* destination delimiter */
++FILE *f = NIL;
++
++
++/* Function prototypes */
++
++void msg_string_init (STRING *s,void *data,unsigned long size);
++char msg_string_next (STRING *s);
++void msg_string_setpos (STRING *s,unsigned long i);
++int main (int argc,char *argv[]);
++long imapxfer_append (MAILSTREAM *stream,void *data,char **flags,char **date,
++		      STRING **message);
++
++/* Append package */
++
++typedef struct append_package {
++  MAILSTREAM *stream;		/* source stream */
++  unsigned long msgno;		/* current message number */
++  char *flags;			/* current flags */
++  char *date;			/* message internal date */
++  STRING *message;		/* stringstruct of message */
++} APPENDPACKAGE;
++
++
++/* Message string driver for message stringstructs */
++
++STRINGDRIVER msg_string = {
++  msg_string_init,		/* initialize string structure */
++  msg_string_next,		/* get next byte in string structure */
++  msg_string_setpos		/* set position in string structure */
++};
++
++/* Initialize file string structure for file stringstruct
++ * Accepts: string structure
++ *	    pointer to message data structure
++ *	    size of string
++ */
++
++void msg_string_init (STRING *s,void *data,unsigned long size)
++{
++  APPENDPACKAGE *md = (APPENDPACKAGE *) data;
++  s->data = data;		/* note stream/msgno and header length */
++  mail_fetchheader_full (md->stream,md->msgno,NIL,&s->data1,FT_PREFETCHTEXT);
++#if 0
++  s->size = size;		/* message size */
++#else	/* This kludge is necessary because of broken IMAP servers (sigh!) */
++  mail_fetchtext_full (md->stream,md->msgno,&s->size,NIL);
++  s->size += s->data1;		/* header + body size */
++#endif
++  SETPOS (s,0);
++}
++
++
++/* Get next character from file stringstruct
++ * Accepts: string structure
++ * Returns: character, string structure chunk refreshed
++ */
++
++char msg_string_next (STRING *s)
++{
++  char c = *s->curpos++;	/* get next byte */
++  SETPOS (s,GETPOS (s));	/* move to next chunk */
++  return c;			/* return the byte */
++}
++
++
++/* Set string pointer position for file stringstruct
++ * Accepts: string structure
++ *	    new position
++ */
++
++void msg_string_setpos (STRING *s,unsigned long i)
++{
++  APPENDPACKAGE *md = (APPENDPACKAGE *) s->data;
++  if (i < s->data1) {		/* want header? */
++    s->chunk = mail_fetchheader (md->stream,md->msgno);
++    s->chunksize = s->data1;	/* header length */
++    s->offset = 0;		/* offset is start of message */
++  }
++  else if (i < s->size) {	/* want body */
++    s->chunk = mail_fetchtext (md->stream,md->msgno);
++    s->chunksize = s->size - s->data1;
++    s->offset = s->data1;	/* offset is end of header */
++  }
++  else {			/* off end of message */
++    s->chunk = NIL;		/* make sure that we crack on this then */
++    s->chunksize = 1;		/* make sure SNX cracks the right way... */
++    s->offset = i;
++  }
++				/* initial position and size */
++  s->curpos = s->chunk + (i -= s->offset);
++  s->cursize = s->chunksize - i;
++}
++
++/* Main program */
++
++int main (int argc,char *argv[])
++{
++  int ret = 1;
++  char *sp,*dp,*t,*t1;
++  char c,tmp[MAILTMPLEN],dst[MAILTMPLEN];
++  APPENDPACKAGE ap;
++  STRING st;
++  MAILSTREAM *stream;
++#include "linkage.c"
++				/* validate arguments */
++  if ((argc != 3) || (argv[1][0] != '{') || !(sp = strchr (argv[1],'}')) ||
++      (argv[2][0] != '{') || !(dp = strchr (argv[2],'}')))
++    printf ("usage: %s \"{source_host}prefix\" \"{destination_host}prefix\"\n",
++	    argv[0]);
++				/* open source mailbox */
++  else if (!(ap.stream = mail_open (NIL,argv[1],OP_HALFOPEN)))
++    printf ("?Can't contact source server: %s\n",argv[1]);
++				/* open destination server */
++  else if (!(stream = mail_open (NIL,argv[2],OP_HALFOPEN))) {
++    printf ("?Can't contact destination server %s\n",argv[2]);
++    mail_close (ap.stream);
++  }
++  else if (!(f = tmpfile ())) {	/* open temporary file */
++    puts ("?Can't open temporary file");
++    mail_close (stream);
++    mail_close (ap.stream);
++  }
++  else {
++    puts ("Listing mailboxes...");
++				/* get delimiter for destination prefix */
++    strcpy (strchr (strcpy (tmp,stream->mailbox),'}') + 1,++dp);
++    mail_list (ap.stream,tmp,"");
++    rewind (f);			/* list all mailboxes matching prefix */
++    if (ddelim < 0) {		/* if server failed to give delimiter */
++      puts ("WARNING: unable to get destination hierarchy delimiter!");
++      ddelim = 0;		/* default to none */
++    }
++    strcpy (strchr (strcpy (tmp,ap.stream->mailbox),'}') + 1,++sp);
++    mail_list (ap.stream,tmp,"*");
++    rewind (f);
++
++				/* read back mailbox names */
++    while (fgets (tmp,MAILTMPLEN-1,f)) {
++      if (t = strchr (tmp+1,'\n')) *t = '\0';
++      for (t = dst,t1 = stream->mailbox,c = NIL; (c != '}') && *t1;
++	   *t++ = c= *t1++);
++      for (t1 = dp; *t1; *t++ = *t1++);
++				/* src and dst have different delimiters? */
++      if (ddelim && (ddelim != tmp[0]))
++				/* swap delimiters then */
++	for (t1 = strchr (tmp+1,'}') + 1; c = *t1++; *t++ = c) {
++	  if (c == ddelim) c = tmp[0] ? tmp[0] : 'x';
++	  else if (c == tmp[0]) c = ddelim;
++	}
++				/* easy case */
++      else for (t1 = strchr (tmp+1,'}') + 1; *t1; *t++ = *t1++);
++      *t++ = '\0';
++      ret = 1;			/* in case failure */
++      printf ("Copying %s\n  => %s\n",tmp+1,dst);
++      fflush (stdout);
++      if (!(ap.stream = mail_open (ap.stream,tmp+1,OP_READONLY)))
++	printf ("?Can't open source mailbox\n");
++      else {
++	printf ("Mailbox %s has %lu message(s).\n",ap.stream->mailbox,
++		ap.stream->nmsgs);
++				/* create destination mailbox */
++	if (!mail_create (stream,dst))
++	  printf ("WARNING: Can't create mailbox %s\n",dst);
++	if (ap.stream->nmsgs) {
++	  sprintf (tmp,"1:%lu",ap.stream->nmsgs);
++				/* make sure we have all messages */
++	  mail_fetchfast (ap.stream,tmp);
++	  ap.msgno = 0;		/* prepare package */
++	  ap.flags = ap.date = NIL;
++	  ap.message = &st;
++				/* copy messages */
++	  if (mail_append_multiple (stream,dst,imapxfer_append,(void *) &ap)){
++	    ret = 0;		/* this one copied OK */
++	    puts ("[Ok]");	/* let user know */
++	  }
++	  else {		/* failed */
++	    printf ("?Can't append message to mailbox %s -- aborting\n",dst);
++	    break;
++	  }
++	}
++      }
++    }
++    mail_close (stream);
++    mail_close (ap.stream);	/* close off mailbox */
++  }
++  _exit (ret);
++  return ret;			/* stupid gcc */
++}
++
++/* Append callback
++ * Accepts: mail stream
++ *	    append package
++ *	    pointer to return flags
++ *	    pointer to return date
++ *	    pointer to return message stringstruct
++ * Returns: T on success
++ */
++
++long imapxfer_append (MAILSTREAM *stream,void *data,char **flags,char **date,
++		      STRING **message)
++{
++  char *t,*t1,tmp[MAILTMPLEN];
++  unsigned long u;
++  MESSAGECACHE *elt;
++  APPENDPACKAGE *ap = (APPENDPACKAGE *) data;
++  if (ap->flags) fs_give ((void **) &ap->flags);
++  if (ap->date) fs_give ((void **) &ap->date);
++  mail_gc (ap->stream,GC_TEXTS);
++  if (++ap->msgno <= ap->stream->nmsgs) {
++				/* initialize flag string */
++    memset (t = tmp,0,MAILTMPLEN);
++				/* output system flags */
++    if ((elt = mail_elt (ap->stream,ap->msgno))->seen) strcat (t," \\Seen");
++    if (elt->deleted) strcat (t," \\Deleted");
++    if (elt->flagged) strcat (t," \\Flagged");
++    if (elt->answered) strcat (t," \\Answered");
++    if (elt->draft) strcat (t," \\Draft");
++    if (u = elt->user_flags) do	/* any user flags? */
++      if ((MAILTMPLEN - ((t += strlen (t)) - tmp)) >
++	  (2 + strlen
++	   (t1 = ap->stream->user_flags[find_rightmost_bit (&u)]))) {
++	*t++ = ' ';		/* space delimiter */
++	strcpy (t,t1);		/* copy the user flag */
++      }
++    while (u);			/* until no more user flags */
++    *flags = ap->flags = cpystr (tmp + 1);
++    *date = ap->date = cpystr (mail_date (tmp,elt));
++    *message = ap->message;	/* message stringstruct */
++    INIT (ap->message,msg_string,(void *) ap,elt->rfc822_size);
++  }
++  else *message = NIL;		/* all done */
++  return LONGT;
++}
++
++/* Co-routines from MAIL library */
++
++
++/* Message matches a search
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_searched (MAILSTREAM *stream,unsigned long msgno)
++{
++  fatal ("impossible mm_searched() call");
++}
++
++
++/* Message exists (i.e. there are that many messages in the mailbox)
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_exists (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++
++/* Message expunged
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_expunged (MAILSTREAM *stream,unsigned long number)
++{
++  fatal ("impossible mm_expunged() call");
++}
++
++
++/* Message flags update seen
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_flags (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++/* Mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_list (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* note destination delimiter */
++  if (ddelim < 0) ddelim = delimiter;
++				/* if got a selectable name */
++  else if (!(attributes & LATT_NOSELECT) && *name)
++    fprintf (f,"%c%s\n",delimiter,name);
++}
++
++
++/* Subscribe mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_lsub (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Mailbox status
++ * Accepts: MAIL stream
++ *	    mailbox name
++ *	    mailbox status
++ */
++
++void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
++{
++				/* dummy routine */
++}
++
++/* Notification event
++ * Accepts: MAIL stream
++ *	    string to log
++ *	    error flag
++ */
++
++void mm_notify (MAILSTREAM *stream,char *string,long errflg)
++{
++  mm_log (string,errflg);	/* just do mm_log action */
++}
++
++
++/* Log an event for the user to see
++ * Accepts: string to log
++ *	    error flag
++ */
++
++void mm_log (char *string,long errflg)
++{
++  switch (errflg) {  
++  case BYE:
++  case NIL:			/* no error */
++    fprintf (stderr,"[%s]\n",string);
++    break;
++  case PARSE:			/* parsing problem */
++  case WARN:			/* warning */
++    fprintf (stderr,"%%%s\n",string);
++    break;
++  case ERROR:			/* error */
++  default:
++    fprintf (stderr,"?%s\n",string);
++    break;
++  }
++}
++
++
++/* Log an event to debugging telemetry
++ * Accepts: string to log
++ */
++
++void mm_dlog (char *string)
++{
++  fprintf (stderr,"%s\n",string);
++}
++
++/* Get user name and password for this host
++ * Accepts: parse of network mailbox name
++ *	    where to return user name
++ *	    where to return password
++ *	    trial count
++ */
++
++void mm_login (NETMBX *mb,char *username,char *password,long trial)
++{
++  if (*mb->user) strcpy (username,mb->user);
++  else {
++    printf ("{%s/%s} username: ",mb->host,mb->service);
++    gets (username);
++  }
++  strcpy (password,getpass ("password: "));
++}
++
++
++/* About to enter critical code
++ * Accepts: stream
++ */
++
++void mm_critical (MAILSTREAM *stream)
++{
++  critical = T;			/* note in critical code */
++}
++
++
++/* About to exit critical code
++ * Accepts: stream
++ */
++
++void mm_nocritical (MAILSTREAM *stream)
++{
++  critical = NIL;		/* note not in critical code */
++}
++
++
++/* Disk error found
++ * Accepts: stream
++ *	    system error code
++ *	    flag indicating that mailbox may be clobbered
++ * Returns: T if user wants to abort
++ */
++
++long mm_diskerror (MAILSTREAM *stream,long errcode,long serious)
++{
++  return T;
++}
++
++
++/* Log a fatal error event
++ * Accepts: string to log
++ */
++
++void mm_fatal (char *string)
++{
++  fprintf (stderr,"?%s\n",string);
++}
+diff -ruN imap-2001a.orig/src/mbxcopy/Makefile imap-2001a/src/mbxcopy/Makefile
+--- imap-2001a.orig/src/mbxcopy/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mbxcopy/Makefile	Thu Dec 13 13:54:42 2001
+@@ -0,0 +1,58 @@
++# Program:	mbxcopy Makefile
++#
++# Author:	Mark Crispin
++#		Networks and Distributed Computing
++#		Computing & Communications
++#		University of Washington
++#		Administration Building, AG-44
++#		Seattle, WA  98195
++#		Internet: MRC@CAC.Washington.EDU
++#
++# Date:		28 July 1994
++# Last Edited:	12 October 1999
++#
++# Copyright 1999 by the University of Washington
++#
++#  Permission to use, copy, modify, and distribute this software and its
++# documentation for any purpose and without fee is hereby granted, provided
++# that the above copyright notice appears in all copies and that both the
++# above copyright notice and this permission notice appear in supporting
++# documentation, and that the name of the University of Washington not be
++# used in advertising or publicity pertaining to distribution of the software
++# without specific, written prior permission.  This software is made
++# available "as is", and
++# THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++# WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++# NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++# (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++
++
++C = ../../c-client
++CCLIENTLIB = $C/`cat $C/$ARCHIVENAME`
++
++# Get local definitions from c-client directory
++
++CC = `cat $C/CCTYPE`
++CFLAGS = -I$C `cat $C/CFLAGS`
++LDFLAGS = -L$C `cat $C/LDFLAGS`
++
++mbxcopy: $(CCLIENTLIB) mbxcopy.o
++	$(CC) $(CFLAGS) -o mbxcopy mbxcopy.o $(LDFLAGS)
++	rm -f mbxmove
++	ln mbxcopy mbxmove
++
++mbxcopy.o: $C/mail.h $C/misc.h $C/osdep.h
++
++$(CCLIENTLIB):
++	cd $C;make
++
++clean:
++	rm -f *.o mbxcopy mbxmove
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/mbxcopy/mbxcopy.1 imap-2001a/src/mbxcopy/mbxcopy.1
+--- imap-2001a.orig/src/mbxcopy/mbxcopy.1	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mbxcopy/mbxcopy.1	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,91 @@
++.TH mbxcopy LOCAL "23 October 1996" 
++.SH NAME
++mbxcopy, mbxmove \- copy or move messages to a new mailbox
++.nh
++.SH SYNTAX
++.B mbxcopy
++.I source destination
++.sp 1
++.B mbxmove
++.I source destination
++.SH DESCRIPTION
++.I mbxcopy 
++and
++.I mbxmove
++transfer messages from the named
++.I source
++mailbox to the named
++.I destination
++mailbox.
++.PP
++.I mbxmove
++removes (deletes and expunges) the messages the messages from the
++.I source
++mailbox after transferring them to the
++.I destination
++mailbox.
++.PP
++.I mbxcopy
++and 
++.I mbxmove
++require that the source
++.I mailbox
++exists and that the
++.I destination
++mailbox not exist.  The
++.I destination
++mailbox will be created automatically.
++.PP
++The mailbox name argument is a standard c-client mailbox name.  A
++variety of mailbox name formats and types of mailboxes are supported
++by c-client; examples of the most common forms of names are:
++.PP
++.I
++.IP Name 15
++.I Meaning
++.IP INBOX
++primary incoming mail folder on the local system
++.IP archive/tx-project
++mail folder named "tx-project" in "archive" subdirectory of local
++filesystem home directory
++.IP {imapserver.foo.com}archive/tx-project
++mail folder named "tx-project" in "archive" subdirectory on IMAP
++server system "imapserver.foo.com"
++.IP #news.comp.mail.misc
++newsgroup "comp.mail.misc" on local filesystem.  This is only useful
++as a
++.I source
++mailbox.
++.I mbxmove
++will mark the transferred messages in the user's .newsrc file.
++.IP {newserver.foo.com/nntp}comp.mail.misc
++newsgroup "comp.mail.misc" on NNTP server system "newserver.foo.com"
++This is only useful as a
++.I source
++mailbox.
++.I mbxmove
++will mark the transferred messages in the user's .newsrc file.
++.IP {popserver.foo.com/pop3}
++mail folder on POP3 server system "popserver.foo.com".  This is only
++useful as a
++.I source
++mailbox.
++.LP
++See your system manager for more information about the types of
++mailboxes which are available on your system.
++.SH RESTRICTIONS
++You must surround a
++.I {host}mailbox
++form mailbox name with quotation marks if you run
++.I mbxcopy
++from
++.IR csh (1)
++or another shell for which braces have special meaning.
++.SH AUTHOR
++Mark Crispin, MRC@CAC.Washington.EDU
++.SH "SEE ALSO"
++chkmail (1)
++.br
++imapcopy (1)
++.br
++mbxcvt (1)
+diff -ruN imap-2001a.orig/src/mbxcopy/mbxcopy.c imap-2001a/src/mbxcopy/mbxcopy.c
+--- imap-2001a.orig/src/mbxcopy/mbxcopy.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mbxcopy/mbxcopy.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,276 @@
++/*
++ * Program:	Copy mailbox
++ *
++ * Author:	Mark Crispin
++ *		Networks and Distributed Computing
++ *		Computing & Communications
++ *		University of Washington
++ *		Administration Building, AG-44
++ *		Seattle, WA  98195
++ *		Internet: MRC@CAC.Washington.EDU
++ *
++ * Date:	28 July 1994
++ * Last Edited:	6 January 2000
++ *
++ * Copyright 2000 by the University of Washington
++ *
++ *  Permission to use, copy, modify, and distribute this software and its
++ * documentation for any purpose and without fee is hereby granted, provided
++ * that the above copyright notice appears in all copies and that both the
++ * above copyright notice and this permission notice appear in supporting
++ * documentation, and that the name of the University of Washington not be
++ * used in advertising or publicity pertaining to distribution of the software
++ * without specific, written prior permission.  This software is made
++ * available "as is", and
++ * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++ * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++ * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++ * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <stdio.h>
++#include <errno.h>
++extern int errno;		/* just in case */
++#include "mail.h"
++#include "osdep.h"
++#include "misc.h"
++#include "linkage.h"
++char *getpass ();		/* let's all do the cretin hop */
++
++int critical = NIL;		/* flag saying in critical code */
++int debugp = NIL;		/* flag saying debugging */
++int verbosep = NIL;		/* flag saying verbose */
++
++
++/* Function prototypes */
++
++int main (int argc,char *argv[]);
++
++/* Main program */
++
++int main (int argc,char *argv[])
++{
++  int ret = 1;
++  char tmp[MAILTMPLEN];
++  MAILSTREAM *s = NIL;
++  char *pgm = argc ? argv[0] : "mbxcopy";
++  char *pgx = strrchr (pgm,'/');
++  int move = !strcmp (pgx ? pgx + 1 : pgm,"mbxmove");
++#include "linkage.c"
++				/* make sure correct number of arguments */
++  if (argc != 3) printf ("usage: %s source destination\n",pgm);
++				/* open source mailbox */
++  else if (s = mail_open (s,argv[1],(move ? NIL : OP_READONLY))) {
++    if (!mail_create (NIL,argv[2]))
++      printf ("?Can't create mailbox %s\n",argv[2]);
++				/* forget empty mailbox */
++    else if (!s->nmsgs) printf ("Mailbox %s is empty\n",s->mailbox);
++    else {
++      printf ("%s [%lu message(s)] => %s\n",s->mailbox,s->nmsgs,argv[2]);
++      sprintf (tmp,"1:%lu",s->nmsgs);
++				/* copy messages */
++      if (move ? mail_move (s,tmp,argv[2]) : mail_copy (s,tmp,argv[2])) {
++	if (move) mail_expunge(s);/* flush moved messages */
++	puts ("[Ok]");		/* make sure user knows it won */
++	ret = NIL;
++      }
++      else puts ("[Failed]");
++    }
++    mail_close (s);		/* close off mailbox */
++  }
++  _exit (ret);
++  return 0;			/* stupid gcc */
++}
++
++/* Co-routines from MAIL library */
++
++
++/* Message matches a search
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_searched (MAILSTREAM *stream,unsigned long msgno)
++{
++  fatal ("impossible mm_searched() call");
++}
++
++
++/* Message exists (i.e. there are that many messages in the mailbox)
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_exists (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++
++/* Message expunged
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_expunged (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++
++/* Message flags update seen
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_flags (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++/* Mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_list (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Subscribe mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_lsub (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Mailbox status
++ * Accepts: MAIL stream
++ *	    mailbox name
++ *	    mailbox status
++ */
++
++void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
++{
++				/* dummy routine */
++}
++
++/* Notification event
++ * Accepts: MAIL stream
++ *	    string to log
++ *	    error flag
++ */
++
++void mm_notify (MAILSTREAM *stream,char *string,long errflg)
++{
++  mm_log (string,errflg);	/* just do mm_log action */
++}
++
++
++/* Log an event for the user to see
++ * Accepts: string to log
++ *	    error flag
++ */
++
++void mm_log (char *string,long errflg)
++{
++  switch (errflg) {  
++  case BYE:			/* server sayonara */
++  case NIL:			/* no error */
++    if (verbosep) printf ("[%s]\n",string);
++    break;
++  case PARSE:			/* parsing problem */
++  case WARN:			/* warning */
++    fprintf (stderr,"%%%s\n",string);
++    break;
++  case ERROR:			/* error */
++  default:
++    fprintf (stderr,"?%s\n",string);
++    break;
++  }
++}
++
++
++/* Log an event to debugging telemetry
++ * Accepts: string to log
++ */
++
++void mm_dlog (char *string)
++{
++  fprintf (stderr,"%s\n",string);
++}
++
++/* Get user name and password for this host
++ * Accepts: parse of network mailbox name
++ *	    where to return user name
++ *	    where to return password
++ *	    trial count
++ */
++
++void mm_login (NETMBX *mb,char *username,char *password,long trial)
++{
++  if (*mb->user) strcpy (username,mb->user);
++  else {
++    printf ("{%s/%s} username: ",mb->host,mb->service);
++    gets (username);
++  }
++  strcpy (password,getpass ("password: "));
++}
++
++
++/* About to enter critical code
++ * Accepts: stream
++ */
++
++void mm_critical (MAILSTREAM *stream)
++{
++  critical = T;			/* note in critical code */
++}
++
++
++/* About to exit critical code
++ * Accepts: stream
++ */
++
++void mm_nocritical (MAILSTREAM *stream)
++{
++  critical = NIL;		/* note not in critical code */
++}
++
++
++/* Disk error found
++ * Accepts: stream
++ *	    system error code
++ *	    flag indicating that mailbox may be clobbered
++ * Returns: T if user wants to abort
++ */
++
++long mm_diskerror (MAILSTREAM *stream,long errcode,long serious)
++{
++  return T;
++}
++
++
++/* Log a fatal error event
++ * Accepts: string to log
++ */
++
++void mm_fatal (char *string)
++{
++  fprintf (stderr,"?%s\n",string);
++}
+diff -ruN imap-2001a.orig/src/mbxcreat/Makefile imap-2001a/src/mbxcreat/Makefile
+--- imap-2001a.orig/src/mbxcreat/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mbxcreat/Makefile	Thu Dec 13 13:54:42 2001
+@@ -0,0 +1,56 @@
++# Program:	mbxcreat Makefile
++#
++# Author:	Mark Crispin
++#		Networks and Distributed Computing
++#		Computing & Communications
++#		University of Washington
++#		Administration Building, AG-44
++#		Seattle, WA  98195
++#		Internet: MRC@CAC.Washington.EDU
++#
++# Date:		12 May 1998
++# Last Edited:	12 October 1999
++#
++# Copyright 1998 by the University of Washington
++#
++#  Permission to use, copy, modify, and distribute this software and its
++# documentation for any purpose and without fee is hereby granted, provided
++# that the above copyright notice appears in all copies and that both the
++# above copyright notice and this permission notice appear in supporting
++# documentation, and that the name of the University of Washington not be
++# used in advertising or publicity pertaining to distribution of the software
++# without specific, written prior permission.  This software is made
++# available "as is", and
++# THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++# WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++# NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++# (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++
++
++C = ../../c-client
++CCLIENTLIB = $C/`cat $C/$ARCHIVENAME`
++
++# Get local definitions from c-client directory
++
++CC = `cat $C/CCTYPE`
++CFLAGS = -I$C `cat $C/CFLAGS`
++LDFLAGS = -L$C `cat $C/LDFLAGS`
++
++mbxcreat: $(CCLIENTLIB) mbxcreat.o
++	$(CC) $(CFLAGS) -o mbxcreat mbxcreat.o $(LDFLAGS)
++
++mbxcreat.o: $C/mail.h $C/misc.h $C/osdep.h
++
++$(CCLIENTLIB):
++	cd $C;make
++
++clean:
++	rm -f *.o mbxcreat
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/mbxcreat/mbxcreat.1 imap-2001a/src/mbxcreat/mbxcreat.1
+--- imap-2001a.orig/src/mbxcreat/mbxcreat.1	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mbxcreat/mbxcreat.1	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,57 @@
++.TH mbxcreat LOCAL "12 May 1998" 
++.SH NAME
++mbxcreat \- create a new mailbox
++.nh
++.SH SYNTAX
++.B mbxcreat
++.I mailbox
++.sp 1
++.SH DESCRIPTION
++.I mbxcreat 
++creates a new
++.I mailbox
++with the given name.
++.PP
++.I mbxcreat
++requires that the
++.I mailbox
++not exist.
++.PP
++Supported mailbox formats are defined when the software is built.
++Contact your system manager for more information on the supported
++mailbox formats on your system.
++.PP
++The mailbox name argument is a standard c-client mailbox name.  A
++variety of mailbox name formats and types of mailboxes are supported
++by c-client; examples of the most common forms of names are:
++.PP
++.I
++.IP Name 15
++.I Meaning
++.IP archive/tx-project
++mail folder named "tx-project" in "archive" subdirectory of local
++filesystem home directory
++.IP {imapserver.foo.com}archive/tx-project
++mail folder named "tx-project" in "archive" subdirectory on IMAP
++server system "imapserver.foo.com"
++.LP
++See your system manager for more information about the types of
++mailboxes which are available on your system.
++.SH RESTRICTIONS
++You must surround a
++.I {host}mailbox
++form mailbox name with quotation marks if you run
++.I mbxcreat
++from
++.IR csh (1)
++or another shell for which braces have special meaning.
++.SH AUTHOR
++Mark Crispin, MRC@CAC.Washington.EDU
++.SH "SEE ALSO"
++chkmail (1)
++.br
++imapcopy (1)
++.br
++mbxcopy (1)
++.br
++mbxcvt (1)
+diff -ruN imap-2001a.orig/src/mbxcreat/mbxcreat.c imap-2001a/src/mbxcreat/mbxcreat.c
+--- imap-2001a.orig/src/mbxcreat/mbxcreat.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mbxcreat/mbxcreat.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,254 @@
++/*
++ * Program:	Create mailbox
++ *
++ * Author:	Mark Crispin
++ *		Networks and Distributed Computing
++ *		Computing & Communications
++ *		University of Washington
++ *		Administration Building, AG-44
++ *		Seattle, WA  98195
++ *		Internet: MRC@CAC.Washington.EDU
++ *
++ * Date:	12 May 1998
++ * Last Edited:	6 January 2000
++ *
++ * Copyright 2000 by the University of Washington
++ *
++ *  Permission to use, copy, modify, and distribute this software and its
++ * documentation for any purpose and without fee is hereby granted, provided
++ * that the above copyright notice appears in all copies and that both the
++ * above copyright notice and this permission notice appear in supporting
++ * documentation, and that the name of the University of Washington not be
++ * used in advertising or publicity pertaining to distribution of the software
++ * without specific, written prior permission.  This software is made
++ * available "as is", and
++ * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++ * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++ * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++ * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <stdio.h>
++#include <errno.h>
++extern int errno;		/* just in case */
++#include "mail.h"
++#include "osdep.h"
++#include "misc.h"
++#include "linkage.h"
++char *getpass ();		/* let's all do the cretin hop */
++
++int critical = NIL;		/* flag saying in critical code */
++
++
++/* Function prototypes */
++
++int main (int argc,char *argv[]);
++
++/* Main program */
++
++int main (int argc,char *argv[])
++{
++#include "linkage.c"
++  if (argc != 2) {		/* make sure correct number of arguments */
++    puts ("usage: mbxcreat mailbox");
++    _exit (1);
++  }
++  if (!mail_create (NIL,argv[1])) {
++    printf ("?Can't create mailbox %s\n",argv[1]);
++    _exit (1);
++  }
++  exit (0);
++}
++
++/* Co-routines from MAIL library */
++
++
++/* Message matches a search
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_searched (MAILSTREAM *stream,unsigned long msgno)
++{
++  fatal ("impossible mm_searched() call");
++}
++
++
++/* Message exists (i.e. there are that many messages in the mailbox)
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_exists (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++
++/* Message expunged
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_expunged (MAILSTREAM *stream,unsigned long number)
++{
++  fatal ("impossible mm_expunged() call");
++}
++
++
++/* Message flags update seen
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_flags (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++/* Mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_list (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Subscribe mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_lsub (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Mailbox status
++ * Accepts: MAIL stream
++ *	    mailbox name
++ *	    mailbox status
++ */
++
++void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
++{
++				/* dummy routine */
++}
++
++/* Notification event
++ * Accepts: MAIL stream
++ *	    string to log
++ *	    error flag
++ */
++
++void mm_notify (MAILSTREAM *stream,char *string,long errflg)
++{
++  mm_log (string,errflg);	/* just do mm_log action */
++}
++
++
++/* Log an event for the user to see
++ * Accepts: string to log
++ *	    error flag
++ */
++
++void mm_log (char *string,long errflg)
++{
++  switch (errflg) {  
++  case BYE:
++  case NIL:			/* no error */
++    fprintf (stderr,"[%s]\n",string);
++    break;
++  case PARSE:			/* parsing problem */
++  case WARN:			/* warning */
++    fprintf (stderr,"%%%s\n",string);
++    break;
++  case ERROR:			/* error */
++  default:
++    fprintf (stderr,"?%s\n",string);
++    break;
++  }
++}
++
++
++/* Log an event to debugging telemetry
++ * Accepts: string to log
++ */
++
++void mm_dlog (char *string)
++{
++  fprintf (stderr,"%s\n",string);
++}
++
++/* Get user name and password for this host
++ * Accepts: parse of network mailbox name
++ *	    where to return user name
++ *	    where to return password
++ *	    trial count
++ */
++
++void mm_login (NETMBX *mb,char *username,char *password,long trial)
++{
++  if (*mb->user) strcpy (username,mb->user);
++  else {
++    printf ("{%s/%s} username: ",mb->host,mb->service);
++    gets (username);
++  }
++  strcpy (password,getpass ("password: "));
++}
++
++
++/* About to enter critical code
++ * Accepts: stream
++ */
++
++void mm_critical (MAILSTREAM *stream)
++{
++  critical = T;			/* note in critical code */
++}
++
++
++/* About to exit critical code
++ * Accepts: stream
++ */
++
++void mm_nocritical (MAILSTREAM *stream)
++{
++  critical = NIL;		/* note not in critical code */
++}
++
++
++/* Disk error found
++ * Accepts: stream
++ *	    system error code
++ *	    flag indicating that mailbox may be clobbered
++ * Returns: T if user wants to abort
++ */
++
++long mm_diskerror (MAILSTREAM *stream,long errcode,long serious)
++{
++  return T;
++}
++
++
++/* Log a fatal error event
++ * Accepts: string to log
++ */
++
++void mm_fatal (char *string)
++{
++  fprintf (stderr,"?%s\n",string);
++}
+diff -ruN imap-2001a.orig/src/mbxcvt/Makefile imap-2001a/src/mbxcvt/Makefile
+--- imap-2001a.orig/src/mbxcvt/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mbxcvt/Makefile	Thu Dec 13 13:54:42 2001
+@@ -0,0 +1,56 @@
++# Program:	mbxcvt Makefile
++#
++# Author:	Mark Crispin
++#		Networks and Distributed Computing
++#		Computing & Communications
++#		University of Washington
++#		Administration Building, AG-44
++#		Seattle, WA  98195
++#		Internet: MRC@CAC.Washington.EDU
++#
++# Date:		2 February 1993
++# Last Edited:	12 October 1999
++#
++# Copyright 1999 by the University of Washington
++#
++#  Permission to use, copy, modify, and distribute this software and its
++# documentation for any purpose and without fee is hereby granted, provided
++# that the above copyright notice appears in all copies and that both the
++# above copyright notice and this permission notice appear in supporting
++# documentation, and that the name of the University of Washington not be
++# used in advertising or publicity pertaining to distribution of the software
++# without specific, written prior permission.  This software is made
++# available "as is", and
++# THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++# WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++# NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++# (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++
++
++C = ../../c-client
++CCLIENTLIB = $C/`cat $C/$ARCHIVENAME`
++
++# Get local definitions from c-client directory
++
++CC = `cat $C/CCTYPE`
++CFLAGS = -I$C `cat $C/CFLAGS`
++LDFLAGS = -L$C `cat $C/LDFLAGS`
++
++mbxcvt: $(CCLIENTLIB) mbxcvt.o
++	$(CC) $(CFLAGS) -o mbxcvt mbxcvt.o $(LDFLAGS)
++
++mbxcvt.o: $C/mail.h $C/misc.h $C/osdep.h
++
++$(CCLIENTLIB):
++	cd $C;make
++
++clean:
++	rm -f *.o mbxcvt
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/mbxcvt/mbxcvt.1 imap-2001a/src/mbxcvt/mbxcvt.1
+--- imap-2001a.orig/src/mbxcvt/mbxcvt.1	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mbxcvt/mbxcvt.1	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,79 @@
++.TH mbxcvt LOCAL "23 October 1996" 
++.SH NAME
++mbxcvt \- copy or move messages to a new mailbox, converting mailbox format
++.nh
++.SH SYNTAX
++.B mbxcvt
++.I source format destination
++.sp 1
++.SH DESCRIPTION
++.I mbxcvt 
++transfers messages from the named
++.I source
++mailbox to a new mailbox named
++.I destination
++in the specified
++.I format.
++.PP
++.I mbxcvt
++requires that the source
++.I mailbox
++exists and that the
++.I destination
++mailbox not exist.  The
++.I destination
++mailbox will be created automatically.
++.PP
++Supported mailbox formats are defined when the software is built.
++Contact your system manager for more information on the supported
++mailbox formats on your system.
++.PP
++The mailbox name argument is a standard c-client mailbox name.  A
++variety of mailbox name formats and types of mailboxes are supported
++by c-client; examples of the most common forms of names are:
++.PP
++.I
++.IP Name 15
++.I Meaning
++.IP INBOX
++primary incoming mail folder on the local system
++.IP archive/tx-project
++mail folder named "tx-project" in "archive" subdirectory of local
++filesystem home directory
++.IP {imapserver.foo.com}archive/tx-project
++mail folder named "tx-project" in "archive" subdirectory on IMAP
++server system "imapserver.foo.com"
++.IP #news.comp.mail.misc
++newsgroup "comp.mail.misc" on local filesystem.  This is only useful
++as a
++.I source
++mailbox.
++.IP {newserver.foo.com/nntp}comp.mail.misc
++newsgroup "comp.mail.misc" on NNTP server system "newserver.foo.com"
++This is only useful as a
++.I source
++mailbox.
++.IP {popserver.foo.com/pop3}
++mail folder on POP3 server system "popserver.foo.com".  This is only
++useful as a
++.I source
++mailbox.
++.LP
++See your system manager for more information about the types of
++mailboxes which are available on your system.
++.SH RESTRICTIONS
++You must surround a
++.I {host}mailbox
++form mailbox name with quotation marks if you run
++.I mbxcvt
++from
++.IR csh (1)
++or another shell for which braces have special meaning.
++.SH AUTHOR
++Mark Crispin, MRC@CAC.Washington.EDU
++.SH "SEE ALSO"
++chkmail (1)
++.br
++imapcopy (1)
++.br
++mbxcopy (1)
+diff -ruN imap-2001a.orig/src/mbxcvt/mbxcvt.c imap-2001a/src/mbxcvt/mbxcvt.c
+--- imap-2001a.orig/src/mbxcvt/mbxcvt.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mbxcvt/mbxcvt.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,418 @@
++/*
++ * Program:	Convert mailbox formats
++ *
++ * Author:	Mark Crispin
++ *		Networks and Distributed Computing
++ *		Computing & Communications
++ *		University of Washington
++ *		Administration Building, AG-44
++ *		Seattle, WA  98195
++ *		Internet: MRC@CAC.Washington.EDU
++ *
++ * Date:	2 February 1994
++ * Last Edited:	8 January 2000
++ *
++ * Copyright 2000 by the University of Washington
++ *
++ *  Permission to use, copy, modify, and distribute this software and its
++ * documentation for any purpose and without fee is hereby granted, provided
++ * that the above copyright notice appears in all copies and that both the
++ * above copyright notice and this permission notice appear in supporting
++ * documentation, and that the name of the University of Washington not be
++ * used in advertising or publicity pertaining to distribution of the software
++ * without specific, written prior permission.  This software is made
++ * available "as is", and
++ * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++ * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++ * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++ * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <stdio.h>
++#include <errno.h>
++extern int errno;		/* just in case */
++#include "mail.h"
++#include "osdep.h"
++#include "misc.h"
++#include "linkage.h"
++char *getpass ();		/* let's all do the cretin hop */
++
++int critical = NIL;		/* flag saying in critical code */
++
++
++/* Function prototypes */
++
++void msg_string_init (STRING *s,void *data,unsigned long size);
++char msg_string_next (STRING *s);
++void msg_string_setpos (STRING *s,unsigned long i);
++int main (int argc,char *argv[]);
++long mbxcvt_append (MAILSTREAM *stream,void *data,char **flags,char **date,
++		    STRING **message);
++
++/* Append package */
++
++typedef struct append_package {
++  MAILSTREAM *stream;		/* source stream */
++  unsigned long msgno;		/* current message number */
++  char *flags;			/* current flags */
++  char *date;			/* message internal date */
++  STRING *message;		/* stringstruct of message */
++} APPENDPACKAGE;
++
++
++/* Message string driver for message stringstructs */
++
++STRINGDRIVER msg_string = {
++  msg_string_init,		/* initialize string structure */
++  msg_string_next,		/* get next byte in string structure */
++  msg_string_setpos		/* set position in string structure */
++};
++
++/* Initialize file string structure for file stringstruct
++ * Accepts: string structure
++ *	    pointer to message data structure
++ *	    size of string
++ */
++
++void msg_string_init (STRING *s,void *data,unsigned long size)
++{
++  APPENDPACKAGE *md = (APPENDPACKAGE *) data;
++  s->data = data;		/* note stream/msgno and header length */
++  mail_fetchheader_full (md->stream,md->msgno,NIL,&s->data1,FT_PREFETCHTEXT);
++#if 0
++  s->size = size;		/* message size */
++#else	/* This kludge is necessary because of broken IMAP servers (sigh!) */
++  mail_fetchtext_full (md->stream,md->msgno,&s->size,NIL);
++  s->size += s->data1;		/* header + body size */
++#endif
++  SETPOS (s,0);
++}
++
++
++/* Get next character from file stringstruct
++ * Accepts: string structure
++ * Returns: character, string structure chunk refreshed
++ */
++
++char msg_string_next (STRING *s)
++{
++  char c = *s->curpos++;	/* get next byte */
++  SETPOS (s,GETPOS (s));	/* move to next chunk */
++  return c;			/* return the byte */
++}
++
++
++/* Set string pointer position for file stringstruct
++ * Accepts: string structure
++ *	    new position
++ */
++
++void msg_string_setpos (STRING *s,unsigned long i)
++{
++  APPENDPACKAGE *md = (APPENDPACKAGE *) s->data;
++  if (i < s->data1) {		/* want header? */
++    s->chunk = mail_fetchheader (md->stream,md->msgno);
++    s->chunksize = s->data1;	/* header length */
++    s->offset = 0;		/* offset is start of message */
++  }
++  else if (i < s->size) {	/* want body */
++    s->chunk = mail_fetchtext (md->stream,md->msgno);
++    s->chunksize = s->size - s->data1;
++    s->offset = s->data1;	/* offset is end of header */
++  }
++  else {			/* off end of message */
++    s->chunk = NIL;		/* make sure that we crack on this then */
++    s->chunksize = 1;		/* make sure SNX cracks the right way... */
++    s->offset = i;
++  }
++				/* initial position and size */
++  s->curpos = s->chunk + (i -= s->offset);
++  s->cursize = s->chunksize - i;
++}
++
++/* Main program */
++
++int main (int argc,char *argv[])
++{
++  char tmp[MAILTMPLEN];
++  DRIVER *d;
++  APPENDPACKAGE ap;
++  STRING message;
++#include "linkage.c"
++  if (argc != 4) {		/* make sure correct number of arguments */
++    puts ("usage: mbxcvt source_mailbox newtype destination_mailbox");
++    _exit (1);
++  }
++  for (d = (DRIVER *) mail_parameters (NIL,GET_DRIVERS,NIL);
++       d && strcmp (d->name,argv[2]); d = d->next);
++  if (!d) {			/* make sure we found driver to use */
++    printf ("?Unknown driver name %s\n",argv[2]);
++    _exit (1);
++  }
++				/* open source mailbox */
++  if (ap.stream = mail_open (NIL,argv[1],OP_READONLY)) {
++    printf ("Mailbox %s is in %s format and has %lu message(s).\n",
++	    ap.stream->mailbox,ap.stream->dtb->name,ap.stream->nmsgs);
++				/* create destination mailbox */
++    if (!(*d->create) (NIL,argv[3])) {
++      printf ("?Can't create mailbox %s\n",argv[3]);
++      mail_close (ap.stream);
++      _exit (1);
++    }
++    if (ap.stream->nmsgs) {	/* only do this if have messages */
++      sprintf (tmp,"1:%lu",ap.stream->nmsgs);
++				/* make sure we have all messages */
++      mail_fetchfast (ap.stream,tmp);
++      ap.msgno = 0;		/* prepare package */
++      ap.flags = ap.date = NIL;
++      ap.message = &message;
++				/* copy messages */
++      if (!(*d->append) (NIL,argv[3],mbxcvt_append,(void *) &ap)) {
++	printf ("?Can't append to mailbox %s\n",argv[3]);
++	mail_close (ap.stream);
++	_exit (1);
++      }
++    }
++    puts ("[Ok]");		/* make sure user knows it won */
++    mail_close (ap.stream);	/* close off mailbox */
++  }
++  return 0;
++}
++
++/* Append callback
++ * Accepts: mail stream
++ *	    append package
++ *	    pointer to return flags
++ *	    pointer to return date
++ *	    pointer to return message stringstruct
++ * Returns: T on success
++ */
++
++long mbxcvt_append (MAILSTREAM *stream,void *data,char **flags,char **date,
++		    STRING **message)
++{
++  char *t,*t1,tmp[MAILTMPLEN];
++  unsigned long u;
++  MESSAGECACHE *elt;
++  APPENDPACKAGE *ap = (APPENDPACKAGE *) data;
++  if (ap->flags) fs_give ((void **) &ap->flags);
++  if (ap->date) fs_give ((void **) &ap->date);
++  mail_gc (ap->stream,GC_TEXTS);
++  if (++ap->msgno <= ap->stream->nmsgs) {
++				/* initialize flag string */
++    memset (t = tmp,0,MAILTMPLEN);
++				/* output system flags */
++    if ((elt = mail_elt (ap->stream,ap->msgno))->seen) strcat (t," \\Seen");
++    if (elt->deleted) strcat (t," \\Deleted");
++    if (elt->flagged) strcat (t," \\Flagged");
++    if (elt->answered) strcat (t," \\Answered");
++    if (elt->draft) strcat (t," \\Draft");
++    if (u = elt->user_flags) do	/* any user flags? */
++      if ((MAILTMPLEN - ((t += strlen (t)) - tmp)) >
++	  (2 + strlen
++	   (t1 = ap->stream->user_flags[find_rightmost_bit (&u)]))) {
++	*t++ = ' ';		/* space delimiter */
++	strcpy (t,t1);		/* copy the user flag */
++      }
++    while (u);			/* until no more user flags */
++    *flags = ap->flags = cpystr (tmp + 1);
++    *date = ap->date = cpystr (mail_date (tmp,elt));
++    *message = ap->message;	/* message stringstruct */
++    INIT (ap->message,msg_string,(void *) ap,elt->rfc822_size);
++  }
++  else *message = NIL;		/* all done */
++  return LONGT;
++}
++
++/* Co-routines from MAIL library */
++
++
++/* Message matches a search
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_searched (MAILSTREAM *stream,unsigned long msgno)
++{
++  fatal ("impossible mm_searched() call");
++}
++
++
++/* Message exists (i.e. there are that many messages in the mailbox)
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_exists (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++
++/* Message expunged
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_expunged (MAILSTREAM *stream,unsigned long number)
++{
++  fatal ("impossible mm_expunged() call");
++}
++
++
++/* Message flags update seen
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_flags (MAILSTREAM *stream,unsigned long number)
++{
++				/* dummy routine */
++}
++
++/* Mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_list (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Subscribe mailbox found
++ * Accepts: MAIL stream
++ *	    hierarchy delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_lsub (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++				/* dummy routine */
++}
++
++
++/* Mailbox status
++ * Accepts: MAIL stream
++ *	    mailbox name
++ *	    mailbox status
++ */
++
++void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
++{
++				/* dummy routine */
++}
++
++/* Notification event
++ * Accepts: MAIL stream
++ *	    string to log
++ *	    error flag
++ */
++
++void mm_notify (MAILSTREAM *stream,char *string,long errflg)
++{
++  mm_log (string,errflg);	/* just do mm_log action */
++}
++
++
++/* Log an event for the user to see
++ * Accepts: string to log
++ *	    error flag
++ */
++
++void mm_log (char *string,long errflg)
++{
++  switch (errflg) {  
++  case BYE:
++  case NIL:			/* no error */
++    fprintf (stderr,"[%s]\n",string);
++    break;
++  case PARSE:			/* parsing problem */
++  case WARN:			/* warning */
++    fprintf (stderr,"%%%s\n",string);
++    break;
++  case ERROR:			/* error */
++  default:
++    fprintf (stderr,"?%s\n",string);
++    break;
++  }
++}
++
++
++/* Log an event to debugging telemetry
++ * Accepts: string to log
++ */
++
++void mm_dlog (char *string)
++{
++  fprintf (stderr,"%s\n",string);
++}
++
++/* Get user name and password for this host
++ * Accepts: parse of network mailbox name
++ *	    where to return user name
++ *	    where to return password
++ *	    trial count
++ */
++
++void mm_login (NETMBX *mb,char *username,char *password,long trial)
++{
++  if (*mb->user) strcpy (username,mb->user);
++  else {
++    printf ("{%s/%s} username: ",mb->host,mb->service);
++    gets (username);
++  }
++  strcpy (password,getpass ("password: "));
++}
++
++
++/* About to enter critical code
++ * Accepts: stream
++ */
++
++void mm_critical (MAILSTREAM *stream)
++{
++  critical = T;			/* note in critical code */
++}
++
++
++/* About to exit critical code
++ * Accepts: stream
++ */
++
++void mm_nocritical (MAILSTREAM *stream)
++{
++  critical = NIL;		/* note not in critical code */
++}
++
++
++/* Disk error found
++ * Accepts: stream
++ *	    system error code
++ *	    flag indicating that mailbox may be clobbered
++ * Returns: T if user wants to abort
++ */
++
++long mm_diskerror (MAILSTREAM *stream,long errcode,long serious)
++{
++  return T;
++}
++
++
++/* Log a fatal error event
++ * Accepts: string to log
++ */
++
++void mm_fatal (char *string)
++{
++  fprintf (stderr,"?%s\n",string);
++}
+diff -ruN imap-2001a.orig/src/mlock/Makefile imap-2001a/src/mlock/Makefile
+--- imap-2001a.orig/src/mlock/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mlock/Makefile	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,49 @@
++# Program:	MLOCK Makefile
++#
++# Author:	Mark Crispin
++#		Networks and Distributed Computing
++#		Computing & Communications
++#		University of Washington
++#		Administration Building, AG-44
++#		Seattle, WA  98195
++#		Internet: MRC@CAC.Washington.EDU
++#
++# Date:		8 February 1999
++# Last Edited:	17 May 1999
++#
++# Copyright 1999 by the University of Washington
++#
++#  Permission to use, copy, modify, and distribute this software and its
++# documentation for any purpose and without fee is hereby granted, provided
++# that the above copyright notice appears in all copies and that both the
++# above copyright notice and this permission notice appear in supporting
++# documentation, and that the name of the University of Washington not be
++# used in advertising or publicity pertaining to distribution of the software
++# without specific, written prior permission.  This software is made
++# available "as is", and
++# THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++# WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++# NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++# (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++
++
++all:	mlock
++
++mlock:	mlock.o
++	$(CC) $(CFLAGS) -o mlock mlock.o
++
++install: mlock
++	chgrp mail mlock
++	chmod 3711 mlock
++	cp -p mlock /etc/mlock
++
++clean:
++	rm -f *.o mlock || true
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/mlock/mlock.c imap-2001a/src/mlock/mlock.c
+--- imap-2001a.orig/src/mlock/mlock.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/mlock/mlock.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,135 @@
++/*
++ * Program:	Standalone Mailbox Lock program
++ *
++ * Author:	Mark Crispin
++ *		Networks and Distributed Computing
++ *		Computing & Communications
++ *		University of Washington
++ *		Administration Building, AG-44
++ *		Seattle, WA  98195
++ *		Internet: MRC@CAC.Washington.EDU
++ *
++ * Date:	8 February 1999
++ * Last Edited:	17 May 1999
++ *
++ * Copyright 1999 by the University of Washington
++ *
++ *  Permission to use, copy, modify, and distribute this software and its
++ * documentation for any purpose and without fee is hereby granted, provided
++ * that the above copyright notices appear in all copies and that both the
++ * above copyright notices and this permission notice appear in supporting
++ * documentation, and that the name of the University of Washington not be
++ * used in advertising or publicity pertaining to distribution of the software
++ * without specific, written prior permission.  This software is made
++ * available "as is", and
++ * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++ * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++ * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
++ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++ * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN
++ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <errno.h>
++#include <fcntl.h>
++#include <stdio.h>
++#include <sysexits.h>
++#include <syslog.h>
++#include <grp.h>
++#include <sys/types.h>
++#include <sys/file.h>
++#include <sys/stat.h>
++#include <sys/param.h>
++
++#define LOCKTIMEOUT 5		/* lock timeout in minutes */
++#define LOCKPROTECTION 0775
++
++/* Fatal error
++ * Accepts: Message string
++ *	    exit code
++ * Never returns
++ */
++
++void die (char *msg,int code)
++{
++  syslog (LOG_NOTICE,"(%u) %s",code,msg);
++  write (1,"?",1);		/* indicate "impossible" failure */
++  _exit (code);			/* sayonara */
++}
++
++
++int main (int argc,char *argv[])
++{
++  int ld;
++  int tries = LOCKTIMEOUT * 60 - 1;
++  size_t len;
++  char *s,*lock,*hitch,tmp[1024];
++  time_t t;
++  struct stat sb,fsb;
++  struct group *grp = getgrnam ("mail");
++				/* get syslog */
++  openlog (argv[0],LOG_PID,LOG_MAIL);
++  if (!grp || (grp->gr_gid != getegid ())) die ("not setgid mail",EX_USAGE);
++  if (argc != 3) die ("invalid arguments",EX_USAGE);
++  for (s = argv[1]; *s; s++) if (!isdigit (*s)) die ("invalid fd",EX_USAGE);
++  len = strlen (argv[2]);	/* make buffers */
++  if (!(lock = (char *) malloc (len + 6)) ||
++      !(hitch = (char *) malloc (len + 6 + 40 + MAXHOSTNAMELEN)))
++    die ("malloc failure",errno);
++				/* get device/inode of file descriptor */
++  if (fstat (atoi (argv[1]),&fsb)) die ("fstat failure",errno);
++				/* better be a regular file */
++  if ((fsb.st_mode & S_IFMT) != S_IFREG) die ("fd not regular file",EX_USAGE);
++				/* now get device/inode of file */
++  if (lstat (argv[2],&sb)) die ("lstat failure",errno);
++				/* does it match? */
++  if ((sb.st_mode & S_IFMT) != S_IFREG) die ("name not regular file",EX_USAGE);
++  if ((sb.st_dev != fsb.st_dev) || (sb.st_ino != fsb.st_ino))
++    die ("fd and name different",EX_USAGE);
++				/* build lock filename */
++  sprintf (lock,"%s.lock",argv[2]);
++  if (!lstat (lock,&sb) && ((sb.st_mode & S_IFMT) != S_IFREG))
++    die ("existing lock not regular file",EX_NOPERM);
++
++  do {				/* until OK or out of tries */
++    t = time (0);		/* get the time now */
++    /* SUN-OS had an NFS
++     * As kludgy as an albatross;
++     * And everywhere that it was installed,
++     * It was a total loss.
++     * -- MRC 9/25/91
++     */
++				/* build hitching post file name */
++    sprintf (hitch,"%s.%lu.%lu.",lock,time (0),getpid ());
++    len = strlen (hitch);	/* append local host name */
++    gethostname (hitch + len,MAXHOSTNAMELEN);
++				/* try to get hitching-post file */
++    if ((ld = open (hitch,O_WRONLY|O_CREAT|O_EXCL,LOCKPROTECTION)) >= 0) {
++				/* make sure others can break the lock */
++      chmod (hitch,LOCKPROTECTION);
++      close (ld);		/* close the hitching-post */
++      link (hitch,lock);	/* tie hitching-post to lock, ignore failure */
++      stat (hitch,&sb);		/* get its data */
++      unlink (hitch);		/* flush hitching post */
++      /* If link count .ne. 2, hitch failed.  Set ld to -1 as if open() failed
++	 so we try again.  If extant lock file and time now is .gt. file time
++	 plus timeout interval, flush the lock so can win next time around. */
++      if ((ld = (sb.st_nlink != 2) ? -1 : 0) && (!stat (lock,&sb)) &&
++	  (t > sb.st_ctime + LOCKTIMEOUT * 60)) unlink (lock);
++    }
++    if (ld < 0) {		/* lock failed */
++      if (tries--) sleep (1);	/* sleep 1 second and try again */
++      else {
++	write (1,"-",1);	/* hard failure */
++	_exit (EX_CANTCREAT);
++      }
++    }
++  } while (ld < 0);
++  write (1,"+",1);		/* indicate that all is well */
++  read (0,tmp,1);		/* read continue signal from parent */
++  unlink (lock);		/* flush the lock file */
++  return EX_OK;
++}
+diff -ruN imap-2001a.orig/src/tmail/Makefile imap-2001a/src/tmail/Makefile
+--- imap-2001a.orig/src/tmail/Makefile	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/tmail/Makefile	Thu Dec 13 13:54:42 2001
+@@ -0,0 +1,56 @@
++# Program:	tmail Makefile
++#
++# Author:	Mark Crispin
++#		Networks and Distributed Computing
++#		Computing & Communications
++#		University of Washington
++#		Administration Building, AG-44
++#		Seattle, WA  98195
++#		Internet: MRC@CAC.Washington.EDU
++#
++# Date:		5 April 1993
++# Last Edited:	12 October 1999
++#
++# Copyright 1999 by the University of Washington
++#
++#  Permission to use, copy, modify, and distribute this software and its
++# documentation for any purpose and without fee is hereby granted, provided
++# that the above copyright notice appears in all copies and that both the
++# above copyright notice and this permission notice appear in supporting
++# documentation, and that the name of the University of Washington not be
++# used in advertising or publicity pertaining to distribution of the software
++# without specific, written prior permission.  This software is made
++# available "as is", and
++# THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++# WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++# NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++# (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++
++
++C = ../../c-client
++CCLIENTLIB = $C/`cat $C/$ARCHIVENAME`
++
++# Get local definitions from c-client directory
++
++CC = `cat $C/CCTYPE`
++CFLAGS = -I$C `cat $C/CFLAGS`
++LDFLAGS = -L$C `cat $C/LDFLAGS`
++
++tmail: $(CCLIENTLIB) tmail.o
++	$(CC) $(CFLAGS) -o tmail tmail.o $(LDFLAGS)
++
++tmail.o: $C/mail.h $C/misc.h $C/osdep.h
++
++$(CCLIENTLIB):
++	cd $C;make
++
++clean:
++	rm -f *.o tmail
++
++# A monument to a hack of long ago and far away...
++love:
++	@echo 'not war?'
+diff -ruN imap-2001a.orig/src/tmail/tmail.1 imap-2001a/src/tmail/tmail.1
+--- imap-2001a.orig/src/tmail/tmail.1	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/tmail/tmail.1	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,193 @@
++.TH TMAIL LOCAL "Version 4.1"
++.SH NAME
++tmail \- Mail Delivery Module
++.nh
++.SH SYNOPSIS
++.B tmail
++.I [\-D] [-f from_name] [\-I inbox_specifier] user[+folder] ...
++.SH DESCRIPTION
++.I tmail
++delivers mail to a user's INBOX or a designated folder.
++.I tmail
++may be configured as a drop-in replacement for
++.IR binmail (1),
++.IR mail.local (1)
++or any program intended for use for mail delivery by
++.IR sendmail (8).
++.PP
++.I tmail
++is intended to be used for direct delivery by the mailer daemon;
++.IR dmail (1)
++is the preferred tool for user applications, e.g. a mail delivery
++filter such as
++.IR filter (1L)
++or
++.IR procmail (1) .
++If
++.I tmail
++is used for a user application,
++then the calling program must be aware of the restrictions noted below.
++.PP
++When
++.I tmail
++exits, it returns exit status values to enable
++.IR sendmail (8)
++to determine whether a message was delivered successfully or had a
++temporary (requeue for later delivery) or permanent (return to sender)
++failure.
++.PP
++If the 
++.I +folder
++extension is included in the user argument, 
++.I tmail
++will attempt to deliver to the designated folder.  If the folder does not 
++exist or the extension is not included, the message is delivered to the 
++user's INBOX.
++If delivery is to INBOX and no INBOX currently exists,
++.I tmail
++will create a new INBOX, using the \fB-I\fR flag if specified.
++.I tmail
++recognizes the format of an existing INBOX or folder, and appends the new
++message in that format.
++.PP
++The \fB-D\fR flag specifies debugging; this enables additional message
++telemetry.
++.PP
++The \fB-f\fR or \fB-r\fR flag is used by
++.IR sendmail (8)
++to specify a Return-Path.  The header
++.br
++   Return-Path: <\fIfrom_name\fR> 
++.br 
++is prepended to the message before delivery.  
++.PP
++The \fB-I\fR flag is used by
++.IR sendmail (8)
++to specify an alternative INBOX name.  This affects the location and
++format of INBOX, and requires privileges.  If specified, it should be
++in one of three forms:
++.sp
++The first form of argument to \fB-I\fR is the string "INBOX", which
++means to write to the system default inbox using the system default
++mailbox format.  These system defaults are defined when the c-client
++library is built.
++.sp
++The second form of argument to \fB-I\fR is a delivery specification,
++consisting of "#driver.", a c-client mailbox format driver name, "/",
++and a file name.  This will write to the specified file in the
++specified format.  For example, #driver.mbx/INBOX will write to file
++"INBOX" in the home directory in mbx format; and
++#driver.unix/mail/incoming will write to file "incoming" in the
++user's "mail" subdirectory in unix (default UNIX) format.
++.sp
++The third form of argument to \fB-I\fR is any other name.  Normally,
++this will write to the specified file on the user's home directory in
++the specified format.  However, certain names are special.  These are:
++.PP
++.nf
++  value       equivalant to
++  -----       -------------
++  INBOX.MTX   #driver.mtx/INBOX.MTX
++  mbox        #driver.unix/mbox
++  mail.txt    #driver.tenex/mail.txt
++.fi
++.PP
++If \fB-I\fR is not specified, the default action is \fB-I INBOX\fR.
++.PP
++If multiple recipients are specified on the command line,
++.I tmail
++spawns one child process per recipient to perform actual delivery.  This
++way of calling
++.I tmail
++is not recommended; see below under
++.IR RESTRICTIONS .
++.SH INSTALLATION
++If 
++.I tmail
++is to be used for mail delivery from 
++.IR sendmail (8),
++it 
++.I must
++be installed setuid root.
++.sp
++.I tmail
++is invoked from sendmail.cf.  Look for the "Mlocal" line, and substitute
++the path name for the
++.I tmail
++binary in place of /bin/mail, /usr/lib/mail.local, etc.  You should also
++add the flag to invoke
++.I tmail
++with CRLF style newlines; this is usually done with E=\\r\\n in the Mlocal
++line.
++.sp
++For example, this is what is used on the author's system with
++sendmail version 8:
++.sp
++.nf
++Mlocal, P=/usr/local/etc/tmail, F=lsDFMAw5:/|@qPrn+,
++  S=10/30, R=20/40, E=\\r\\n, T=DNS/RFC822/X-Unix,
++  A=tmail $u
++.fi
++.PP
++If
++.I tmail
++is to be called with the \fB-I\fR flag, it must be invoked with both
++real and effective UID root.  Many sendmail configurations invoke the
++local mailer as the sending user when that user is local, which
++will prevent \fB-I\fR from working.
++.SH SECURITY CONSIDERATIONS
++If
++.I tmail
++is invoked by an ordinary user, the Received: header line will
++indicate the name or UID of the user that invoked it.
++.PP
++Ordinary users are not permitted to use the \fB-I\fR flag since
++otherwise a user could create any file on another user's directory.
++.PP
++.I tmail
++can deliver mail to home directories.  In addition,
++.I tmail
++can be used to deliver mail to other mail folders in a home directory
++or an inferior directory of a home directory.
++.SH RESTRICTIONS
++The calling program should invoke
++.I tmail
++with CRLF newlines, otherwise
++.I tmail
++will complain in syslog.
++.PP
++Absolute pathnames and 
++.I ~user
++specifications are not permitted in
++.I +folder
++extensions.
++.PP
++Ordinary users are not permitted to use the \fB-I\fR flag.
++.PP
++IMAP4 namespace names are not yet supported in 
++.I +folder
++extensions.
++.PP
++It is not possible to use
++.I tmail
++to deliver to
++.IR mh (1)
++format mailboxes.
++.PP
++If delivery to multiple users is specified and delivery to any single user
++fails, the entire delivery will be reported as having failed, even though
++delivery to other users may have succeeded.  If
++.I tmail
++is used for mail delivery from
++.IR sendmail (8),
++a separate tmail invocation should be done for each user.  Otherwise a
++delivery failure for a single user in a message going to multiple users
++will cause multiple deliveries to all the other users every time
++.IR sendmail (8),
++retries.
++.SH AUTHOR
++Mark Crispin, MRC@CAC.Washington.EDU
++.SH "SEE ALSO"
++binmail(1)
++.br
++sendmail(8)
+diff -ruN imap-2001a.orig/src/tmail/tmail.c imap-2001a/src/tmail/tmail.c
+--- imap-2001a.orig/src/tmail/tmail.c	Wed Dec 31 19:00:00 1969
++++ imap-2001a/src/tmail/tmail.c	Thu Dec 13 13:53:39 2001
+@@ -0,0 +1,775 @@
++/*
++ * Program:	Mail Delivery Module
++ *
++ * Author:	Mark Crispin
++ *		Networks and Distributed Computing
++ *		Computing & Communications
++ *		University of Washington
++ *		Administration Building, AG-44
++ *		Seattle, WA  98195
++ *		Internet: MRC@CAC.Washington.EDU
++ *
++ * Date:	5 April 1993
++ * Last Edited:	9 December 2000
++ *
++ * Copyright 2000 by the University of Washington
++ *
++ *  Permission to use, copy, modify, and distribute this software and its
++ * documentation for any purpose and without fee is hereby granted, provided
++ * that the above copyright notice appears in all copies and that both the
++ * above copyright notice and this permission notice appear in supporting
++ * documentation, and that the name of the University of Washington not be
++ * used in advertising or publicity pertaining to distribution of the software
++ * without specific, written prior permission.  This software is made
++ * available "as is", and
++ * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++ * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++ * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++ * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <stdio.h>
++#include <pwd.h>
++#include <errno.h>
++extern int errno;		/* just in case */
++#include <sysexits.h>
++#include <sys/file.h>
++#include <sys/stat.h>
++#include <sys/syslog.h>
++#include "mail.h"
++#include "osdep.h"
++#include "misc.h"
++#include "linkage.h"
++
++
++/* Globals */
++
++char *version = "2000(13)";	/* tmail release version */
++int debug = NIL;		/* debugging (don't fork) */
++int trycreate = NIL;		/* flag saying gotta create before appending */
++int critical = NIL;		/* flag saying in critical code */
++char *sender = NIL;		/* message origin */
++char *inbox = NIL;		/* inbox file */
++
++
++/* Function prototypes */
++
++void file_string_init (STRING *s,void *data,unsigned long size);
++char file_string_next (STRING *s);
++void file_string_setpos (STRING *s,unsigned long i);
++int main (int argc,char *argv[]);
++int deliver (FILE *f,unsigned long msglen,char *user);
++long ibxpath (MAILSTREAM *ds,char **mailbox,char *path);
++int deliver_safely (MAILSTREAM *prt,STRING *st,char *mailbox,char *path,
++		    uid_t uid,char *tmp);
++int delivery_unsafe (char *path,uid_t uid,struct stat *sbuf,char *tmp);
++int fail (char *string,int code);
++char *getusername (char *s,char **t);
++
++
++/* File string driver for file stringstructs */
++
++STRINGDRIVER file_string = {
++  file_string_init,		/* initialize string structure */
++  file_string_next,		/* get next byte in string structure */
++  file_string_setpos		/* set position in string structure */
++};
++
++
++/* Cache buffer for file stringstructs */
++
++#define CHUNKLEN 16384
++char chunk[CHUNKLEN];
++
++/* Initialize file string structure for file stringstruct
++ * Accepts: string structure
++ *	    pointer to string
++ *	    size of string
++ */
++
++void file_string_init (STRING *s,void *data,unsigned long size)
++{
++  s->data = data;		/* note fd */
++  s->size = size;		/* note size */
++  s->chunk = chunk;
++  s->chunksize = (unsigned long) CHUNKLEN;
++  SETPOS (s,0);			/* set initial position */
++}
++
++
++/* Get next character from file stringstruct
++ * Accepts: string structure
++ * Returns: character, string structure chunk refreshed
++ */
++
++char file_string_next (STRING *s)
++{
++  char c = *s->curpos++;	/* get next byte */
++  SETPOS (s,GETPOS (s));	/* move to next chunk */
++  return c;			/* return the byte */
++}
++
++
++/* Set string pointer position for file stringstruct
++ * Accepts: string structure
++ *	    new position
++ */
++
++void file_string_setpos (STRING *s,unsigned long i)
++{
++  if (i > s->size) i = s->size;	/* don't permit setting beyond EOF */
++  s->offset = i;		/* set new offset */
++  s->curpos = s->chunk;		/* reset position */
++				/* set size of data */
++  if (s->cursize = min (s->chunksize,SIZE (s))) {
++				/* move to that position in the file */
++    fseek ((FILE *) s->data,s->offset,SEEK_SET);
++    fread (s->curpos,sizeof (char),(unsigned int) s->cursize,(FILE *) s->data);
++  }
++}
++
++/* Main program */
++
++int main (int argc,char *argv[])
++{
++  FILE *f = NIL;
++  int pid,c,ret = 0;
++  unsigned long msglen,status = 0;
++  char *s,tmp[MAILTMPLEN];
++  uid_t ruid = getuid ();
++  struct passwd *pwd;
++  openlog ("tmail",LOG_PID,LOG_MAIL);
++#include "linkage.c"
++				/* make sure have some arguments */
++  if (--argc < 1) _exit (fail ("usage: tmail [-D] user[+folder]",EX_USAGE));
++				/* process all flags */
++  while (argc && (*(s = *++argv)) == '-') {
++    argc--;			/* gobble this argument */
++    switch (s[1]) {		/* what is this flag? */
++    case 'D':			/* debug */
++      debug = T;		/* don't fork */
++      break;
++    case 'd':			/* obsolete flag meaning multiple users */
++      break;
++    case 'I':			/* inbox specifier */
++      if (argc--) inbox = cpystr (*++argv);
++      else _exit (fail ("missing argument to -I",EX_USAGE));
++      break;
++    case 'f':			/* new name for this flag */
++    case 'r':			/* flag giving return path */
++      if (argc--) sender = cpystr (*++argv);
++      else _exit (fail ("missing argument to -r",EX_USAGE));
++      break;
++    default:			/* anything else */
++      _exit (fail ("unknown switch",EX_USAGE));
++    }
++  }
++
++  if (!argc) ret = fail ("no recipients",EX_USAGE);
++  else if (!(f = tmpfile ())) ret = fail ("can't make temp file",EX_TEMPFAIL);
++  else {			/* build delivery headers */
++    if (sender) fprintf (f,"Return-Path: <%s>\015\012",sender);
++				/* start Received line: */
++    fprintf (f,"Received: via tmail-%s",version);
++				/* not root or daemon? */
++    if (ruid && !((pwd = getpwnam ("daemon")) && (ruid == pwd->pw_uid))) {
++      pwd = getpwuid (ruid);	/* get unprivileged user's information */
++      if (inbox) {
++	if (pwd) sprintf (tmp,"user %.80s",pwd->pw_name);
++	else sprintf (tmp,"UID %ld",(long) ruid);
++	strcat (tmp," is not privileged to use -I");
++	_exit (fail (tmp,EX_USAGE));
++      }
++      fputs (" (invoked by ",f);
++      if (pwd) fprintf (f,"user %s",pwd->pw_name);
++      else fprintf (f,"UID %ld",(long) ruid);
++      fputs (")",f);
++    }
++				/* write "for" if single recipient */
++    if (argc == 1) fprintf (f," for %s",*argv);
++    fputs ("; ",f);
++    rfc822_date (tmp);
++    fputs (tmp,f);
++    fputs ("\015\012",f);
++				/* copy text from standard input */
++    if (!fgets (tmp,MAILTMPLEN-1,stdin) || !(s = strchr (tmp,'\n')) ||
++	(s == tmp) || s[1]) _exit (fail ("bad first message line",EX_USAGE));
++    if (s[-1] == '\015') {	/* nuke leading "From " line */
++      if ((tmp[0] != 'F') || (tmp[1] != 'r') || (tmp[2] != 'o') ||
++	  (tmp[3] != 'm') || (tmp[4] != ' ')) fputs (tmp,f);
++      while ((c = getchar ()) != EOF) putc (c,f);
++    }
++    else {
++      mm_log ("tmail called with LF-only newlines",WARN);
++      if ((tmp[0] != 'F') || (tmp[1] != 'r') || (tmp[2] != 'o') ||
++	  (tmp[3] != 'm') || (tmp[4] != ' ')) {
++	*s++ = '\015';		/* overwrite NL with CRLF */
++	*s++ = '\012';
++	*s = '\0';		/* tie off string */
++	fputs (tmp,f);		/* write line */
++      }
++				/* copy text from standard input */
++      while ((c = getchar ()) != EOF) {
++				/* add CR if needed */
++	if (c == '\012') putc ('\015',f);
++	putc (c,f);
++      }
++    }
++    msglen = ftell (f);		/* size of message */
++    fflush (f);			/* make sure all changes written out */
++
++    if (ferror (f)) ret = fail ("error writing temp file",EX_TEMPFAIL);
++    else if (!msglen) ret = fail ("empty message",EX_TEMPFAIL);
++				/* single delivery */
++    else if (argc == 1) ret = deliver (f,msglen,*argv);
++    else do {			/* multiple delivery uses daughter forks */
++      if ((pid = fork ()) < 0) ret = fail (strerror (errno),EX_OSERR);
++      else if (pid) {		/* mother process */
++	grim_pid_reap_status (pid,NIL,(void *) status);
++				/* normal termination? */
++	if (!ret) ret = (status & 0xff) ? EX_SOFTWARE : (status & 0xff00) >> 8;
++      }
++				/* daughter process */
++      else _exit (deliver (f,msglen,*argv));
++    } while (--argc && *argv++);
++    mm_dlog (ret ? "error in delivery" : "all recipients delivered");
++  }
++  if (f) fclose (f);		/* all done with temporary file */
++  _exit (ret);			/* normal exit */
++  return 0;			/* stupid gcc */
++}
++
++/* Deliver message to recipient list
++ * Accepts: file description of message temporary file
++ *	    size of message temporary file in bytes
++ *	    recipient name
++ * Returns: NIL if success, else error code
++ */
++
++int deliver (FILE *f,unsigned long msglen,char *user)
++{
++  MAILSTREAM *ds = NIL;
++  DRIVER *dv = NIL;
++  char *s,*t,*mailbox,tmp[MAILTMPLEN],path[MAILTMPLEN];
++  struct passwd *pwd;
++  STRING st;
++  struct stat sbuf;
++  uid_t duid;
++  uid_t euid = geteuid ();
++				/* get user record */
++  if (!(pwd = getpwnam (getusername (user,&mailbox)))) {
++    sprintf (tmp,"no such user as %.80s",user);
++    return fail (tmp,EX_NOUSER);
++  }
++				/* absurd is absurd */
++  if (mailbox && (strlen (mailbox) > 256))
++    return fail ("absurd folder name",EX_NOUSER);
++				/* big security hole if this is allowed */
++  if (!(duid = pwd->pw_uid)) return fail ("mail to root prohibited",EX_NOUSER);
++  if (duid != euid) {		/* avoid obnoxious initgroups() msg if self */
++    setgid (pwd->pw_gid);	/* initialize groups */
++    initgroups (user,pwd->pw_gid);
++    if (setuid (duid)) {	/* log in as that user */
++      sprintf (tmp,"unable to log in UID %ld from UID %ld",
++	       (long) duid,(long) euid);
++      return fail (tmp,EX_NOUSER);
++    }
++  }
++				/* can't use pwd after this point */
++  env_init (pwd->pw_name,pwd->pw_dir);
++  sprintf (tmp,"delivering to %.80s+%.80s",user,mailbox ? mailbox : "INBOX");
++  mm_dlog (tmp);
++				/* prepare stringstruct */
++  INIT (&st,file_string,(void *) f,msglen);
++  if (mailbox) {		/* non-INBOX name */
++    switch (mailbox[0]) {	/* make sure a valid name */
++    default:			/* other names, try to deliver if not INBOX */
++      if (!strstr (mailbox,"..") && !strstr (mailbox,"//") &&
++	  !strstr (mailbox,"/~") && mailboxfile (path,mailbox) && path[0] &&
++	  !deliver_safely (NIL,&st,mailbox,path,duid,tmp)) return NIL;
++    case '%': case '*':		/* wildcards not valid */
++    case '#':			/* namespace name not valid */
++    case '/':			/* absolute path names not valid */
++    case '~':			/* user names not valid */
++      sprintf (tmp,"invalid mailbox name %.80s+%.80s",user,mailbox);
++      mm_log (tmp,WARN);
++      break;
++    }
++    mm_dlog ("retrying delivery to INBOX");
++    SETPOS (&st,0);		/* rewind stringstruct just in case */
++  }
++
++				/* -I specified and not "-I INBOX"? */
++  if (inbox && !(((inbox[0] == 'I') || (inbox[0] == 'i')) &&
++		 ((inbox[1] == 'N') || (inbox[1] == 'n')) &&
++		 ((inbox[2] == 'B') || (inbox[2] == 'b')) &&
++		 ((inbox[3] == 'O') || (inbox[3] == 'o')) &&
++		 ((inbox[4] == 'X') || (inbox[4] == 'x')) && !inbox[5])) {
++				/* "-I #driver.xxx/name"? */
++    if ((*inbox == '#') && ((inbox[1] == 'd') || (inbox[1] == 'D')) &&
++	((inbox[2] == 'r') || (inbox[2] == 'R')) &&
++	((inbox[3] == 'i') || (inbox[3] == 'I')) &&
++	((inbox[4] == 'v') || (inbox[4] == 'V')) &&
++	((inbox[5] == 'e') || (inbox[5] == 'E')) &&
++	((inbox[6] == 'r') || (inbox[6] == 'R')) && (inbox[7] == '.') &&
++	(s = strchr (inbox+8,'/'))) {
++      *s = '\0';		/* temporarily tie off driver name */
++      if (!((dv = mail_parameters (NIL,GET_DRIVER,(void *) (inbox+8))) &&
++	    (mailboxfile (path,s[1] ? s + 1 : "&&&&&") == path) &&
++	    (s[1] || ((t = strstr (path,"&&&&&")) && strcpy (t,"INBOX"))))) {
++	path[0] = '\0';		/* bad -I argument, no path resolved */
++	sprintf (tmp,"Unable to resolve driver in %.80s, -I ignored",inbox);
++	mm_log (tmp,WARN);
++      }
++      *s = '/';			/* restore delimiter */
++    }
++				/* resolve "-I other" specification */
++    else if (mailboxfile (path,inbox) && path[0]) {
++				/* resolution succeeded, impute driver */
++      if (!strcmp (inbox,"mail.txt"))
++	dv = mail_parameters (NIL,GET_DRIVER,(void *) "tenex");
++      else if (!strcmp (inbox,"INBOX.MTX"))
++	dv = mail_parameters (NIL,GET_DRIVER,(void *) "mtx");
++      else if (!strcmp (inbox,"mbox"))
++	dv = mail_parameters (NIL,GET_DRIVER,(void *) "unix");
++    }
++    else {			/* bad -I argument */
++      path[0] = '\0';		/* no path resolved */
++      sprintf (tmp,"Unable to resolve %.80s, -I ignored",inbox);
++      mm_log (tmp,WARN);
++    }
++    if (path) {			/* -I successfully resolved a path? */
++      MAILSTREAM dpr;
++      dpr.dtb = dv;
++      if (dv) ds = &dpr;
++				/* supplicate to the Evil One if necessary */
++      if (lstat (path,&sbuf) && !path_create (ds,path)) {
++				/* the Evil One rejected the plea */
++	sprintf (tmp,"Unable to create %.80s, -I ignored",path);
++	mm_log (tmp,WARN);
++      }
++				/* now attempt delivery */
++      else return deliver_safely (ds,&st,inbox,path,duid,tmp);
++    }
++  }
++
++				/* no -I, resolve "INBOX" into path */
++  if (mailboxfile (path,mailbox = "INBOX") && !path[0]) {
++				/* clear box, get generic INBOX prototype */
++    if (!(ds = mail_open (NIL,"INBOX",OP_PROTOTYPE)))
++      fatal ("no INBOX prototype");
++				/* standard system driver? */
++    if (!strcmp (ds->dtb->name,"unix") || !strcmp (ds->dtb->name,"mmdf")) {
++      strcpy (path,sysinbox ());/* use system INBOX */
++      if (!lstat (path,&sbuf))	/* deliver to existing system INBOX */
++	return deliver_safely (ds,&st,mailbox,path,duid,tmp);
++    }
++    else {			/* other driver, try ~/INBOX */
++      if ((mailboxfile (path,"&&&&&") == path) &&
++	  (s = strstr (path,"&&&&&")) && strcpy (s,"INBOX") &&
++	  !lstat (path,&sbuf)){	/* deliver to existing ~/INBOX */
++	sprintf (tmp,"#driver.%s/INBOX",ds->dtb->name);
++	return deliver_safely (ds,&st,cpystr (tmp),path,duid,tmp);
++      }
++    }
++				/* not dummy, deliver to driver imputed path */
++    if (strcmp (ds->dtb->name,"dummy"))
++      return (ibxpath (ds,&mailbox,path) && !lstat (path,&sbuf)) ?
++	deliver_safely (ds,&st,mailbox,path,duid,tmp) :
++	  fail ("unable to resolve INBOX path",EX_CANTCREAT);
++				/* dummy, empty imputed append path exist? */
++    if (ibxpath (ds = default_proto (T),&mailbox,path) &&
++	!lstat (path,&sbuf) && !sbuf.st_size)
++      return deliver_safely (ds,&st,mailbox,path,duid,tmp);
++				/* impute path that we will create */
++    if (!ibxpath (ds = default_proto (NIL),&mailbox,path))
++      return fail ("unable to resolve INBOX",EX_CANTCREAT);
++  }
++				/* black box, must create, get create proto */
++  else if (lstat (path,&sbuf)) ds = default_proto (NIL);
++  else {			/* black box, existing file */
++				/* empty file, get append prototype */
++    if (!sbuf.st_size) ds = default_proto (T);
++				/* non-empty, get prototype from its data */
++    else if (!(ds = mail_open (NIL,"INBOX",OP_PROTOTYPE)))
++      fatal ("no INBOX prototype");
++				/* error if unknown format */
++    if (!strcmp (ds->dtb->name,"phile"))
++      return fail ("unknown format INBOX",EX_UNAVAILABLE);
++				/* otherwise can deliver to it */
++    return deliver_safely (ds,&st,mailbox,path,duid,tmp);
++  }
++  sprintf (tmp,"attempting to create mailbox %.80s path %.80s",mailbox,path);
++  mm_dlog (tmp);
++				/* supplicate to the Evil One */
++  if (!path_create (ds,path)) return fail ("can't create INBOX",EX_CANTCREAT);
++  sprintf (tmp,"created %.80s",path);
++  mm_dlog (tmp);
++				/* deliver the message */
++  return deliver_safely (ds,&st,mailbox,path,duid,tmp);
++}
++
++/* Resolve INBOX from driver prototype into mailbox name and filesystem path
++ * Accepts: driver prototype
++ * 	    pointer to mailbox name string pointer
++ *	    buffer to return mailbox path
++ * Returns: T if success, NIL if error
++ */
++
++long ibxpath (MAILSTREAM *ds,char **mailbox,char *path)
++{
++  char *s,tmp[MAILTMPLEN];
++  long ret = T;
++  if (!strcmp (ds->dtb->name,"unix") || !strcmp (ds->dtb->name,"mmdf"))
++    strcpy (path,sysinbox ());	/* use system INBOX for unix and MMDF */
++  else if (!strcmp (ds->dtb->name,"tenex"))
++    ret = (mailboxfile (path,"mail.txt") == path) ? T : NIL;
++  else if (!strcmp (ds->dtb->name,"mtx"))
++    ret = (mailboxfile (path,"INBOX.MTX") == path) ? T : NIL;
++  else if (!strcmp (ds->dtb->name,"mbox"))
++    ret = (mailboxfile (path,"mbox") == path) ? T : NIL;
++				/* better not be a namespace driver */
++  else if (ds->dtb->flags & DR_NAMESPACE) return NIL;
++				/* INBOX in home directory */
++  else ret = ((mailboxfile (path,"&&&&&") == path) &&
++	      (s = strstr (path,"&&&&&")) && strcpy (s,"INBOX")) ? T : NIL;
++  if (ret) {			/* don't bother if lossage */
++    sprintf (tmp,"#driver.%s/INBOX",ds->dtb->name);
++    *mailbox = cpystr (tmp);	/* name of INBOX in this namespace */
++  }
++  return ret;
++}
++
++/* Deliver safely
++ * Accepts: prototype stream to force mailbox format
++ *	    stringstruct of message temporary file or NIL for check only
++ *	    mailbox name
++ *	    filesystem path name
++ *	    user id
++ *	    scratch buffer for messages
++ * Returns: NIL if success, else error code
++ */
++
++int deliver_safely (MAILSTREAM *prt,STRING *st,char *mailbox,char *path,
++		    uid_t uid,char *tmp)
++{
++  struct stat sbuf;
++  int i = delivery_unsafe (path,uid,&sbuf,tmp);
++  if (i) return i;		/* give up now if delivery unsafe */
++				/* directory, not file */
++  if ((sbuf.st_mode & S_IFMT) == S_IFDIR) {
++    if (sbuf.st_mode & 0001) {	/* listable directories may be worrisome */
++      sprintf (tmp,"WARNING: directory %.80s is listable",path);
++      mm_log (tmp,WARN);
++    }
++  }
++  else {			/* file, not directory */
++    if (sbuf.st_nlink != 1) {	/* multiple links may be worrisome */
++      sprintf (tmp,"WARNING: multiple links to file %.80s",path);
++      mm_log (tmp,WARN);
++    }
++    if (sbuf.st_mode & 0111) {	/* executable files may be worrisome */
++      sprintf (tmp,"WARNING: file %.80s is executable",path);
++      mm_log (tmp,WARN);
++    }
++  }
++  if (sbuf.st_mode & 0002) {	/* public-write files may be worrisome */
++    sprintf (tmp,"WARNING: file %.80s is publicly-writable",path);
++    mm_log (tmp,WARN);
++  }
++  if (sbuf.st_mode & 0004) {	/* public-write files may be worrisome */
++    sprintf (tmp,"WARNING: file %.80s is publicly-readable",path);
++    mm_log (tmp,WARN);
++  }
++				/* so far, so good */
++  sprintf (tmp,"%s appending to %.80s (%s %.80s)",
++	   prt ? prt->dtb->name : "default",mailbox,
++	   ((sbuf.st_mode & S_IFMT) == S_IFDIR) ? "directory" : "file",path);
++  mm_dlog (tmp);
++				/* do the append now! */
++  if (!mail_append (prt,mailbox,st)) {
++    sprintf (tmp,"message delivery failed to %.80s",path);
++    return fail (tmp,EX_CANTCREAT);
++  }
++				/* note success */
++  sprintf (tmp,"delivered to %.80s",path);
++  mm_log (tmp,NIL);
++				/* make sure nothing evil this way comes */
++  return delivery_unsafe (path,uid,&sbuf,tmp);
++}
++
++/* Verify that delivery is safe
++ * Accepts: path name
++ *	    user id
++ *	    stat buffer
++ *	    scratch buffer for messages
++ * Returns: NIL if delivery is safe, error code if unsafe
++ */
++
++int delivery_unsafe (char *path,uid_t uid,struct stat *sbuf,char *tmp)
++{
++  u_short type;
++  sprintf (tmp,"Verifying safe delivery to %.80s by UID %ld",path,(long) uid);
++  mm_dlog (tmp);
++				/* prepare message just in case */
++  sprintf (tmp,"delivery to %.80s unsafe: ",path);
++				/* unsafe if can't get its status */
++  if (lstat (path,sbuf)) strcat (tmp,strerror (errno));
++  else if (sbuf->st_uid != uid)	/* unsafe if UID does not match */
++    sprintf (tmp + strlen (tmp),"uid mismatch (%ld != %ld)",
++	     (long) sbuf->st_uid,(long) uid);
++				/* unsafe if not a regular file */
++  else if (((type = sbuf->st_mode & (S_IFMT | S_ISUID | S_ISGID)) != S_IFREG)&&
++	   (type != S_IFDIR)) {
++    strcat (tmp,"can't deliver to ");
++				/* unsafe if setuid */
++    if (type & S_ISUID) strcat (tmp,"setuid file");
++				/* unsafe if setgid */
++    else if (type & S_ISGID) strcat (tmp,"setgid file");
++    else switch (type) {
++    case S_IFCHR: strcat (tmp,"character special"); break;
++    case S_IFBLK: strcat (tmp,"block special"); break;
++    case S_IFLNK: strcat (tmp,"symbolic link"); break;
++    case S_IFSOCK: strcat (tmp,"socket"); break;
++    default:
++      sprintf (tmp + strlen (tmp),"file type %07o",(unsigned int) type);
++    }
++  }
++  else return NIL;		/* OK to deliver */
++  return fail (tmp,EX_CANTCREAT);
++}
++
++/* Report an error
++ * Accepts: string to output
++ */
++
++int fail (char *string,int code)
++{
++  mm_log (string,ERROR);	/* pass up the string */
++#if T
++  switch (code) {
++  case EX_USAGE:
++  case EX_OSERR:
++  case EX_SOFTWARE:
++  case EX_NOUSER:
++  case EX_CANTCREAT:
++  case EX_UNAVAILABLE:
++    code = EX_TEMPFAIL;		/* coerce these to TEMPFAIL */
++  default:
++    break;
++  }
++#endif
++  return code;			/* error code to return */
++}
++
++
++/* Get user name from username+mailbox specifier
++ * Accepts: username/mailbox specifier
++ *	    pointer to return location for mailbox specifier
++ * Returns: user name, mailbox specifier value NIL if INBOX, patches out +
++ */
++
++char *getusername (char *s,char **t)
++{
++  char tmp[MAILTMPLEN];
++  if (*t = strchr (s,'+')) {	/* have a mailbox specifier? */
++    *(*t)++ = '\0';		/* yes, tie off user name */
++				/* user+ and user+INBOX same as user */
++    if (!**t || !strcmp ("INBOX",ucase (strcpy (tmp,*t)))) *t = NIL;
++  }
++  return s;			/* return user name */
++}
++
++/* Co-routines from MAIL library */
++
++
++/* Message matches a search
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_searched (MAILSTREAM *stream,unsigned long msgno)
++{
++  fatal ("mm_searched() call");
++}
++
++
++/* Message exists (i.e. there are that many messages in the mailbox)
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_exists (MAILSTREAM *stream,unsigned long number)
++{
++  fatal ("mm_exists() call");
++}
++
++
++/* Message expunged
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_expunged (MAILSTREAM *stream,unsigned long number)
++{
++  fatal ("mm_expunged() call");
++}
++
++
++/* Message flags update seen
++ * Accepts: MAIL stream
++ *	    message number
++ */
++
++void mm_flags (MAILSTREAM *stream,unsigned long number)
++{
++}
++
++/* Mailbox found
++ * Accepts: MAIL stream
++ *	    delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_list (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++  fatal ("mm_list() call");
++}
++
++
++/* Subscribed mailbox found
++ * Accepts: MAIL stream
++ *	    delimiter
++ *	    mailbox name
++ *	    mailbox attributes
++ */
++
++void mm_lsub (MAILSTREAM *stream,int delimiter,char *name,long attributes)
++{
++  fatal ("mm_lsub() call");
++}
++
++
++/* Mailbox status
++ * Accepts: MAIL stream
++ *	    mailbox name
++ *	    mailbox status
++ */
++
++void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
++{
++  fatal ("mm_status() call");
++}
++
++/* Notification event
++ * Accepts: MAIL stream
++ *	    string to log
++ *	    error flag
++ */
++
++void mm_notify (MAILSTREAM *stream,char *string,long errflg)
++{
++  char tmp[MAILTMPLEN];
++  tmp[11] = '\0';		/* see if TRYCREATE */
++  if (!strcmp (ucase (strncpy (tmp,string,11)),"[TRYCREATE]")) trycreate = T;
++  mm_log (string,errflg);	/* just do mm_log action */
++}
++
++
++/* Log an event for the user to see
++ * Accepts: string to log
++ *	    error flag
++ */
++
++void mm_log (char *string,long errflg)
++{
++  if (trycreate)mm_dlog(string);/* debug logging only if trycreate in effect */
++  else {			/* ordinary logging */
++    fprintf (stderr,"%s\n",string);
++    switch (errflg) {  
++    case NIL:			/* no error */
++      syslog (LOG_INFO,"%s",string);
++      break;
++    case PARSE:			/* parsing problem */
++    case WARN:			/* warning */
++      syslog (LOG_WARNING,"%s",string);
++      break;
++    case ERROR:			/* error */
++    default:
++      syslog (LOG_ERR,"%s",string);
++      break;
++    }
++  }
++}
++
++
++/* Log an event to debugging telemetry
++ * Accepts: string to log
++ */
++
++void mm_dlog (char *string)
++{
++  if (debug) fprintf (stderr,"%s\n",string);
++  syslog (LOG_DEBUG,"%s",string);
++}
++
++/* Get user name and password for this host
++ * Accepts: parse of network mailbox name
++ *	    where to return user name
++ *	    where to return password
++ *	    trial count
++ */
++
++void mm_login (NETMBX *mb,char *username,char *password,long trial)
++{
++  fatal ("mm_login() call");
++}
++
++
++/* About to enter critical code
++ * Accepts: stream
++ */
++
++void mm_critical (MAILSTREAM *stream)
++{
++  critical = T;			/* note in critical code */
++}
++
++
++/* About to exit critical code
++ * Accepts: stream
++ */
++
++void mm_nocritical (MAILSTREAM *stream)
++{
++  critical = NIL;		/* note not in critical code */
++}
++
++
++/* Disk error found
++ * Accepts: stream
++ *	    system error code
++ *	    flag indicating that mailbox may be clobbered
++ * Returns: T if user wants to abort
++ */
++
++long mm_diskerror (MAILSTREAM *stream,long errcode,long serious)
++{
++  return T;
++}
++
++
++/* Log a fatal error event
++ * Accepts: string to log
++ */
++
++void mm_fatal (char *string)
++{
++  printf ("?%s\n",string);	/* shouldn't happen normally */
++}

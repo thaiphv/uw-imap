@@ -1,0 +1,2 @@
+/etc/pam.d/pop
+/etc/logcheck/ignore.d.server/ipopd

@@ -1,0 +1,174 @@
+diff -ruN imap-2001a.orig/src/c-client/c-client.h imap-2001a/src/c-client/c-client.h
+--- imap-2001a.orig/src/c-client/c-client.h	Tue May 29 17:53:03 2001
++++ imap-2001a/src/c-client/c-client.h	Thu Dec 13 14:01:13 2001
+@@ -24,9 +24,6 @@
+ #ifdef __cplusplus		/* help out people who use C++ compilers */
+ extern "C" {
+ #define private cclientPrivate	/* private to c-client */
+-#define and cclientAnd		/* C99 doesn't realize that ISO 646 is dead */
+-#define or cclientOr
+-#define not cclientNot
+ #endif
+ 
+ #include "mail.h"		/* primary interfaces */
+diff -ruN imap-2001a.orig/src/c-client/imap4r1.c imap-2001a/src/c-client/imap4r1.c
+--- imap-2001a.orig/src/c-client/imap4r1.c	Wed Nov 14 17:50:55 2001
++++ imap-2001a/src/c-client/imap4r1.c	Thu Dec 13 14:01:13 2001
+@@ -1508,8 +1508,8 @@
+ 				/* be sure that receiver understands */
+   LOCAL->uidsearch = (flags & SE_UID) ? T : NIL;
+   if (!LEVELIMAP4 (stream) &&	/* if old server but new functions... */
+-      (charset || LOCAL->uidsearch || pgm->msgno || pgm->uid || pgm->or ||
+-       pgm->not || pgm->header || pgm->larger || pgm->smaller ||
++      (charset || LOCAL->uidsearch || pgm->msgno || pgm->uid || pgm->cclientOr 
++       || pgm->cclientNot || pgm->header || pgm->larger || pgm->smaller ||
+        pgm->sentbefore || pgm->senton || pgm->sentsince || pgm->draft ||
+        pgm->undraft || pgm->return_path || pgm->sender || pgm->reply_to ||
+        pgm->message_id || pgm->in_reply_to || pgm->newsgroups ||
+@@ -2556,14 +2556,14 @@
+     if (reply = imap_send_astring (stream,tag,s,&hdr->text,NIL)) return reply;
+   }
+   while (hdr = hdr->next);
+-  for (pgo = pgm->or; pgo; pgo = pgo->next) {
++  for (pgo = pgm->cclientOr; pgo; pgo = pgo->next) {
+     for (t = " OR ("; *t; *(*s)++ = *t++);
+     if (reply = imap_send_spgm (stream,tag,s,pgo->first)) return reply;
+     for (t = ") ("; *t; *(*s)++ = *t++);
+     if (reply = imap_send_spgm (stream,tag,s,pgo->second)) return reply;
+     *(*s)++ = ')';
+   }
+-  for (pgl = pgm->not; pgl; pgl = pgl->next) {
++  for (pgl = pgm->cclientNot; pgl; pgl = pgl->next) {
+     for (t = " NOT ("; *t; *(*s)++ = *t++);
+     if (reply = imap_send_spgm (stream,tag,s,pgl->pgm)) return reply;
+     *(*s)++ = ')';
+diff -ruN imap-2001a.orig/src/c-client/mail.c imap-2001a/src/c-client/mail.c
+--- imap-2001a.orig/src/c-client/mail.c	Tue Nov 13 14:29:07 2001
++++ imap-2001a/src/c-client/mail.c	Thu Dec 13 14:01:13 2001
+@@ -3095,10 +3095,10 @@
+       (pgm->body && !mail_search_text (stream,msgno,section,pgm->body,NIL)))
+     return NIL;
+ 				/* logical conditions */
+-  for (or = pgm->or; or; or = or->next)
++  for (or = pgm->cclientOr; or; or = or->next)
+     if (!(mail_search_msg (stream,msgno,section,or->first) ||
+ 	  mail_search_msg (stream,msgno,section,or->second))) return NIL;
+-  for (not = pgm->not; not; not = not->next)
++  for (not = pgm->cclientNot; not; not = not->next)
+     if (mail_search_msg (stream,msgno,section,not->pgm)) return NIL;
+   return T;
+ }
+@@ -5279,8 +5279,8 @@
+   if (*pgm) {			/* only free if exists */
+     mail_free_searchset (&(*pgm)->msgno);
+     mail_free_searchset (&(*pgm)->uid);
+-    mail_free_searchor (&(*pgm)->or);
+-    mail_free_searchpgmlist (&(*pgm)->not);
++    mail_free_searchor (&(*pgm)->cclientOr);
++    mail_free_searchpgmlist (&(*pgm)->cclientNot);
+     mail_free_searchheader (&(*pgm)->header);
+     mail_free_stringlist (&(*pgm)->bcc);
+     mail_free_stringlist (&(*pgm)->body);
+diff -ruN imap-2001a.orig/src/c-client/mail.h imap-2001a/src/c-client/mail.h
+--- imap-2001a.orig/src/c-client/mail.h	Tue Nov 13 14:29:05 2001
++++ imap-2001a/src/c-client/mail.h	Thu Dec 13 14:01:13 2001
+@@ -768,11 +768,19 @@
+   SEARCHPGMLIST *next;		/* next in list */
+ };
+ 
++/* Backwards compatability for C programs */
++#ifdef __STDC__
++  #ifndef __cplusplus
++    #define cclientOr or
++    #define cclientNot not
++  #endif
++#endif   
++
+ SEARCHPGM {			/* search program */
+   SEARCHSET *msgno;		/* message numbers */
+   SEARCHSET *uid;		/* unique identifiers */
+-  SEARCHOR *or;			/* or'ed in programs */
+-  SEARCHPGMLIST *not;		/* and'ed not program */
++  SEARCHOR *cclientOr;		/* or'ed in programs */
++  SEARCHPGMLIST *cclientNot;	/* and'ed not program */
+   SEARCHHEADER *header;		/* list of headers */
+   STRINGLIST *bcc;		/* bcc recipients */
+   STRINGLIST *body;		/* text in message body */
+diff -ruN imap-2001a.orig/src/c-client/nntp.c imap-2001a/src/c-client/nntp.c
+--- imap-2001a.orig/src/c-client/nntp.c	Wed Oct 17 16:03:22 2001
++++ imap-2001a/src/c-client/nntp.c	Thu Dec 13 14:01:14 2001
+@@ -1084,10 +1084,10 @@
+       return NIL;
+   }
+ 				/* logical conditions */
+-  for (or = pgm->or; or; or = or->next)
++  for (or = pgm->cclientOr; or; or = or->next)
+     if (!(nntp_search_msg (stream,msgno,or->first,ov) ||
+ 	  nntp_search_msg (stream,msgno,or->second,ov))) return NIL;
+-  for (not = pgm->not; not; not = not->next)
++  for (not = pgm->cclientNot; not; not = not->next)
+     if (nntp_search_msg (stream,msgno,not->pgm,ov)) return NIL;
+   return T;
+ }
+diff -ruN imap-2001a.orig/src/c-client/utf8.c imap-2001a/src/c-client/utf8.c
+--- imap-2001a.orig/src/c-client/utf8.c	Fri Jun 15 18:07:01 2001
++++ imap-2001a/src/c-client/utf8.c	Thu Dec 13 14:01:14 2001
+@@ -868,11 +868,11 @@
+     }
+     utf8_stringlist (pgm->body,charset);
+     utf8_stringlist (pgm->text,charset);
+-    for (ol = pgm->or; ol; ol = ol->next) {
++    for (ol = pgm->cclientOr; ol; ol = ol->next) {
+       utf8_searchpgm (ol->first,charset);
+       utf8_searchpgm (ol->second,charset);
+     }
+-    for (pl = pgm->not; pl; pl = pl->next) utf8_searchpgm (pl->pgm,charset);
++    for (pl = pgm->cclientNot; pl; pl = pl->next) utf8_searchpgm (pl->pgm,charset);
+   }
+ }
+ 
+diff -ruN imap-2001a.orig/src/imapd/imapd.c imap-2001a/src/imapd/imapd.c
+--- imap-2001a.orig/src/imapd/imapd.c	Wed Nov 14 18:26:07 2001
++++ imap-2001a/src/imapd/imapd.c	Thu Dec 13 14:01:14 2001
+@@ -1783,9 +1783,9 @@
+     case '5': case '6': case '7': case '8': case '9':
+       if (*(set = &pgm->msgno)){/* already a sequence? */
+ 				/* silly, but not as silly as the client! */
+-	for (not = &pgm->not; *not; not = &(*not)->next);
++	for (not = &pgm->cclientNot; *not; not = &(*not)->next);
+ 	*not = mail_newsearchpgmlist ();
+-	set = &((*not)->pgm->not = mail_newsearchpgmlist ())->pgm->msgno;
++	set = &((*not)->pgm->cclientNot = mail_newsearchpgmlist ())->pgm->msgno;
+       }
+       ret = crit_set (set,&s,maxmsg) && (tail == s);
+       break;
+@@ -1837,7 +1837,7 @@
+     case 'N':			/* possible NEW, NOT */
+       if (!strcmp (s+1,"EW")) ret = pgm->recent = pgm->unseen = T;
+       else if (!strcmp (s+1,"OT") && c == ' ' && *++tail) {
+-	for (not = &pgm->not; *not; not = &(*not)->next);
++	for (not = &pgm->cclientNot; *not; not = &(*not)->next);
+ 	*not = mail_newsearchpgmlist ();
+ 	ret = parse_criterion ((*not)->pgm,&tail,maxmsg,depth+1);
+       }
+@@ -1848,7 +1848,7 @@
+       else if (!strcmp (s+1,"N") && c == ' ' && *++tail)
+ 	ret = crit_date (&pgm->on,&tail);
+       else if (!strcmp (s+1,"R") && c == ' ') {
+-	for (or = &pgm->or; *or; or = &(*or)->next);
++	for (or = &pgm->cclientOr; *or; or = &(*or)->next);
+ 	*or = mail_newsearchor ();
+ 	ret = *++tail && parse_criterion((*or)->first,&tail,maxmsg,depth+1) &&
+ 	  *tail == ' ' && *++tail &&
+@@ -1884,9 +1884,9 @@
+       if (!strcmp (s+1,"ID") && c== ' ' && *++tail) {
+ 	if (*(set = &pgm->uid)){/* already a sequence? */
+ 				/* silly, but not as silly as the client! */
+-	  for (not = &pgm->not; *not; not = &(*not)->next);
++	  for (not = &pgm->cclientNot; *not; not = &(*not)->next);
+ 	  *not = mail_newsearchpgmlist ();
+-	  set = &((*not)->pgm->not = mail_newsearchpgmlist ())->pgm->uid;
++	  set = &((*not)->pgm->cclientNot = mail_newsearchpgmlist ())->pgm->uid;
+ 	}
+ 	ret = crit_set (set,&tail,0xffffffff);
+       }

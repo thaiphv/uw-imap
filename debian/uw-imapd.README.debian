@@ -1,0 +1,102 @@
+UW IMAP 2001 for DEBIAN
+----------------------
+
+Comments regarding the Package
+
+[Note: imap uses the c-client library for most of the actual work of
+handling mail.  So you should read the documentation in
+/usr/share/doc/libc-client2001/ too.]
+
+ Here are some known issues.
+
+1. If you suddenly can't login to the imap server anymore
+
+See the section on MD5 support below.
+
+2. MD5 Support
+ 
+This version has been compiled with MD5 support.  Unlike the standard
+authentication method, this will send encrypt passwords which is more
+secure so it is recommended you use this feature.  To enable it you need
+to have a file called /etc/cram-md5.pwd See 
+/usr/share/doc/libc-client2001/md5.txt for information on how to set this up.
+ 
+An earlier version of this file installed an empty /etc/cram-md5.pwd.
+Although this ill-advised move was fixed quickly, because it was marked as
+a conffile, you may still have it around.  As a result, your users may
+will not be able to login.  The fix is to either delete this file or
+populate it with passwords as explained in 
+/usr/share/doc/libc-client2001/md5.txt.
+
+The way libc-client handles authentication is as follows:
+ 
+*   If the file /etc/cram-md5.pwd file exists, it will attempt to use MD5
+    authentication (more secure.)
+ 
+*   If it doesn't, or or if the client explicitly asks for plaintext
+    authentication, it reverts to plaintext authentication.  This uses
+    PAM. 
+
+3.  Default mailbox location
+
+As of version 4.5-8, the mailbox root is back to being $HOME.  I apologize
+for the inconvenience I have caused, but however I keep it, it is going to
+annoy someone or the other.  $HOME is better because:
+
+1) most of the bug reports complain about it.
+2) That's what the upstream distribution does.  So it's less of a
+   maintenance headache for me.
+3) It's what most people expect (Principle of least surprise.)
+4) The reasoning behind the previous change was bogus anyway.
+
+Please be sure to check your setup to see if there is anything that might
+be affected by this change.  (Procmail rules are onething that immediately
+comes to mind.
+
+One problem with $HOME being the mailbox root is every file in that
+directory will show up as a folder by default.  To reduce clutter select
+your imap clients "Show only subscribed folders" option.  (Most clients
+have one.)  Most also have an option to set "server path" or something
+similar.  You can set this to $HOME/mail or another directory of your
+choosing if you want to keep all your folders together in one place.
+
+If you really, really want to make the IMAP server set the mailbox root to
+$HOME/mail or any other place for that matter, see the toplevel Makefile
+in the source, set MAILSUBDIR to your choice and recompile.
+
+4. mbox driver
+
+This package has the mbox driver enabled which means that if there is a
+file in your $HOME directory called mbox it will be treated as your inbox
+and all mail in your system inbox (/var//mail/<your login>) will
+immediately be transfered there on access.
+
+[Thanks to Brock Rozen for help with the above comments]
+
+5.  Enhanced maildir support
+Support for maildir format mailboxes should be complete in this version.
+You can delete them and move mail to folders in other formats now.
+Maildirs will also be looked for in the mail spool directory as well as
+the home directory.
+
+6.  compiling under slink.
+ 
+...is no longer supported.
+ 
+7. imap2, imap3, and imaps services in inetd.conf
+
+By default, this package is set up to listen to the following ports through
+inetd.
+
+service port    comment
+imap2   143     Actually IMAP 4.1.  Logins are via clear text or TLS if the
+                client supports it.
+imap3   220     IMAP 3 is obsolete but some clients still try and connect to
+                this port.  imapd will respond the same way as imap2.
+imaps   993     IMAP over SSL.
+
+Depending on your needs you may want to turn off one or more of these.  See
+update-inetd(8) to do this in way that won't get overwritten by new versions of
+this package.
+
+Jaldhar H. Vyas <jaldhar@debian.org>, Thu, 22 Nov 2001 12:51:00 -0500

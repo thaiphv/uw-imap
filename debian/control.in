@@ -1,0 +1,69 @@
+Source: uw-imap
+Priority: optional
+Section: mail
+Maintainer: Jaldhar H. Vyas <jaldhar@debian.org>
+Standards-Version: 3.5.6
+Build-Depends: libpam0g-dev, debhelper, dbs
+
+Package: uw-imapd
+Section: mail
+Architecture: any
+Depends: ${shlibs:Depends}
+Recommends: exim | mail-transport-agent
+Suggests: mutt | imap-client, logcheck
+Provides: imap-server
+Replaces: imapd,imap-4,imap, uw-imapd-ssl
+Conflicts: imapd,imap-4,imap, uw-imapd-ssl, imap-server, logcheck (<< 1.1.1-9)
+Description: remote mail folder access server
+ IMAP (the Interactive Mail Access Protocol) is a mechanism for
+ accessing mail folders and the messages in them remotely, ie with
+ your user mail program running on a different machine to the one
+ where all the messages are stored.
+ .
+ If you do install uw-imapd you will almost certainly want to install a
+ Mail Transfer Agent such as Smail or Sendmail, as remote mail
+ programs which use IMAP to access incoming and saved mail will
+ usually want to send mail using SMTP, often to the same machine.
+
+Package: ipopd
+Section: mail
+Architecture: any
+Depends: ${shlibs:Depends}
+Conflicts: imap (<< 4.4-1), ipopd-ssl, pop3-server, pop2-server, logcheck (<< 1.1.1-9)
+Replaces: ipopd-ssl
+Provides: pop3-server, pop2-server
+Suggests: logcheck
+Description: POP2 and POP3 servers from UW
+ This package contains the POP2 and POP3 servers which were  
+ formerly part of the University of Washington IMAP package.
+
+Package: libc-client__VER__-dev
+Section: devel
+Architecture: any
+Depends: libc-client__VER__ (= __DEBIANVER__), libpam0g-dev
+Conflicts: c-client-dev,libc-client-dev
+Replaces: c-client-dev,libc-client-dev (<< __DEBIANVER__-1), libc-client4.7-dev
+Description: UW c-client library for mail protocols
+ This package contains the static lib and headers for using the c-client mail 
+ handling library.
+ 
+Package: libc-client__VER__
+Section: libs
+Architecture: any
+Depends: libpam-modules, mlock, ${shlibs:Depends}
+Replaces: libc-client4.5,libc-client4.6, libc-client4.7
+Description: UW c-client library for mail protocols
+ This package contains the shared c-client mail handling library. 
+ .
+ WARNING: mailbox root has been changed back to $HOME again.  It is no
+ longer $HOME/mail. Please carefully reviw your setup to see if this will
+ affect you in any way.  See README.Debian for additional info.
+
+Package: mlock
+Section: mail
+Architecture: any
+Depends: ${shlibs:Depends}
+Conflicts: libc-client4.5,libc-client4.6,libc-client (<< 4.7-4)
+Description: Mailbox locking program from UW
+ libc-client.so uses this program to lock mailbox files so they don't get
+ corrupted.
