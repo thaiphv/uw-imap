@@ -1,9 +1,6 @@
 Template: uw-imapd/protocol
 Type: multiselect
 Choices: imap2, imap3, imaps
-Choices-da: imap2, imap3, imaps
-Choices-ja: imap2, imap3, imaps
-Choices-pt_BR: imap2, imap3, imaps
 Default: imap2, imaps
 Description: Which ports should the server listen on?
  imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS
@@ -14,6 +11,23 @@ Description: Which ports should the server listen on?
  imaps = IMAP 4Rev1 on TCP port 993 with SSL support.
  .
  If in doubt, pick imap2 and imaps.
+Description-ca: Quins ports ha d'escoltar el servidor?
+ imap2 = L'IMAP 4Rev1 (no la 2, suficientment estrany) al port de TCP 143
+ amb el suport de TLS.
+ .
+ imap3 = L'IMAP 3 al port de TCP 220 amb el suport de TLS. És obsolet.
+ .
+ imaps = L'IMAP 4Rev1 al port de TCP 993 amb el suport d'SSL.
+ .
+ Si dubteu escolliu l'imap2 i l'imaps.
+Description-cs: Na kterých portech má server naslouchat?
+ imap2 = IMAP 4Rev1 na TCP portu 143 s podporou TLS.
+ .
+ imap3 = IMAP 3 na TCP portu 220 s podporou TLS. Tento je zastaralý.
+ .
+ imaps = IMAP 4Rev1 na TCP portu 993 s podporou SSL.
+ .
+ Pokud si nejste jisti, vyberte imap2 a imaps.
 Description-da: Hvilke porte skal serveren lytte på?
  imap2 = IMAP 4Rev1 (ikke 2, spøjst nok) på TCP port 143 med
  TLS-understøttelse.
@@ -23,6 +37,25 @@ Description-da: Hvilke porte skal serveren lytte på?
  imaps = IMAP 4Rev1 på TCP port 993 med SSL-understøttelse.
  .
  Er du i tvivl så vælg imap2 og imaps.
+Description-es: ¿En qué puertos debe escuchar el servidor?
+ imap2 = IMAP 4Rev1 (no 2, extrañamente) en el puerto TCP 143 con soporte
+ para TLS
+ .
+ imap3 = IMAP 3 en el puerto TCP 220 con soporte para TLS. Obsoleto.
+ .
+ imaps = IMAP 4Rev1 en el puerto TCP 993 con soporte para SSL.
+ .
+ Si tiene dudas, escoja imap2 e imaps.
+Description-fr: Ports où le serveur doit être à l'écoute :
+ IMAP2 - IMAP4 version 1 (et non 2, assez étonnamment) sur le port TCP 143,
+ avec gestion TLS.
+ .
+ IMAP3 - IMAP3 sur le port TCP 220, avec gestion TLS. Ce choix est
+ obsolète.
+ .
+ IMAPS - IMAP4 version 1 sur le port TCP 993, avec gestion SSL.
+ .
+ Dans le doute, vous devriez choisir IMAP2 et IMAPS.
 Description-ja: ¥µ¡¼¥Ð¤Ç¤É¤Î¥Ý¡¼¥È¤ò¥ê¥¹¥ó¤·¤Þ¤¹¤«?
  imap2 = TCP ¥Ý¡¼¥È 143 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥Ý¡¼¥ÈÉÕ¤­ IMAP 4Rev1
  (´ñÌ¯¤Ê¤³¤È¤Ç¤¹¤¬ 2 ¤Ç¤Ï¤¢¤ê¤Þ¤»¤ó)¡£
@@ -42,3 +75,13 @@ Description-pt_BR: Em quais portas o servidor deve ouvir ?
  imaps = IMAP 4Rev1 na porta TCP 993 com suporte SSL.
  .
  Em caso de dúvidas, escolha imap2 e imaps
+Description-tr: Sunucu hangi portlarý dinlemeli?
+ imap2 = TCP port 143 üzerinde TLS desteðiyle IMAP 4Rev1 (tuhaf þekilde, 2
+ deðil).
+ .
+ imap3 = TCP port 220 üzerinde TLS desteðiyle IMAP 3.  Bu ayar artýk
+ eskimiþtir.
+ .
+ imaps = TCP port 993 üzerinde SSL desteðiyle IMAP 4Rev1.
+ .
+ Eðer kararsýz kaldýysanýz, imap2 ve imaps'i seçin.

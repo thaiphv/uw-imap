@@ -23,7 +23,7 @@ This package uses PAM for authentication.  The configuration file is
 /etc/pam.d/imap
 
 It has also been compiled with CRAM-MD5 SASL support.
-See /usr/share/doc/libc-client2003debian/md5.txt for additional information.
+See /usr/share/doc/libc-client__VER__/md5.txt for additional information.
 NOTE:  If your users seem to have problems logging in, this is the first
 thing to check.
 

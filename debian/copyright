@@ -1,18 +1,38 @@
-This package was initially debianized by Jaldhar H. Vyas jaldhar@debian.org on
-Mon, 12 Jan 1998 21:32:11 -0500.
+This is IMAP Toolkit Environment packaged for Debian GNU systems.
 
-It was downloaded from ftp://ftp.cac.washington.edu/mail/
+
+Upstream source: ftp://ftp.cac.washington.edu/mail/
 
 Upstream *.tar.Z archive has been uncompressed and compressed using GNU
 Gzip to meet Debian packaging requirements.
 
+
 Upstream Author: Mark Crispin
 
-Additional info:
-Mailinglist c-client-request@u.washington.edu (subscription info at
-http://www.washington.edu/imap/imap-list.html) and news:comp.mail.imap .
+Instead of contacting Mark Crispin directly, use the mailinglist
+c-client-request@u.washington.edu (subscription info at
+http://www.washington.edu/imap/imap-list.html) or news:comp.mail.imap .
 
-Copyright:
+
+Copyright and licensing info, generally for IMAP Toolkit Environment:
+
+# The IMAP toolkit provided in this Distribution is
+# Copyright 1988-2003 University of Washington.
+#
+# The full text of our legal notices is contained in the file called
+# CPYRIGHT, included with this Distribution.
+
+
+Additional copyright note for parts of c-client and mtest code:
+
+ * This original version of this file is
+ * Copyright 1988 Stanford University
+ * and was developed in the Symbolic Systems Resources Group of the Knowledge
+ * Systems Laboratory at Stanford University in 1987-88, and was funded by the
+ * Biomedical Research Technology Program of the NationalInstitutes of Health
+ * under grant number RR-00785.
+
+Content of CPYRIGHT, mentioned above:
 
 University of Washington's Free-Fork License
 

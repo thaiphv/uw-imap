@@ -1,3 +1,95 @@
+uw-imap (7:2002edebian1-6) unstable; urgency=high
+
+  * Fix CERT security bug VU#702777: CRAM-MD5 authentication (disabled
+    by default in Debian) would always grant access after 4 failed
+    attempts. This closes: bug#292606, #293418 (thanks to Tomas Pospisek
+    <tpo_deb@sourcepole.ch> for first reporting it and Martin Schulze
+    <joey@infodrom.org> for providing a patch).
+  * Set urgency=high due to above security fix.
+  * Update local cdbs snippets:
+    + buildinfo.mk: Make it actually work (tie to proper targets).
+    + debhelper.mk: Add CDBS_BUILD_DEPENDS.
+    + bts.mk: Make a test more quiet.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu,  3 Feb 2005 20:22:23 +0100
+
+uw-imap (7:2002edebian1-5) unstable; urgency=low
+
+  * Stop messing with with /etc/c-client.cf using debconf (giving up -
+    cannot figure out a solid set of routines). Closes: bug#273687,
+    #239537 (thanks to all reporting the issue over time).
+  * Depend on (not only recommend) debconf and remove fallback for
+    libc-client, to obey Debian Policy 3.10.1.
+  * Improve logcheck rules (wonder why I didn't need this myself).
+    Closes: bug#271569, #277696 (thanks to Will Deutsch
+    <wdeutsch@pqbon.com> and Wouter de Vries
+    <w.l.devries@student.tudelft.nl>).
+  * Correct typo in mailutil manpage. Closes: bug#251910 (thanks to
+    Markus Järvinen <mkj@iki.fi>).
+  * Refer to current location of library in NEWS (not the location at
+    the time of breaking the news). Closes: bug#276460 (thanks to Calum
+    Mackay <calum.mackay@cdmnet.org>).
+  * Correct french (fr) l12n typo, and make protocol names
+    untranslatable. Closes: bug#277055 (thanks to Alexandre Fayolle
+    <alexandre.fayolle@logilab.fr> and Christian Perrier
+    <bubulle@debian.org>).
+  * Add Czech (cs) l12n. Closes: bug#287306 (thanks to Miroslav Kure
+    <kurem@upcase.inf.upol.cz>).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon,  3 Jan 2005 14:39:10 +0100
+
+uw-imap (7:2002edebian1-4) unstable; urgency=high
+
+  * Add/update debconf l12n, superseding non-maintainer upload. Closes:
+    bug#275226 (thanks to Denis Barbier <barbier@debian.org>).
+    + Japanese (ja) updated. Closes: bug#241804 (thanks to Kenshi Muto
+      <kmuto@debian.org>).
+    + French (fr) added. Closes: bug#241986 (thanks to Christian Perrier
+      <bubulle@debian.org>).
+    + Catalan (ca) updated. Closes: Bug#248762 (thanks to Aleix Badia i
+      Bosch <a.badia@callusdigital.org>).
+    + Turkish (tr) added. Closes: bug#249129 (thanks to Recai Oktas
+      <roktas@omu.edu.tr> and Mehmet Turker).
+    + Brazilian Portuguese (pt_BR) added (or updated, actually: It seems
+      to have fallen out at some point - sorry about that!). Closes:
+      bug#267322 (thanks to Andre Luis Lopes <andrelop@debian.org>).
+    + German (de) added. Closes: bug#267674 (thanks to Erik Schanze
+      <schanzi_usenet@gmx.de>).
+    + Danish (da) updated. Closes: bug#275980 (thanks to Morten Brix
+      Pedersen <morten@wtf.dk>).
+    + Spanish (es) added. Closes: bug#276285 (thanks to Carlos Galisteo
+      <cgalisteo@k-rolus.net>).
+  * Begin using cdbs:
+    + Build-depend on cdbs.
+    + Include localbuildinfo.mk snippet and build on dh-buildinfo.
+    + Use simple-patchsys.mk and drop local cbs make snippet.
+    + Use debhelper.mk and simplify debian/rules greatly.
+    + Include a few additional cdbs snippets helpful for backporting.
+    + Avoid using makefile.mk this close to sarge release!
+  * Add debian/NEWS with notes on secure-only connections and dropped
+    Maildir-support.
+  * Apply patch 11_manpages_are_not_local.diff to please lintian.
+  * Update TODO.Debian - and rename to TODO in source to make sure it
+    gets included (although only in uw-imaps package) by dh_installdocs.
+  * Change 2002 and 2003 to __VER__ a few places in README.Debian files.
+  * Parse Debian version more cleverly: Reuse simply expanded variables.
+    Also, add UPSTREAMVER and use it to automatically update watch file.
+  * Attempt asking both debconf questions in libc-client postinst.
+    Closes: Bug#229842 (thanks to Jay Berkenbilt <ejb@ql.org>).
+  * Add note in libc-client.postconf explaining the use of printf.
+  * Improve logcheck rules. Closes: Bug#244324 (thanks to Paul Traina).
+  * Check for up-to-date deban/rules before patching.
+  * Cleaned up debian/copyright:
+    + Replace info contained in changelog with note on "GNU systems".
+    + Declare each topic more strictly.
+    + Mention "licensing info" together with copyright.
+    + Add (historical) copyright info of Stanford University.
+  * Correct dependency for transition packages, and shorten description.
+  * Tighten build-dependency on debhelper to please lintian.
+  * Set urgency=high as we want this in sarge.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 13 Oct 2004 17:56:46 +0200
+
 uw-imap (7:2002edebian1-3) unstable; urgency=low
 
   * Have libc-client-dev be priority optional.
@@ -697,4 +789,3 @@ uw-imap-ssl (2000debian-1) unstable; urgency=low
   * New package with SSL support compiled in.
 
  -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 14 Nov 2000 15:46:35 -0500
-

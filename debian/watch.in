@@ -1,0 +1,4 @@
+# Run the "uscan" command to check for upstream updates and more.
+version=2
+#ftp://ftp.cac.washington.edu/mail/imap-(\d\w*(\.DEV\.SNAP.*)?)\.tar\.Z __UPSTREAMVER__
+ftp://ftp.cac.washington.edu/mail/imap-(\d\w*)\.tar\.Z __UPSTREAMVER__

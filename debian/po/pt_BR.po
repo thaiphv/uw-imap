@@ -15,19 +15,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: uw-imapd-6:2003debian0.0303051641-2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-02-28 16:43+0100\n"
+"POT-Creation-Date: 2005-01-03 17:51+0100\n"
 "PO-Revision-Date: 2003-03-22 15:00-0300\n"
 "Last-Translator: André Luís Lopes <andrelop@ig.com.br>\n"
 "Language-Team: Debian-BR Project <debian-l10n-portuguese@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#. Type: multiselect
-#. Choices
-#: ../ipopd.templates.master:3
-msgid "pop2, pop3, pop3s"
-msgstr "pop2, pop3, pop3s"
 
 #. Type: multiselect
 #. Description
@@ -62,56 +56,12 @@ msgstr "Em caso de dúvidas, escolha pope 3 pop3s."
 #. Type: boolean
 #. Description
 #: ../libc-client__VER__.templates.in.master:4
-msgid "Allow insecure authentication using plaintext passwords?"
-msgstr ""
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-#, fuzzy
-msgid ""
-"The use of unencrypted plaintext passwords is generally insecure, and the "
-"current version of libc-client by default only allows network access through "
-"either TLS or SSL connections.  This affects uw-imapd, ipopd and any other "
-"programs that use libc-client for mail access through the network.  However, "
-"this functionality can be changed by using the semi-official /etc/c-client."
-"cf configuration file.  Read more about this in /usr/share/doc/libc-"
-"client__VER__/README.Debian."
-msgstr ""
-"O uso de senhas não criptografadas em texto puro é geralmente inseguro e a "
-"versão atual da libc-client por padrão somente permite acesso a rede através "
-"de conexões TLS ou SSL. Isto afeta o uw-imapd, o ipopd e quaisquer outros "
-"programas que usem a libc-client para acesso a e-mail através da rede. "
-"Porém, esta funcionalidade pode ser mudada usando o aruivo de configuração "
-"semi-oficial /etc/c-client.cf. Leia mais sobre isso em /usr/share/doc/libc-"
-"client2003debian/README.Debian."
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-#, fuzzy
-msgid ""
-"Do you want to allow email access authentication using insecure plaintext "
-"passwords?"
-msgstr ""
-"Responda sim para permitir o acesso a e-mail usando senhas em texto puro "
-"inseguras."
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
-msgstr "Note : senhas cram-md5 são tratadas como senhas em texto puro !"
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:21
 msgid "Continue installing libc-client without Maildir support?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../libc-client__VER__.templates.in.master:21
+#: ../libc-client__VER__.templates.in.master:4
 msgid ""
 "Libc-client earlier than version 2002d (and development versions of 2003) "
 "included an unofficial and no longer maintained patch to support Maildirs. "
@@ -122,16 +72,10 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../libc-client__VER__.templates.in.master:21
+#: ../libc-client__VER__.templates.in.master:4
 msgid ""
 "Do you want to continue installing a libc-client without Maildir support?"
 msgstr ""
-
-#. Type: multiselect
-#. Choices
-#: ../uw-imapd.templates.master:3
-msgid "imap2, imap3, imaps"
-msgstr "imap2, imap3, imaps"
 
 #. Type: multiselect
 #. Description
@@ -160,6 +104,41 @@ msgstr "imaps = IMAP 4Rev1 na porta TCP 993 com suporte SSL."
 #: ../uw-imapd.templates.master:5
 msgid "If in doubt, pick imap2 and imaps."
 msgstr "Em caso de dúvidas, escolha imap2 e imaps"
+
+#~ msgid "pop2, pop3, pop3s"
+#~ msgstr "pop2, pop3, pop3s"
+
+#~ msgid "imap2, imap3, imaps"
+#~ msgstr "imap2, imap3, imaps"
+
+#, fuzzy
+#~ msgid ""
+#~ "The use of unencrypted plaintext passwords is generally insecure, and the "
+#~ "current version of libc-client by default only allows network access "
+#~ "through either TLS or SSL connections.  This affects uw-imapd, ipopd and "
+#~ "any other programs that use libc-client for mail access through the "
+#~ "network.  However, this functionality can be changed by using the semi-"
+#~ "official /etc/c-client.cf configuration file.  Read more about this in /"
+#~ "usr/share/doc/libc-client__VER__/README.Debian."
+#~ msgstr ""
+#~ "O uso de senhas não criptografadas em texto puro é geralmente inseguro e "
+#~ "a versão atual da libc-client por padrão somente permite acesso a rede "
+#~ "através de conexões TLS ou SSL. Isto afeta o uw-imapd, o ipopd e "
+#~ "quaisquer outros programas que usem a libc-client para acesso a e-mail "
+#~ "através da rede. Porém, esta funcionalidade pode ser mudada usando o "
+#~ "aruivo de configuração semi-oficial /etc/c-client.cf. Leia mais sobre "
+#~ "isso em /usr/share/doc/libc-client2003debian/README.Debian."
+
+#, fuzzy
+#~ msgid ""
+#~ "Do you want to allow email access authentication using insecure plaintext "
+#~ "passwords?"
+#~ msgstr ""
+#~ "Responda sim para permitir o acesso a e-mail usando senhas em texto puro "
+#~ "inseguras."
+
+#~ msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
+#~ msgstr "Note : senhas cram-md5 são tratadas como senhas em texto puro !"
 
 #~ msgid "yes, no"
 #~ msgstr "sim, não"

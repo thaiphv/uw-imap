@@ -1,64 +1,55 @@
+# uw-imap (debconf) translation to Catalan.
+# Copyright (C) 2004 Free Software Foundation, Inc.
+# Aleix Badia i Bosch <abadia@ica.es>, 2004
 #
-#    Translators, if you are not familiar with the PO format, gettext
-#    documentation is worth reading, especially sections dedicated to
-#    this format, e.g. by running:
-#         info -n '(gettext)PO Files'
-#         info -n '(gettext)Header Entry'
-#
-#    Some information specific to po-debconf are available at
-#            /usr/share/doc/po-debconf/README-trans
-#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
-#
-#    Developers do not need to manually edit POT or PO files.
-#
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: uw-imap_7:2002edebian1-1_templates\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-03 17:51+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2004-03-05 19:46GMT\n"
+"Last-Translator: Aleix Badia i Bosch <abadia@ica.es>\n"
+"Language-Team: Catalan <debian-l10n-catalan@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
 msgid "Which ports should the server listen on?"
-msgstr ""
+msgstr "Quins ports ha d'escoltar el servidor?"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
-msgstr ""
+msgstr "pop2= El POP 2 al port de TCP 109 amb el suport de TLS. Està obsolet."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop3  = POP 3 on TCP port 110 with TLS support."
-msgstr ""
+msgstr "pop3 = El POP 3 al port de TCP 110 amb el suport de TLS."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop3s = POP 3 on TCP port 995 with SSL support."
-msgstr ""
+msgstr "pop3s = El POP 3 al port de TCP 995 amb el suport d'SSL."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "If in doubt, choose pop3 and pop3s."
-msgstr ""
+msgstr "Si dubteu escolliu el pop3 i el pop3s."
 
 #. Type: boolean
 #. Description
 #: ../libc-client__VER__.templates.in.master:4
 msgid "Continue installing libc-client without Maildir support?"
 msgstr ""
+"Voleu continuar la instal·lació del libc-client sense el suport del Maildir?"
 
 #. Type: boolean
 #. Description
@@ -70,6 +61,12 @@ msgid ""
 "changed your system configuration or other installed programs depend on libc-"
 "client then upgrading may result in broken mail handling."
 msgstr ""
+"Les versions del libc-client anteriors a la 2002d (i les versions de "
+"desenvolupament del 2003) incloïen un pedaç no oficial i que ja no és manté "
+"per suportar els Maildir. L'uw-imapd i l'ipopd no utilitzen els Maildir per "
+"defecte, però si heu canviat la configuració del sistema o d'altres "
+"programes instal·lats depenen del libc-client l'actualització pot induir a "
+"errors en la gestió del correu."
 
 #. Type: boolean
 #. Description
@@ -77,6 +74,7 @@ msgstr ""
 msgid ""
 "Do you want to continue installing a libc-client without Maildir support?"
 msgstr ""
+"Voleu continuar la instal·lació d'un libc-client sense el suport del Maildir?"
 
 #. Type: multiselect
 #. Description
@@ -85,21 +83,29 @@ msgid ""
 "imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
 "support."
 msgstr ""
+"imap2 = L'IMAP 4Rev1 (no la 2, suficientment estrany) al port de TCP 143 amb "
+"el suport de TLS."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
-msgstr ""
+msgstr "imap3 = L'IMAP 3 al port de TCP 220 amb el suport de TLS. És obsolet."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
-msgstr ""
+msgstr "imaps = L'IMAP 4Rev1 al port de TCP 993 amb el suport d'SSL."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "If in doubt, pick imap2 and imaps."
-msgstr ""
+msgstr "Si dubteu escolliu l'imap2 i l'imaps."
+
+#~ msgid "pop2, pop3, pop3s"
+#~ msgstr "pop2, pop3, pop3s"
+
+#~ msgid "imap2, imap3, imaps"
+#~ msgstr "imap2, imap3, imaps"

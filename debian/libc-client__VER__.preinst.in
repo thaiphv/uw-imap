@@ -5,16 +5,9 @@
 # Inspired by Debian postfix preinst by LaMont Jones <lamont@debian.org>
 # and Colin Walters <levanti@verbum.org>
 
-# do we have debconf?
-if [ -f /usr/share/debconf/confmodule ]; then
-    . /usr/share/debconf/confmodule
-    DEBCONF=true
-else
-    DEBCONF=
-fi
+. /usr/share/debconf/confmodule
 
 maildir_warning() {
-    if [ -n "$DEBCONF" ]; then
 #	db_fset libc-client/no_maildir_warning seen false
 	db_input high libc-client/no_maildir_warning || true
 	db_go || true
@@ -24,24 +17,6 @@ maildir_warning() {
 	    echo "aborting libc-client__VER__ install"
 	    exit 1
 	fi
-    else
-	# no debconf, fall back
-	cat << EOF
-Libc-client earlier than version 2002d (and development versions of
-2003) included an unofficial and no longer maintained patch to support
-Maildirs.
-By default Maildirs where not used by uw-imapd or ipopd, but if you have
-changed your system configuration or other installed programs depend on
-libc-client then upgrading may result in broken mail handling.
-EOF
-	echo -n "Do you want to continue the installation? "
-	read line
-	case ${line} in
-	    [nN]*)	echo "aborting libc-client__VER__ install"
-			exit 1
-			;;
-	esac
-    fi
 }
 
 case "$1" in

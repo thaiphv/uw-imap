@@ -2,13 +2,24 @@
 # Made with the aid of debmake, by Christoph Lameter,
 # based on the sample debian/rules file for GNU hello by Ian Jackson.
 
-DEBVERSION=$(shell head -1 debian/changelog | cut '-d ' -f 2 | sed 's/[()]//g')
-VERSION=$(shell expr `pwd` : '.*-\([0-9][0-9a-z]*debian\)')
+## official debhelper rule may not work on woody backports...
+#include /usr/share/cdbs/1/class/makefile.mk
+include /usr/share/cdbs/1/rules/debhelper.mk
+#include debian/cdbs/1/rules/debhelper.mk
+include debian/cdbs/1/rules/po-debconf.mk
+include /usr/share/cdbs/1/rules/simple-patchsys.mk
+include debian/cdbs/1/rules/buildinfo.mk
 
-REVISION=$(shell expr `pwd` : '.*debian\([0-9a-z\.]\+\)$$')
+DEBVERSION := $(shell head -1 debian/changelog | cut '-d ' -f 2 | sed 's/[()]//g')
+EPOCH := $(shell expr '$(DEBVERSION)' : '\([^:]\+:\)')
+DEBVERSION_ := $(shell expr '$(DEBVERSION)' : '$(EPOCH)\(.*\)$$')
+UPSTREAMVER := $(shell expr '$(DEBVERSION_)' : '\([0-9][0-9a-z]*\)debian')
+VERSION := $(shell expr '$(DEBVERSION_)' : '\([0-9][0-9a-z]*debian\)')
+REVISION := $(shell expr $(DEBVERSION_) : '.*debian\([^-]\+\)-')
+# FIXME: Make sure epoch is included/stripped correctly
 
 SEDRULE_FILENAME=-e s/__VER__/$(VERSION)/g -e s/\\.in$$//
-SEDRULE_CONTENT=-e s/__DEBIANVER__/$(DEBVERSION)/g -e s/__FULLVER__/$(VERSION).$(REVISION)/g -e s/__VER__/$(VERSION)/g
+SEDRULE_CONTENT=-e s/__DEBIANVER__/$(DEBVERSION)/g -e s/__UPSTREAMVER__/$(UPSTREAMVER)/g -e s/__FULLVER__/$(VERSION).$(REVISION)/g -e s/__VER__/$(VERSION)/g
 
 CFLAGS = -Wall -g -D_REENTRANT -DDISABLE_POP_PROXY
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
@@ -17,35 +28,31 @@ else
 CFLAGS += -O2
 endif
 
+DEB_PHONY_RULES += update-control
+
 # Enforce symbol resolution at build time
 # (suggested by Debian Policy 3.6.1 chapter 10.2)
 SHLIBCFLAGS = -Wl,-z,defs
 
-ifeq (,$(wildcard /usr/bin/po2debconf))
-PO2DEBCONF := no
-MINDEBCONFVER := 0.5
-else
-PO2DEBCONF := yes
-MINDEBCONFVER := 1.2.0
-endif
-
 # Enable Kerberos V support
 EXTRAAUTHENTICATORS = gss
 
-export DH_OPTIONS
+# dh_shlibdeps argument -L rewuires debhelper 4.1.1 not in woody
+#DEB_DH_SHLIBDEPS_ARGS = -Llibc-client$(VERSION) -ldebian/libc-client$(VERSION)/usr/lib
+DEB_DH_SHLIBDEPS_ARGS =	-ldebian/libc-client$(VERSION)/usr/lib -- -Ldebian/libc-client$(VERSION).shlibs
+
 #export DH_VERBOSE=1
 
-include debian/cbs-patches.Makefile
-
-build: build-stamp
-build-stamp: debian/stamp-patched
-	dh_testdir
-
+pre-build::
 	sed $(SEDRULE_CONTENT) <debian/control.in | diff -u debian/control - || ( \
 		echo; \
 		echo "Upstream version has changed (or debian/control.in is out of sync)"; \
 		echo "Please do a 'debian/rules update-control' or edit manually..."; \
 		exit 1)
+
+build: build-stamp
+build-stamp: debian/stamp-patched
+	dh_testdir
 
 	$(MAKE) VERSION=$(VERSION) EXTRAAUTHENTICATORS='$(EXTRAAUTHENTICATORS)' EXTRACFLAGS='$(CFLAGS)' ldb
 	mv c-client/c-client.a .
@@ -60,103 +67,55 @@ build-stamp: debian/stamp-patched
 
 	touch build-stamp
 
-clean: clean-dh-tests reverse-patches clean-impl clean-debconf
-	rm -rf RCS
-	for file in `find debian -type f -name '*.in' -not -name control.in -not -name POTFILES.in -not -name watch.in`; do \
-		eval targetfile=`echo $$file | sed $(SEDRULE_FILENAME)`; \
-		rm -f $$targetfile; \
-		done
-	dh_clean
-clean-dh-tests:
-	dh_testdir
-	dh_testroot
-clean-impl:
+clean::
 	$(MAKE) clean
 	for dir in $(DEB_PATCHDIRS); do rm -f $$dir/*.log; done
 	rm -f c-client.a
 	rm -f debian/stamp-*
 	rm -f debian/mlock.1
-clean-debconf:
-ifeq ($(PO2DEBCONF),yes)
-	# Hack for woody compatibility. This makes sure that the
-	# debian/templates file shipped in the source package doesn't
-	# specify encodings, which woody's debconf can't handle. If building
-	# on a system with po-debconf installed (conveniently debhelper (>=
-	# 4.1.16) depends on it), the binary-arch target will generate a
-	# better version for sarge.
-	echo 1 > debian/po/output
-	for f in `cat debian/po/POTFILES.in |sed 's|[^]]*\] ||'` ; do \
-		po2debconf debian/$$f > debian/`dirname $$f`/`basename $$f .master`; \
+	rm -rf RCS
+	for file in `find debian -type f -name '*.in' -not -name control.in -not -name POTFILES.in -not -name watch.in`; do \
+		eval targetfile=`echo $$file | sed $(SEDRULE_FILENAME)`; \
+		rm -f $$targetfile; \
 		done
-	rm -f debian/po/output
-endif
 
-update-control:
-	sed $(SEDRULE_CONTENT) <debian/control.in >debian/control
-	echo "Done!"
-
-expand-strings: clean-debconf
+pre-build::
 	for file in `find debian -type f -name '*.in' -not -name control.in -not -name POTFILES.in`; do \
 		eval targetfile=`echo $$file | sed $(SEDRULE_FILENAME)`; \
 		sed $(SEDRULE_CONTENT) <$$file >$$targetfile; \
 		done
 
-install: DH_OPTIONS=
-install: build expand-strings
-	dh_testdir
-	dh_testroot
-	dh_clean -k
-	dh_installdirs
+# TODO: Use d-shlibmove instead (we already depend on it)
+binary-post-install/libc-client$(VERSION)::
+	mv debian/$(cdbs_curpkg)/usr/lib/libc-client.so debian/$(cdbs_curpkg)/usr/lib/libc-client.so.$(VERSION).$(REVISION)
 
-	d-devlibdeps debian/libc-client-dev.substvars c-client/libc-client.so
+# Automatically calculate development package dependencies
+common-binary-post-install-arch::
+	d-devlibdeps debian/libc-client-dev.substvars debian/libc-client$(VERSION)/usr/lib/libc-client.so.$(VERSION).$(REVISION)
 
-	dh_install
+# Daemon and PAM names are not equal
+binary-post-install/ipopd::
+	mv debian/$(cdbs_curpkg)/etc/pam.d/ipopd debian/$(cdbs_curpkg)/etc/pam.d/pop
+binary-post-install/uw-imapd::
+	mv debian/$(cdbs_curpkg)/etc/pam.d/uw-imapd debian/$(cdbs_curpkg)/etc/pam.d/imap
 
-	(cd debian/libc-client$(VERSION)/usr/lib/ && mv libc-client.so libc-client.so.$(VERSION).$(REVISION))
+binary-predeb/ipopd::
+	chown root.mail debian/$(cdbs_curpkg)/usr/sbin/ipop2d
+	chown root.mail debian/$(cdbs_curpkg)/usr/sbin/ipop3d
+	chmod 2755 debian/$(cdbs_curpkg)/usr/sbin/ipop2d
+	chmod 2755 debian/$(cdbs_curpkg)/usr/sbin/ipop3d
 
-binary-common:
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs
-	dh_installdocs
-	dh_installexamples
-ifeq ($(PO2DEBCONF),yes)
-	for f in `cat debian/po/POTFILES.in |sed 's|[^]]*\] ||'` ; do \
-		po2debconf -e utf8 debian/$$f > debian/`dirname $$f`/`basename $$f .master`; \
-		done
-endif
-	dh_installdebconf
-	dh_installpam
-	(cd debian/ipopd/etc/pam.d/ && mv ipopd pop) || true
-	(cd debian/uw-imapd/etc/pam.d/ && mv uw-imapd imap) || true
-	dh_installinit
-	dh_installman
-	dh_strip
-	dh_link
-	dh_compress
-	dh_fixperms
-	(cd debian/ipopd/usr/sbin/ && chown root.mail ipop2d ipop3d) || true
-	(cd debian/ipopd/usr/sbin/ && chmod 2755 ipop2d ipop3d) || true
-	(cd debian/uw-imapd/usr/sbin/ && chown root.mail imapd) || true
-	(cd debian/uw-imapd/usr/sbin/ && chmod 2755 imapd) || true
-	(cd debian/mlock/usr/bin/ && chown root.mail mlock) || true
-	(cd debian/mlock/usr/bin/ && chmod 2755 mlock) || true
-	dh_makeshlibs
-	dh_installdeb
-#	dh_shlibdeps -Llibc-client$(VERSION) -ldebian/libc-client$(VERSION)/usr/lib #Requires debhelper 4.1.1 not in woody
-	dh_shlibdeps -ldebian/libc-client$(VERSION)/usr/lib -- -Ldebian/libc-client$(VERSION).shlibs
-	dh_gencontrol -- -V'debconf-depends=debconf (>= $(MINDEBCONFVER))'
-	dh_md5sums
-	dh_builddeb
+binary-predeb/uw-imapd::
+	chown root.mail debian/$(cdbs_curpkg)/usr/sbin/imapd
+	chmod 2755 debian/$(cdbs_curpkg)/usr/sbin/imapd
 
-binary-indep: build install
-	 $(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
+binary-predeb/mlock::
+	chown root.mail debian/$(cdbs_curpkg)/usr/bin/mlock
+	chmod 2755 debian/$(cdbs_curpkg)/usr/bin/mlock
 
-binary-arch: build install
-	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
-
-binary-%: build install
-	make -f debian/rules binary-common DH_OPTIONS=-p$*
-
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary-common binary install
+# Run this rule whenever you edit debian/control.in (do not mess
+# directly with debian/control!)
+# TODO: Integrate with cdbs auto-update.
+update-control:
+	sed $(SEDRULE_CONTENT) <debian/control.in >debian/control
+	echo "Done!"

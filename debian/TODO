@@ -1,11 +1,3 @@
-  * Use dh_buildinfo.
-  * Use cdbs.
-  * Place config in separate c-client-config package to make it general.
-    across versions of libc-client (replaces all earlier libc-client and
-    requires current one or newer - is that possible to define?!?).
-  * Replace 10_disallow_escaping_home.diff with c-client.conf option
-    "set restrict-mailbox-access all".
-  * Move all dialogs to debconf.
   * Support non-self-signed certificates, and ask for optional CA
     certificate or already prepared (or bought) certificate and private
     key.
@@ -18,3 +10,9 @@
   * Now that $C/ARCHIVENAME is correctly read in src/imapd/Makefile and
     src/ipopd/Makefile, check if other parts of 01_shlib.diff is no
     longer needed.
+  * Add note in README.Debian of other packages that more documentation
+    is in libc-clientXXX.
+  * Improve backport-compatibility based on Bug#224237
+  * Change version numbering scheme (again!): 2004debian will be wrongly
+    considered newer than 2004adebian and even 2004ddebian.
+  * Check and eliminate all FIXMEs and TODOs within scripts.

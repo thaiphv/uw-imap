@@ -1,65 +1,78 @@
+# uw-imap translation to spanish
+# Copyright (C) 2004 Software in the Public Interest
+# This file is distributed under the same license as the uw-imap package.
 #
-#    Translators, if you are not familiar with the PO format, gettext
-#    documentation is worth reading, especially sections dedicated to
-#    this format, e.g. by running:
+# Changes:
+# - Initial translation
+#       Carlos Galisteo de Cabo <cgalisteo@k-rolus.net>, 2004
+# - Reviewed
+#       Rubén Porras Campo <nahoo@inicia.es>, 2004
+#
+#  Traductores, si no conoce el formato PO, merece la pena leer la
+#  documentación de gettext, especialmente las secciones dedicadas a este
+#  formato, por ejemplo ejecutando:
 #         info -n '(gettext)PO Files'
 #         info -n '(gettext)Header Entry'
 #
-#    Some information specific to po-debconf are available at
-#            /usr/share/doc/po-debconf/README-trans
-#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+# Equipo de traducción al español, por favor lean antes de traducir
+# los siguientes documentos:
 #
-#    Developers do not need to manually edit POT or PO files.
+# - El proyecto de traducción de Debian al español
+#   http://www.debian.org/intl/spanish/coordinacion
+#   especialmente las notas de traducción en
+#   http://www.debian.org/intl/spanish/notas
+#
+# - La guía de traducción de po's de debconf:
+#   /usr/share/doc/po-debconf/README-trans
+#   o http://www.debian.org/intl/l10n/po-debconf/README-trans
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: uw-imap 7:2002edebian1-3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-03 17:51+0100\n"
-"PO-Revision-Date: 2004-04-03 11:54+0900\n"
-"Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
-"Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
+"PO-Revision-Date: 2004-08-29 21:01+0200\n"
+"Last-Translator: Carlos Galisteo <cgalisteo@k-rolus.net>\n"
+"Language-Team: Debian l10n spanish <debian-l10n-spanish@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=EUC-JP\n"
+"Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
 msgid "Which ports should the server listen on?"
-msgstr "¥µ¡¼¥Ð¤Ç¤É¤Î¥Ý¡¼¥È¤ò¥ê¥¹¥ó¤·¤Þ¤¹¤«?"
+msgstr "¿En qué puertos debe escuchar el servidor?"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
-msgstr ""
-"pop2  = TCP ¥Ý¡¼¥È 109 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥Ý¡¼¥ÈÉÕ¤­ POP 2¡£¤³¤ì¤Ï¤â¤¦»þÂåÃÙ¤ì"
-"¤Î¤â¤Î¤Ç¤¹¡£"
+msgstr "pop2 = POP 2 en el puerto TCP 109 con soporte para TLS. Obsoleto."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop3  = POP 3 on TCP port 110 with TLS support."
-msgstr "pop3  = TCP ¥Ý¡¼¥È 110 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥Ý¡¼¥ÈÉÕ¤­ POP 3¡£"
+msgstr "pop3 = POP 3 en el puerto TCP 110 con soporte para TLS."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop3s = POP 3 on TCP port 995 with SSL support."
-msgstr "pop3s = TCP ¥Ý¡¼¥È 995 ¤ÇÆ°ºî¤¹¤ë SSL ¥µ¥Ý¡¼¥ÈÉÕ¤­ POP 3¡£"
+msgstr "pop3s = POP 3 en el puerto TCP 995 con soporte para SSL."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "If in doubt, choose pop3 and pop3s."
-msgstr "¤è¤¯¤ï¤«¤é¤Ê¤±¤ì¤Ð¡¢pop3 ¤È pop3s ¤òÁª¤ó¤Ç¤¯¤À¤µ¤¤¡£"
+msgstr "Si tiene dudas, elija pop3 y pop3s."
 
 #. Type: boolean
 #. Description
 #: ../libc-client__VER__.templates.in.master:4
 msgid "Continue installing libc-client without Maildir support?"
-msgstr "Maildir ¥µ¥Ý¡¼¥È¤Ê¤·¤Ç libc-client ¤Î¥¤¥ó¥¹¥È¡¼¥ë¤òÂ³¤±¤Þ¤¹¤«?"
+msgstr "¿Continuar instalando libc-client sin soporte para Maildir?"
 
 #. Type: boolean
 #. Description
@@ -71,18 +84,19 @@ msgid ""
 "changed your system configuration or other installed programs depend on libc-"
 "client then upgrading may result in broken mail handling."
 msgstr ""
-"libc-client ¤Î¥Ð¡¼¥¸¥ç¥ó 2002d °Ê²¼ (¤ª¤è¤Ó 2003 ¤Î³«È¯¥Ð¡¼¥¸¥ç¥ó) ¤Ç¤Ï "
-"Maildirs ¤ò¥µ¥Ý¡¼¥È¤¹¤ëÈó¸ø¼°¤Ç¤â¤¦¥á¥ó¥Æ¥Ê¥ó¥¹¤µ¤ì¤Æ¤¤¤Ê¤¤¥Ñ¥Ã¥Á¤¬´Þ¤Þ¤ì¤Æ¤¤"
-"¤Þ¤·¤¿¡£¥Ç¥Õ¥©¥ë¥È¤Ç¤Ï uw-imapd ¤ä ipopd ¤Ç¤Ï Maildirs ¤ò»È¤¤¤Þ¤»¤ó¤¬¡¢¥·¥¹¥Æ"
-"¥àÀßÄê¤òÊÑ¹¹¤·¤Æ¤¤¤¿¤ê¡¢¤½¤ÎÂ¾¤Î¥¤¥ó¥¹¥È¡¼¥ëºÑ¤ß¥×¥í¥°¥é¥à¤¬ libc-client ¤Ë°Í"
-"Â¸¤·¤Æ¤¤¤ë¤Î¤Ç¤¢¤ì¤Ð¡¢¤³¤Î¹¹¿·¤Ï¥á¡¼¥ëÁàºî¤Ë¾ã³²¤ò¤â¤¿¤é¤¹·ë²Ì¤È¤Ê¤ê¤Þ¤¹¡£"
+"Las libc-client anteriores a la versión 2002d (y versiones de desarrollo de "
+"2003) incluyen un parche no oficial sin mantenimiento en la actualidad para "
+"soportar Maildirs. Por omisión uw-imapd o ipopd no usan Maildirs, pero si ha "
+"cambiado la configuración de su sistema u otros programas instalados "
+"dependen de libc-client la actualización puede provocar una gestión del "
+"correo errónea. "
 
 #. Type: boolean
 #. Description
 #: ../libc-client__VER__.templates.in.master:4
 msgid ""
 "Do you want to continue installing a libc-client without Maildir support?"
-msgstr "Maildir ¥µ¥Ý¡¼¥È¤Ê¤·¤Ç libc-client ¤Î¥¤¥ó¥¹¥È¡¼¥ë¤òÂ³¤±¤Þ¤¹¤«?"
+msgstr "¿Quiere continuar instalando una libc-client sin soporte para Maildir?"
 
 #. Type: multiselect
 #. Description
@@ -91,28 +105,26 @@ msgid ""
 "imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
 "support."
 msgstr ""
-"imap2 = TCP ¥Ý¡¼¥È 143 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥Ý¡¼¥ÈÉÕ¤­ IMAP 4Rev1 (´ñÌ¯¤Ê¤³¤È¤Ç¤¹"
-"¤¬ 2 ¤Ç¤Ï¤¢¤ê¤Þ¤»¤ó)¡£"
+"imap2 = IMAP 4Rev1 (no 2, extrañamente) en el puerto TCP 143 con soporte "
+"para TLS"
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
-msgstr ""
-"imap3 = TCP ¥Ý¡¼¥È 220 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥Ý¡¼¥ÈÉÕ¤­ IMAP 3¡£¤³¤ì¤Ï¤â¤¦»þÂåÃÙ¤ì"
-"¤Î¤â¤Î¤Ç¤¹¡£"
+msgstr "imap3 = IMAP 3 en el puerto TCP 220 con soporte para TLS. Obsoleto."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
-msgstr "imaps = TCP ¥Ý¡¼¥È 993 ¤ÇÆ°ºî¤¹¤ë SSL ¥µ¥Ý¡¼¥ÈÉÕ¤­ IMAP 4Rev1¡£"
+msgstr "imaps = IMAP 4Rev1 en el puerto TCP 993 con soporte para SSL."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "If in doubt, pick imap2 and imaps."
-msgstr "¤è¤¯¤ï¤«¤é¤Ê¤±¤ì¤Ð¡¢imap2 ¤È imaps ¤òÁª¤ó¤Ç¤¯¤À¤µ¤¤¡£"
+msgstr "Si tiene dudas, escoja imap2 e imaps."
 
 #~ msgid "pop2, pop3, pop3s"
 #~ msgstr "pop2, pop3, pop3s"
@@ -121,7 +133,7 @@ msgstr "¤è¤¯¤ï¤«¤é¤Ê¤±¤ì¤Ð¡¢imap2 ¤È imaps ¤òÁª¤ó¤Ç¤¯¤À¤µ¤¤¡£"
 #~ msgstr "imap2, imap3, imaps"
 
 #~ msgid "Allow insecure authentication using plaintext passwords?"
-#~ msgstr "¥×¥ì¥¤¥ó¥Æ¥­¥¹¥È¥Ñ¥¹¥ï¡¼¥É¤ò»È¤Ã¤¿°ÂÁ´¤Ç¤Ê¤¤Ç§¾Ú¤òµö²Ä¤·¤Þ¤¹¤«?"
+#~ msgstr "¿Permitir autenticación insegura usando contraseñas en texto plano?"
 
 #~ msgid ""
 #~ "The use of unencrypted plaintext passwords is generally insecure, and the "
@@ -132,21 +144,22 @@ msgstr "¤è¤¯¤ï¤«¤é¤Ê¤±¤ì¤Ð¡¢imap2 ¤È imaps ¤òÁª¤ó¤Ç¤¯¤À¤µ¤¤¡£"
 #~ "official /etc/c-client.cf configuration file.  Read more about this in /"
 #~ "usr/share/doc/libc-client__VER__/README.Debian."
 #~ msgstr ""
-#~ "°Å¹æ²½¤µ¤ì¤Æ¤¤¤Ê¤¤¥×¥ì¥¤¥ó¥Æ¥­¥¹¥È¥Ñ¥¹¥ï¡¼¥É¤Î»ÈÍÑ¤Ï°ìÈÌ¤Ë°ÂÁ´¤Ç¤Ê¤¯¡¢"
-#~ "libc-client ¤Î¸½ºß¤Î¥Ð¡¼¥¸¥ç¥ó¤Ç¤Ï¥Ç¥Õ¥©¥ë¥È¤Ç TLS ¤Þ¤¿¤Ï SSL ÀÜÂ³¤Î¤¤¤º¤ì"
-#~ "¤«¤ò·ÐÍ³¤·¤Æ¤Î¥Í¥Ã¥È¥ï¡¼¥¯¥¢¥¯¥»¥¹¤Î¤ß¤Ëµö²Ä¤µ¤ì¤Æ¤¤¤Þ¤¹¡£¤³¤ì¤Ï¥Í¥Ã¥È¥ï¡¼"
-#~ "¥¯·ÐÍ³¤Ç¥á¡¼¥ë¤Ë¥¢¥¯¥»¥¹¤¹¤ë¤¿¤á¤Ë libc-client ¤ò»È¤¦ uw-imapd¡¢ipopd ¤ª¤è"
-#~ "¤Ó¤½¤ÎÂ¾¤Î¥×¥í¥°¥é¥à¤ËÇÈµÚ¤·¤Þ¤¹¡£¤¿¤À¤·¡¢¤³¤Îµ¡Ç½¤Ï¡¢½à¸ø¼°¤Î /etc/c-"
-#~ "client.cf ÀßÄê¥Õ¥¡¥¤¥ë¤ò»È¤Ã¤ÆÊÑ¹¹¤Ç¤­¤Þ¤¹¡£¾ÜºÙ¤Ë¤Ä¤¤¤Æ¤Ï /usr/share/doc/"
-#~ "libc-client__VER__/README.Debian ¤ò»²¾È¤·¤Æ¤¯¤À¤µ¤¤¡£"
+#~ "El uso de contraseñas en texto plano sin cifrar es generalmente inseguro, "
+#~ "y la versión actual de libc-client por omisión sólo permite acceso por "
+#~ "red desde conexiones TLS o SSL. Esto afecta a uw-imap, ipopd y cualquier "
+#~ "otro programa que use libc-client para acceder al correo a través de la "
+#~ "red. No obstante esta funcionalidad puede cambiarse usando el archivo de "
+#~ "configuración semi-oficial /etc/client.cf. Lea más acerca de esto en /usr/"
+#~ "share/doc/libc-client__VER__/README.Debian."
 
 #~ msgid ""
 #~ "Do you want to allow email access authentication using insecure plaintext "
 #~ "passwords?"
 #~ msgstr ""
-#~ "°ÂÁ´¤Ç¤Ê¤¤¥×¥ì¥¤¥ó¥Æ¥­¥¹¥È¥Ñ¥¹¥ï¡¼¥É¤ò»È¤Ã¤¿¥á¡¼¥ë¥¢¥¯¥»¥¹Ç§¾Ú¤òµö²Ä¤·¤Þ¤¹"
-#~ "¤«?"
+#~ "¿Quiere permitir el acceso al correo usando contraseñas inseguras en "
+#~ "texto plano?"
 
 #~ msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
 #~ msgstr ""
-#~ "Ãí°Õ: cram-md5 ¥Ñ¥¹¥ï¡¼¥É¤Ï¥×¥ì¥¤¥ó¥Æ¥­¥¹¥È¥Ñ¥¹¥ï¡¼¥É¤È¤·¤Æ°·¤ï¤ì¤Þ¤¹!"
+#~ "Nota: ¡Las contraseñas cramd-md5 se tratan como contraseñas en texto "
+#~ "plano!"

@@ -1,9 +1,6 @@
 Template: ipopd/protocol
 Type: multiselect
 Choices: pop2, pop3, pop3s
-Choices-da: pop2, pop3, pop3s
-Choices-ja: pop2, pop3, pop3s
-Choices-pt_BR: pop2, pop3, pop3s
 Default: pop3, pop3s
 Description: Which ports should the server listen on?
  pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete.
@@ -13,6 +10,22 @@ Description: Which ports should the server listen on?
  pop3s = POP 3 on TCP port 995 with SSL support.
  .
  If in doubt, choose pop3 and pop3s.
+Description-ca: Quins ports ha d'escoltar el servidor?
+ pop2= El POP 2 al port de TCP 109 amb el suport de TLS. Està obsolet.
+ .
+ pop3 = El POP 3 al port de TCP 110 amb el suport de TLS.
+ .
+ pop3s = El POP 3 al port de TCP 995 amb el suport d'SSL.
+ .
+ Si dubteu escolliu el pop3 i el pop3s.
+Description-cs: Na kterých portech má server naslouchat?
+ pop2  = POP 2 na TCP portu 109 s podporou TLS. Tento je zastaralý.
+ .
+ pop3  = POP 3 na TCP portu 110 s podporou TLS.
+ .
+ pop3s = POP 3 na TCP portu 995 s podporou SSL.
+ .
+ Pokud si nejste jisti, vyberte pop3 a pop3s.
 Description-da: Hvilke porte skal serveren lytte på?
  pop2 = POP 2 på TCP port 109 med TLS-understøttelse. Dette er forældet.
  .
@@ -21,6 +34,22 @@ Description-da: Hvilke porte skal serveren lytte på?
  pop3s = POP 3 på TCP port 995 med SSL-understøttelse.
  .
  Er du i tvivl så vælg pop3 og pop3s.
+Description-es: ¿En qué puertos debe escuchar el servidor?
+ pop2 = POP 2 en el puerto TCP 109 con soporte para TLS. Obsoleto.
+ .
+ pop3 = POP 3 en el puerto TCP 110 con soporte para TLS.
+ .
+ pop3s = POP 3 en el puerto TCP 995 con soporte para SSL.
+ .
+ Si tiene dudas, elija pop3 y pop3s.
+Description-fr: Ports où le serveur doit être à l'écoute :
+ POP2  - port TCP 109 avec gestion TLS. Ce choix est obsolète.
+ .
+ POP3  - port TCP 110 avec gestion TLS.
+ .
+ POP3S - port TCP 995 avec gestion SSL.
+ .
+ Dans le doute, vous devriez choisir POP3 et POP3S.
 Description-ja: ¥µ¡¼¥Ð¤Ç¤É¤Î¥Ý¡¼¥È¤ò¥ê¥¹¥ó¤·¤Þ¤¹¤«?
  pop2  = TCP ¥Ý¡¼¥È 109 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥Ý¡¼¥ÈÉÕ¤­ POP
  2¡£¤³¤ì¤Ï¤â¤¦»þÂåÃÙ¤ì¤Î¤â¤Î¤Ç¤¹¡£
@@ -38,3 +67,12 @@ Description-pt_BR: Em quais portas o servidor deve ouvir ?
  pop3s = POP 3 na porta TCP 995 com suporte SSL.
  .
  Em caso de dúvidas, escolha pope 3 pop3s.
+Description-tr: Sunucu hangi portlarý dinlemeli?
+ pop2 =  TCP port 109 üzerinde TLS desteðiyle POP 2.  Bu ayar artýk
+ eskimiþtir.
+ .
+ pop3  = TCP port 110 üzerinde TLS desteði ile POP 3.
+ .
+ pop3s = TCP port 995 üzerinde SSL desteði ile POP 3.
+ .
+ Eðer kararsýz kaldýysanýz, pop3 ve pop3s'i seçiniz.

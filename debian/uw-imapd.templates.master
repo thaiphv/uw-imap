@@ -1,6 +1,6 @@
 Template: uw-imapd/protocol
 Type: multiselect
-_Choices: imap2, imap3, imaps
+Choices: imap2, imap3, imaps
 Default: imap2, imaps
 _Description: Which ports should the server listen on?
  imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS

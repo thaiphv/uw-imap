@@ -1,0 +1,24 @@
+--- uw-imap-2002edebian1.orig/src/dmail/dmail.1
++++ uw-imap-2002edebian1/src/dmail/dmail.1
+@@ -1,4 +1,4 @@
+-.TH DMAIL LOCAL "Version 2003"
++.TH DMAIL 1 "Version 2003"
+ .SH NAME
+ dmail \- procmail Mail Delivery Module
+ .nh
+--- uw-imap-2002edebian1.orig/src/mailutil/mailutil.1
++++ uw-imap-2002edebian1/src/mailutil/mailutil.1
+@@ -1,4 +1,4 @@
+-.TH mailutil LOCAL "31 January 2003" 
++.TH mailutil 1 "31 January 2003" 
+ .SH NAME
+ mailutil - mail utility program
+ .nh
+--- uw-imap-2002edebian1.orig/src/tmail/tmail.1
++++ uw-imap-2002edebian1/src/tmail/tmail.1
+@@ -1,4 +1,4 @@
+-.TH TMAIL LOCAL "Version 4.1"
++.TH TMAIL 1 "Version 4.1"
+ .SH NAME
+ tmail \- Mail Delivery Module
+ .nh

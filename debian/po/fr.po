@@ -1,61 +1,65 @@
-# Translators, if you are not familiar with the PO format, gettext
-# documentation is worth reading, especially sections dedicated to
-# this format, e.g. by running:
-# info -n '(gettext)PO Files'
-# info -n '(gettext)Header Entry'
-# Some information specific to po-debconf are available at
-# /usr/share/doc/po-debconf/README-trans
-# or http://www.debian.org/intl/l10n/po-debconf/README-trans
-# Developers do not need to manually edit POT or PO files.
-# 
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: uw-imap 2002edebian1\n"
+"Project-Id-Version: uw-imap\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-03 17:51+0100\n"
-"PO-Revision-Date: 2004-10-11 12:16+0200\n"
-"Last-Translator: Morten Brix Pedersen <morten@wtf.dk>\n"
-"Language-Team: Danish <dansk@klid.dk>\n"
+"PO-Revision-Date: 2004-03-27 12:19+0100\n"
+"Last-Translator: Christian Perrier <bubulle@debian.org>\n"
+"Language-Team: French <debian-l10n-french@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
 msgid "Which ports should the server listen on?"
-msgstr "Hvilke porte skal serveren lytte p√•?"
+msgstr "Ports o˘ le serveur doit Ítre ‡ l'Ècoute†:"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
-msgstr ""
-"pop2 = POP 2 p√• TCP port 109 med TLS-underst√∏ttelse. Dette er for√¶ldet."
+msgstr "POP2  - port TCP 109 avec gestion TLS. Ce choix est obsolËte."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop3  = POP 3 on TCP port 110 with TLS support."
-msgstr "pop3 = POP 3 p√• TCP port 110 med TLS-underst√∏ttelse."
+msgstr "POP3  - port TCP 110 avec gestion TLS."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop3s = POP 3 on TCP port 995 with SSL support."
-msgstr "pop3s = POP 3 p√• TCP port 995 med SSL-underst√∏ttelse."
+msgstr "POP3S - port TCP 995 avec gestion SSL."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "If in doubt, choose pop3 and pop3s."
-msgstr "Er du i tvivl s√• v√¶lg pop3 og pop3s."
+msgstr "Dans le doute, vous devriez choisir POP3 et POP3S."
 
 #. Type: boolean
 #. Description
 #: ../libc-client__VER__.templates.in.master:4
 msgid "Continue installing libc-client without Maildir support?"
-msgstr "Forts√¶t installation af libc-client uden underst√∏ttelse for Maildir?"
+msgstr ""
+"Faut-il poursuivre l'installation de libc-client sans gestion de "
+"´†Maildir†ª†?"
 
 #. Type: boolean
 #. Description
@@ -67,12 +71,13 @@ msgid ""
 "changed your system configuration or other installed programs depend on libc-"
 "client then upgrading may result in broken mail handling."
 msgstr ""
-"Libc-client tidligere end version 2002d (og udvikler-versioner af 2003) "
-"indeholdt en uofficiel og ikke l√¶ngere vedligeholdt rettelse til "
-"underst√∏ttelse af Maildir. Som standard blev Maildir ikke benyttet af uw-"
-"imapd eller ipopd, men hvis du har √¶ndret din systemops√¶tning eller andre "
-"installerede programmer som afh√¶nger af libc-client vil denne opgradering "
-"medf√∏re at fejl i h√•ndtering af emails."
+"Les versions de libc-client antÈrieures ‡ 2002d (et les versions de "
+"dÈveloppement de 2003) incluaient une rustine non officielle et non "
+"maintenue pour la gestion des rÈpertoires de courriel au format ´†Maildir†ª. "
+"Ce format n'Ètait pas celui par dÈfaut pour uw-imapd ou ipopd. Toutefois, si "
+"votre configuration systËme a ÈtÈ modifiÈe ou que d'autres programmes "
+"installÈs dÈpendent de libc-client, la gestion du courriel pourrait Ítre "
+"perturbÈe."
 
 #. Type: boolean
 #. Description
@@ -80,7 +85,8 @@ msgstr ""
 msgid ""
 "Do you want to continue installing a libc-client without Maildir support?"
 msgstr ""
-"Vil du forts√¶tte installation af libc-client uden Maildir underst√∏ttelse?"
+"Veuillez confirmer que vous souhaitez bien installer un libc-client sans "
+"gestion des rÈpertoires de courriel au format Maildir."
 
 #. Type: multiselect
 #. Description
@@ -89,36 +95,37 @@ msgid ""
 "imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
 "support."
 msgstr ""
-"imap2 = IMAP 4Rev1 (ikke 2, sp√∏jst nok) p√• TCP port 143 med TLS-"
-"underst√∏ttelse."
+"IMAP2 - IMAP4 version 1 (et non 2, assez Ètonnamment) sur le port TCP 143, "
+"avec gestion TLS."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
 msgstr ""
-"imap3 = IMAP 3 p√• TCP port 220 med TLS-underst√∏ttelse. Dette er for√¶ldet."
+"IMAP3 - IMAP3 sur le port TCP 220, avec gestion TLS. Ce choix est obsolËte."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
-msgstr "imaps = IMAP 4Rev1 p√• TCP port 993 med SSL-underst√∏ttelse."
+msgstr "IMAPS - IMAP4 version 1 sur le port TCP 993, avec gestion SSL."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "If in doubt, pick imap2 and imaps."
-msgstr "Er du i tvivl s√• v√¶lg imap2 og imaps."
+msgstr "Dans le doute, vous devriez choisir IMAP2 et IMAPS."
 
 #~ msgid "pop2, pop3, pop3s"
-#~ msgstr "pop2, pop3, pop3s"
+#~ msgstr "POP2, POP3, POP3S"
 
 #~ msgid "imap2, imap3, imaps"
-#~ msgstr "imap2, imap3, imaps"
+#~ msgstr "IMAP2, IMAP3, IMAPS"
 
 #~ msgid "Allow insecure authentication using plaintext passwords?"
-#~ msgstr "Tillad usikker godkendelse ved brug af adgangskoder i simpel-tekst?"
+#~ msgstr ""
+#~ "Faut-il autoriser les authentifications avec mots de passe en clair†?"
 
 #~ msgid ""
 #~ "The use of unencrypted plaintext passwords is generally insecure, and the "
@@ -129,21 +136,23 @@ msgstr "Er du i tvivl s√• v√¶lg imap2 og imaps."
 #~ "official /etc/c-client.cf configuration file.  Read more about this in /"
 #~ "usr/share/doc/libc-client__VER__/README.Debian."
 #~ msgstr ""
-#~ "Brugen af ukrypterede simpel-tekst adgangskoder er generelt usikker, og "
-#~ "den nuv√¶rende version af libc-client tillader som standard kun "
-#~ "netv√¶rksadgang med enten TLS eller SSL-forbindelser. Dette p√•virker uw-"
-#~ "imapd, ipopd og mange andre programmer der bruger libc-client for post-"
-#~ "adgang igennem netv√¶rket. Men denne funktionalitet kan √¶ndres ved hj√¶lp "
-#~ "af den semi-officielle /etc/c-client.cf ops√¶tningsfil. L√¶s mere om dette "
-#~ "i /usr/share/doc/libc-client__VER__/README.Debian."
+#~ "L'utilisation de mots de passe non chiffrÈs est considÈrÈe comme peu "
+#~ "s˚re. La version actuelle de libc-client n'autorise par dÈfaut que des "
+#~ "accËs rÈseau via des connexions TLS ou SSL. Cela concerne uw-imapd, ipopd "
+#~ "ainsi que tous les programmes qui utilisent libc-client pour l'accËs au "
+#~ "courriel via le rÈseau. Ce comportement peut toutefois Ítre modifiÈ ‡ "
+#~ "l'aide du fichier de configuration semi-officiel /etc/c-client.cf. Vous "
+#~ "trouverez plus de dÈtails ‡ ce sujet dans le fichier /usr/share/doc/libc-"
+#~ "client__VER__/README.Debian."
 
 #~ msgid ""
 #~ "Do you want to allow email access authentication using insecure plaintext "
 #~ "passwords?"
 #~ msgstr ""
-#~ "Vil du tillade at post-adgangsgodkendelse bruger usikre simpel-tekst "
-#~ "adgangskoder?"
+#~ "Veuillez confirmer que vous souhaitez permettre l'accËs au courriel avec "
+#~ "envoi de mots de passe en clair."
 
 #~ msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
 #~ msgstr ""
-#~ "Note: cramd-md5 adgangskoder h√•ndteres som simpel-tekst adgangskoder."
+#~ "Note†: les mots de passe cramd-md5 sont considÈrÈs comme des mots de "
+#~ "passe en clair."

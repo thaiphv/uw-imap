@@ -3,7 +3,7 @@ Priority: optional
 Section: mail
 Maintainer: Jonas Smedegaard <dr@jones.dk>
 Standards-Version: 3.6.1
-Build-Depends: libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, debhelper (>= 4), d-shlibs (>> 0.13), perl
+Build-Depends: cdbs, dh-buildinfo, libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, debhelper (>= 4.1), d-shlibs (>> 0.13), perl
 
 Package: uw-imapd
 Section: mail
@@ -58,8 +58,7 @@ Description: UW c-client library for mail protocols
 Package: libc-client__VER__
 Section: libs
 Architecture: any
-Depends: ${shlibs:Depends}, libpam-modules, mlock
-Recommends: ${debconf-depends}
+Depends: ${shlibs:Depends}, ${debconf-depends}, libpam-modules, mlock
 Suggests: uw-mailutils
 Description: UW c-client library for mail protocols
  C-client is a library of functions for accessing mail folders and messages.
@@ -102,17 +101,13 @@ Description: C-client support programs from UW
 Package: uw-imapd-ssl
 Section: mail
 Architecture: all
-Depends: uw-imapd (>= 2002.rc7debian )
+Depends: uw-imapd (>= 4:2002.rc7debian )
 Description: Dummy upgrade package for uw-imapd
- Now that the uw-imapd package supports SSL, this package is obsolete.  It is
- being provided solely as a way to seamlessly upgrade to uw-imapd.  Once 
- uw-imapd is installed, you can purge it.
+ This package is obsolete.  Once uw-imapd is installed, you can purge it.
 
 Package: ipopd-ssl
 Section: mail
 Architecture: all
-Depends: ipopd (>= 2002.rc7debian )
+Depends: ipopd (>= 4:2002.rc7debian )
 Description: Dummy upgrade package for ipopd
- Now that the ipopd package supports SSL, this package is obsolete.  It is
- being provided solely as a way to seamlessly upgrade to ipopd.  Once ipopd
- is installed, you can purge it.
+ This package is obsolete.  Once uw-imapd is installed, you can purge it.

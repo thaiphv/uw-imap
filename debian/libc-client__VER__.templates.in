@@ -1,20 +1,3 @@
-Template: libc-client/plaintext
-Type: boolean
-Default: false
-Description: Allow insecure authentication using plaintext passwords?
- The use of unencrypted plaintext passwords is generally insecure, and
- the current version of libc-client by default only allows network
- access through either TLS or SSL connections.  This affects uw-imapd,
- ipopd and any other programs that use libc-client for mail access
- through the network.  However, this functionality can be changed by
- using the semi-official /etc/c-client.cf configuration file.  Read more
- about this in /usr/share/doc/libc-client__VER__/README.Debian.
- .
- Do you want to allow email access authentication using insecure
- plaintext passwords?
- .
- Note: cramd-md5 passwords are treated as plaintext passwords!
-
 Template: libc-client/no_maildir_warning
 Type: boolean
 Default: true
@@ -27,3 +10,69 @@ Description: Continue installing libc-client without Maildir support?
  libc-client then upgrading may result in broken mail handling.
  .
  Do you want to continue installing a libc-client without Maildir support?
+Description-ca: Voleu continuar la instal·lació del libc-client sense el suport del Maildir?
+ Les versions del libc-client anteriors a la 2002d (i les versions de
+ desenvolupament del 2003) incloïen un pedaç no oficial i que ja no és
+ manté per suportar els Maildir. L'uw-imapd i l'ipopd no utilitzen els
+ Maildir per defecte, però si heu canviat la configuració del sistema o
+ d'altres programes instal·lats depenen del libc-client l'actualització pot
+ induir a errors en la gestió del correu.
+ .
+ Voleu continuar la instal·lació d'un libc-client sense el suport del
+ Maildir?
+Description-cs: Pokraèovat v instalaci libc-client bez podpory Maildiru?
+ Libc-client døívìj¹í ne¾ verze 2002d (a vývojové verze 2003) obsahovaly
+ neoficiální záplatu pro podporu scchránek typu Maildir. Implicitnì se tyto
+ schránky nepou¾ívaly ani v uw-imapd ani v ipopd. Pokud jste ale zmìnili
+ nastavení, nebo pokud na libc-client závisí jiné instalované programy, tak
+ se mù¾e stát, ¾e aktualizace programu zpùsobí poru¹ené zpracování po¹ty.
+ .
+ Chcete pokraèovat v instalaci libc-client bez podpory Maildiru?
+Description-da: Fortsæt installation af libc-client uden understøttelse for Maildir?
+ Libc-client tidligere end version 2002d (og udvikler-versioner af 2003)
+ indeholdt en uofficiel og ikke længere vedligeholdt rettelse til
+ understøttelse af Maildir. Som standard blev Maildir ikke benyttet af
+ uw-imapd eller ipopd, men hvis du har ændret din systemopsætning eller
+ andre installerede programmer som afhænger af libc-client vil denne
+ opgradering medføre at fejl i håndtering af emails.
+ .
+ Vil du fortsætte installation af libc-client uden Maildir understøttelse?
+Description-es: ¿Continuar instalando libc-client sin soporte para Maildir?
+ Las libc-client anteriores a la versión 2002d (y versiones de desarrollo
+ de 2003) incluyen un parche no oficial sin mantenimiento en la actualidad
+ para soportar Maildirs. Por omisión uw-imapd o ipopd no usan Maildirs,
+ pero si ha cambiado la configuración de su sistema u otros programas
+ instalados dependen de libc-client la actualización puede provocar una
+ gestión del correo errónea. 
+ .
+ ¿Quiere continuar instalando una libc-client sin soporte para Maildir?
+Description-fr: Faut-il poursuivre l'installation de libc-client sans gestion de « Maildir » ?
+ Les versions de libc-client antérieures à 2002d (et les versions de
+ développement de 2003) incluaient une rustine non officielle et non
+ maintenue pour la gestion des répertoires de courriel au format
+ « Maildir ». Ce format n'était pas celui par défaut pour uw-imapd ou
+ ipopd. Toutefois, si votre configuration système a été modifiée ou que
+ d'autres programmes installés dépendent de libc-client, la gestion du
+ courriel pourrait être perturbée.
+ .
+ Veuillez confirmer que vous souhaitez bien installer un libc-client sans
+ gestion des répertoires de courriel au format Maildir.
+Description-ja: Maildir ¥µ¥Ý¡¼¥È¤Ê¤·¤Ç libc-client ¤Î¥¤¥ó¥¹¥È¡¼¥ë¤òÂ³¤±¤Þ¤¹¤«?
+ libc-client ¤Î¥Ð¡¼¥¸¥ç¥ó 2002d °Ê²¼ (¤ª¤è¤Ó 2003 ¤Î³«È¯¥Ð¡¼¥¸¥ç¥ó) ¤Ç¤Ï
+ Maildirs
+ ¤ò¥µ¥Ý¡¼¥È¤¹¤ëÈó¸ø¼°¤Ç¤â¤¦¥á¥ó¥Æ¥Ê¥ó¥¹¤µ¤ì¤Æ¤¤¤Ê¤¤¥Ñ¥Ã¥Á¤¬´Þ¤Þ¤ì¤Æ¤¤¤Þ¤·¤¿¡£¥Ç¥Õ¥©¥ë¥È¤Ç¤Ï
+ uw-imapd ¤ä ipopd ¤Ç¤Ï Maildirs
+ ¤ò»È¤¤¤Þ¤»¤ó¤¬¡¢¥·¥¹¥Æ¥àÀßÄê¤òÊÑ¹¹¤·¤Æ¤¤¤¿¤ê¡¢¤½¤ÎÂ¾¤Î¥¤¥ó¥¹¥È¡¼¥ëºÑ¤ß¥×¥í¥°¥é¥à¤¬
+ libc-client
+ ¤Ë°ÍÂ¸¤·¤Æ¤¤¤ë¤Î¤Ç¤¢¤ì¤Ð¡¢¤³¤Î¹¹¿·¤Ï¥á¡¼¥ëÁàºî¤Ë¾ã³²¤ò¤â¤¿¤é¤¹·ë²Ì¤È¤Ê¤ê¤Þ¤¹¡£
+ .
+ Maildir ¥µ¥Ý¡¼¥È¤Ê¤·¤Ç libc-client ¤Î¥¤¥ó¥¹¥È¡¼¥ë¤òÂ³¤±¤Þ¤¹¤«?
+Description-tr: "libc-client" kurulumuna Maildir desteði olmadan devam edilsin mi?
+ Sürüm 2002d'den daha yeni libc-client (ve 2003'ün geliþtirme sürümleri)
+ resmî olmayan ve Maildir desteði için artýk desteklenmeyen bir yama
+ içeriyordu.  Uw-imapd veya ipod öntanýmlý olarak Maildir biçemini
+ kullanmýyordu.  Fakat eðer sistem yapýlandýrmanýzý deðiþtirdiyseniz veya
+ libc-client'a baðýmlý uygulamalar kurduysanýz güncelleþtirme bozuk bir
+ e-posta yönetimine yol açabilir.
+ .
+ "libc-client" kurulumuna Maildir desteði olmadan devam etmek istermisiniz?
