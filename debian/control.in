@@ -2,13 +2,13 @@ Source: uw-imap
 Priority: optional
 Section: mail
 Maintainer: Jonas Smedegaard <dr@jones.dk>
-Standards-Version: 3.6.1
+Standards-Version: 3.6.2
 Build-Depends: cdbs, dh-buildinfo, libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, debhelper (>= 4.1), d-shlibs (>> 0.13), perl
 
 Package: uw-imapd
 Section: mail
 Architecture: any
-Depends: ${shlibs:Depends}, ${debconf-depends}, openssl, libpam-runtime (>= 0.76-13.1)
+Depends: ${shlibs:Depends}, ${debconf-depends}, openssl, libpam-runtime (>= 0.76-13.1), netbase
 Recommends: exim4 | mail-transport-agent
 Suggests: mutt | imap-client, logcheck
 Provides: imap-server
@@ -30,7 +30,7 @@ Description: remote mail folder access server
 Package: ipopd
 Section: mail
 Architecture: any
-Depends: ${shlibs:Depends}, ${debconf-depends}, openssl, libpam-runtime (>= 0.76-13.1)
+Depends: ${shlibs:Depends}, ${debconf-depends}, openssl, libpam-runtime (>= 0.76-13.1), netbase
 Recommends: exim4 | mail-transport-agent
 Conflicts: imap (<< 4.4-1), pop3-server, pop2-server, logcheck (<< 1.1.1-9)
 Provides: pop3-server, pop2-server
@@ -42,6 +42,7 @@ Description: POP2 and POP3 servers from UW
  This server has SSL support built in.
 
 Package: libc-client-dev
+Priority: extra
 Section: libdevel
 Architecture: any
 Depends: libc-client__VER__ (= ${Source-Version}), ${devlibs:Depends}

@@ -1,5 +1,5 @@
 #
-# The PAM configuration file for the UW IMAPd `imap' service
+# The PAM configuration file for the UW IMAPd `__PAMSERVICE__' service
 #
 
 # The standard Unix authentication modules, used with

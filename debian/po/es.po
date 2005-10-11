@@ -28,9 +28,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: uw-imap 7:2002edebian1-3\n"
+"Project-Id-Version: uw-imap_7:2002edebian1-11\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-03 17:51+0100\n"
+"POT-Creation-Date: 2005-03-31 16:55+0200\n"
 "PO-Revision-Date: 2004-08-29 21:01+0200\n"
 "Last-Translator: Carlos Galisteo <cgalisteo@k-rolus.net>\n"
 "Language-Team: Debian l10n spanish <debian-l10n-spanish@lists.debian.org>\n"
@@ -66,13 +66,39 @@ msgstr "pop3s = POP 3 en el puerto TCP 995 con soporte para SSL."
 #. Description
 #: ../ipopd.templates.master:5
 msgid "If in doubt, choose pop3 and pop3s."
-msgstr "Si tiene dudas, elija pop3 y pop3s."
+msgstr "Elija pop3 y pop3s si tiene alguna duda."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid "Enforce port selection?"
+msgstr "¿Desea forzar la selección de puerto?"
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"The ports selected for enabling may be overridden by locally configured "
+"services. By default the port selection is respected only on initial "
+"installs, and is ignored on later reconfiguration."
+msgstr "Los puertos seleccionados para habilitarse pueden ser sobreescritos "
+"por servicios configurados localmente. Por omisión la selección de puertos "
+"se respeta sólo en instalaciones nuevas y se ignora en posteriores "
+"reconfiguraciones."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"Do you want to ignore possible local tweaks and always use selected ports?"
+msgstr "¿Quiere ignorar posibles ajustes locales y usar siempre los puertos "
+"seleccionados?"
 
 #. Type: boolean
 #. Description
 #: ../libc-client__VER__.templates.in.master:4
 msgid "Continue installing libc-client without Maildir support?"
-msgstr "¿Continuar instalando libc-client sin soporte para Maildir?"
+msgstr "¿Desea continuar instalando libc-client sin soporte para Maildir?"
 
 #. Type: boolean
 #. Description
@@ -85,11 +111,11 @@ msgid ""
 "client then upgrading may result in broken mail handling."
 msgstr ""
 "Las libc-client anteriores a la versión 2002d (y versiones de desarrollo de "
-"2003) incluyen un parche no oficial sin mantenimiento en la actualidad para "
-"soportar Maildirs. Por omisión uw-imapd o ipopd no usan Maildirs, pero si ha "
+"2003) incluyen un parche no oficial para soportar «Maildirs» para el que no se "
+"da ya soporte. Por omisión uw-imapd o ipopd no usan «Maildirs», pero si ha "
 "cambiado la configuración de su sistema u otros programas instalados "
-"dependen de libc-client la actualización puede provocar una gestión del "
-"correo errónea. "
+"dependen de libc-client la actualización puede causar problemas en la gestión "
+"del correo. "
 
 #. Type: boolean
 #. Description
@@ -124,42 +150,4 @@ msgstr "imaps = IMAP 4Rev1 en el puerto TCP 993 con soporte para SSL."
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "If in doubt, pick imap2 and imaps."
-msgstr "Si tiene dudas, escoja imap2 e imaps."
-
-#~ msgid "pop2, pop3, pop3s"
-#~ msgstr "pop2, pop3, pop3s"
-
-#~ msgid "imap2, imap3, imaps"
-#~ msgstr "imap2, imap3, imaps"
-
-#~ msgid "Allow insecure authentication using plaintext passwords?"
-#~ msgstr "¿Permitir autenticación insegura usando contraseñas en texto plano?"
-
-#~ msgid ""
-#~ "The use of unencrypted plaintext passwords is generally insecure, and the "
-#~ "current version of libc-client by default only allows network access "
-#~ "through either TLS or SSL connections.  This affects uw-imapd, ipopd and "
-#~ "any other programs that use libc-client for mail access through the "
-#~ "network.  However, this functionality can be changed by using the semi-"
-#~ "official /etc/c-client.cf configuration file.  Read more about this in /"
-#~ "usr/share/doc/libc-client__VER__/README.Debian."
-#~ msgstr ""
-#~ "El uso de contraseñas en texto plano sin cifrar es generalmente inseguro, "
-#~ "y la versión actual de libc-client por omisión sólo permite acceso por "
-#~ "red desde conexiones TLS o SSL. Esto afecta a uw-imap, ipopd y cualquier "
-#~ "otro programa que use libc-client para acceder al correo a través de la "
-#~ "red. No obstante esta funcionalidad puede cambiarse usando el archivo de "
-#~ "configuración semi-oficial /etc/client.cf. Lea más acerca de esto en /usr/"
-#~ "share/doc/libc-client__VER__/README.Debian."
-
-#~ msgid ""
-#~ "Do you want to allow email access authentication using insecure plaintext "
-#~ "passwords?"
-#~ msgstr ""
-#~ "¿Quiere permitir el acceso al correo usando contraseñas inseguras en "
-#~ "texto plano?"
-
-#~ msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
-#~ msgstr ""
-#~ "Nota: ¡Las contraseñas cramd-md5 se tratan como contraseñas en texto "
-#~ "plano!"
+msgstr "Escoja imap2 e imaps si tiene alguna duda."

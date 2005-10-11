@@ -1,64 +1,56 @@
+# Vietnamese translation for UW-IMAP.
+# Copyright © 2005 Free Software Foundation, Inc.
+# Clytie Siddall <clytie@riverland.net.au>, 2005.
 #
-#    Translators, if you are not familiar with the PO format, gettext
-#    documentation is worth reading, especially sections dedicated to
-#    this format, e.g. by running:
-#         info -n '(gettext)PO Files'
-#         info -n '(gettext)Header Entry'
-#
-#    Some information specific to po-debconf are available at
-#            /usr/share/doc/po-debconf/README-trans
-#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
-#
-#    Developers do not need to manually edit POT or PO files.
-#
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: uw-imap 7/2002edebian1-11\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-03-31 16:55+0200\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2005-08-20 12:24+0930\n"
+"Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
+"Language-Team: Vietnamese <gnomevi-list@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"X-Generator: LocFactoryEditor 1.2.2\n"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
 msgid "Which ports should the server listen on?"
-msgstr ""
+msgstr "Trình phục vụ nên lắng nghe những cổng nào?"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
-msgstr ""
+msgstr "pop2 = POP 2 trên cổng TCP 109 với sự hỗ trợ TLS. Nó quá thời."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop3  = POP 3 on TCP port 110 with TLS support."
-msgstr ""
+msgstr "pop3 = POP 3 trên cổng TCP 110 với sự hỗ trợ TLS."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop3s = POP 3 on TCP port 995 with SSL support."
-msgstr ""
+msgstr "pop3s = POP 3 trên cổng TCP 995 với sự hỗ trợ SSL."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "If in doubt, choose pop3 and pop3s."
-msgstr ""
+msgstr "Nếu chưa chắc thì hãy chọn pop3 và pop3s."
 
 #. Type: boolean
 #. Description
 #: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
 msgid "Enforce port selection?"
-msgstr ""
+msgstr "Ép buộc chọn cổng không?"
 
 #. Type: boolean
 #. Description
@@ -67,20 +59,20 @@ msgid ""
 "The ports selected for enabling may be overridden by locally configured "
 "services. By default the port selection is respected only on initial "
 "installs, and is ignored on later reconfiguration."
-msgstr ""
+msgstr "Những cổng được chọn để hiệu lực vẫn còn có thể bị đè bằng dịch vụ đã cấu hình một cách địa phương. Mặc định là lựa chọn cổng được theo chỉ khi cài đặt đầu tiên, rồi bị bỏ qua khi cấu hình sau."
 
 #. Type: boolean
 #. Description
 #: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
 msgid ""
 "Do you want to ignore possible local tweaks and always use selected ports?"
-msgstr ""
+msgstr "Bạn có muốn bỏ qua cách điều chỉnh địa phương có thể, và luôn luôn dùng những cổng được chọn không?"
 
 #. Type: boolean
 #. Description
 #: ../libc-client__VER__.templates.in.master:4
 msgid "Continue installing libc-client without Maildir support?"
-msgstr ""
+msgstr "Tiếp tục cài đặt khách « libc-client » không có hỗ trợ Maildir không?"
 
 #. Type: boolean
 #. Description
@@ -91,14 +83,14 @@ msgid ""
 "By default Maildirs were not used by uw-imapd or ipopd, but if you have "
 "changed your system configuration or other installed programs depend on libc-"
 "client then upgrading may result in broken mail handling."
-msgstr ""
+msgstr "Trình khách « libc-client » trước phiên bản 2002d (và các phiên bản phát triển trong năm 2003) bao gồm một đắp vá không chính thức và không còn được bảo quản lại, để hỗ trợ các Maildir. Mặc định là hai trình nền uw-imapd và ipopd không dùng Maildir, nhưng mà nếu bạn đã sửa đổi cấu hình hệ thống, hoặc nếu chương trình đã cài đặt khác còn phụ thuộc vào « libc-client » thì việc nâng cấp có thể hỏng khả năng quản lý thư tin."
 
 #. Type: boolean
 #. Description
 #: ../libc-client__VER__.templates.in.master:4
 msgid ""
 "Do you want to continue installing a libc-client without Maildir support?"
-msgstr ""
+msgstr "Bạn có muốn tiếp tục cài đặt một trình khách « libc-client » không có sự hỗ trợ Maildir không?"
 
 #. Type: multiselect
 #. Description
@@ -106,22 +98,22 @@ msgstr ""
 msgid ""
 "imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
 "support."
-msgstr ""
+msgstr "imap2 = IMAP 4Rev1 (không phải 2, mà lạ) trên cổng TCP 143 với sự hỗ trợ TLS."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
-msgstr ""
+msgstr "imap3 = IMAP 3 trên cổng TCP 220 với sự hỗ trợ TLS. Nó quá thời."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
-msgstr ""
+msgstr "imaps = IMAP 4Rev1 trên cổng TCP 993 với sự hỗ trợ SSL."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "If in doubt, pick imap2 and imaps."
-msgstr ""
+msgstr "Nếu chưa chắc thì hãy chọn imap2 và imaps."

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: uw-imap\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-03 17:51+0100\n"
+"POT-Creation-Date: 2005-03-31 16:55+0200\n"
 "PO-Revision-Date: 2004-05-15 11:46+0300\n"
 "Last-Translator: Mehmet Türker <mturker@innova.com.tr>\n"
 "Language-Team: Turkish <debian-l10n-turkish@lists.debian.org>\n"
@@ -45,6 +45,28 @@ msgstr "pop3s = TCP port 995 üzerinde SSL desteği ile POP 3."
 #: ../ipopd.templates.master:5
 msgid "If in doubt, choose pop3 and pop3s."
 msgstr "Eğer kararsız kaldıysanız, pop3 ve pop3s'i seçiniz."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid "Enforce port selection?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"The ports selected for enabling may be overridden by locally configured "
+"services. By default the port selection is respected only on initial "
+"installs, and is ignored on later reconfiguration."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"Do you want to ignore possible local tweaks and always use selected ports?"
+msgstr ""
 
 #. Type: boolean
 #. Description

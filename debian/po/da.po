@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: uw-imap 2002edebian1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-03 17:51+0100\n"
-"PO-Revision-Date: 2004-10-11 12:16+0200\n"
+"POT-Creation-Date: 2005-03-31 16:55+0200\n"
+"PO-Revision-Date: 2005-04-06 18:38+0200\n"
 "Last-Translator: Morten Brix Pedersen <morten@wtf.dk>\n"
 "Language-Team: Danish <dansk@klid.dk>\n"
 "MIME-Version: 1.0\n"
@@ -50,6 +50,32 @@ msgstr "pop3s = POP 3 på TCP port 995 med SSL-understøttelse."
 #: ../ipopd.templates.master:5
 msgid "If in doubt, choose pop3 and pop3s."
 msgstr "Er du i tvivl så vælg pop3 og pop3s."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid "Enforce port selection?"
+msgstr "Tving port-valg?"
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"The ports selected for enabling may be overridden by locally configured "
+"services. By default the port selection is respected only on initial "
+"installs, and is ignored on later reconfiguration."
+msgstr ""
+"Portene der er valgt som slået til, kan tilsidesættes ved at "
+"konfigurere services lokalt. Som standard er port valget respekteret "
+"på initielle installationer, og ignoreret ved senere genopsætning."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"Do you want to ignore possible local tweaks and always use selected ports?"
+msgstr ""
+"Vil du ignorere mulige lokale ændringer og altid bruge de valgte porte?"
 
 #. Type: boolean
 #. Description
@@ -110,40 +136,3 @@ msgstr "imaps = IMAP 4Rev1 på TCP port 993 med SSL-understøttelse."
 #: ../uw-imapd.templates.master:5
 msgid "If in doubt, pick imap2 and imaps."
 msgstr "Er du i tvivl så vælg imap2 og imaps."
-
-#~ msgid "pop2, pop3, pop3s"
-#~ msgstr "pop2, pop3, pop3s"
-
-#~ msgid "imap2, imap3, imaps"
-#~ msgstr "imap2, imap3, imaps"
-
-#~ msgid "Allow insecure authentication using plaintext passwords?"
-#~ msgstr "Tillad usikker godkendelse ved brug af adgangskoder i simpel-tekst?"
-
-#~ msgid ""
-#~ "The use of unencrypted plaintext passwords is generally insecure, and the "
-#~ "current version of libc-client by default only allows network access "
-#~ "through either TLS or SSL connections.  This affects uw-imapd, ipopd and "
-#~ "any other programs that use libc-client for mail access through the "
-#~ "network.  However, this functionality can be changed by using the semi-"
-#~ "official /etc/c-client.cf configuration file.  Read more about this in /"
-#~ "usr/share/doc/libc-client__VER__/README.Debian."
-#~ msgstr ""
-#~ "Brugen af ukrypterede simpel-tekst adgangskoder er generelt usikker, og "
-#~ "den nuværende version af libc-client tillader som standard kun "
-#~ "netværksadgang med enten TLS eller SSL-forbindelser. Dette påvirker uw-"
-#~ "imapd, ipopd og mange andre programmer der bruger libc-client for post-"
-#~ "adgang igennem netværket. Men denne funktionalitet kan ændres ved hjælp "
-#~ "af den semi-officielle /etc/c-client.cf opsætningsfil. Læs mere om dette "
-#~ "i /usr/share/doc/libc-client__VER__/README.Debian."
-
-#~ msgid ""
-#~ "Do you want to allow email access authentication using insecure plaintext "
-#~ "passwords?"
-#~ msgstr ""
-#~ "Vil du tillade at post-adgangsgodkendelse bruger usikre simpel-tekst "
-#~ "adgangskoder?"
-
-#~ msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
-#~ msgstr ""
-#~ "Note: cramd-md5 adgangskoder håndteres som simpel-tekst adgangskoder."

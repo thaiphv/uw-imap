@@ -11,3 +11,13 @@ _Description: Which ports should the server listen on?
  imaps = IMAP 4Rev1 on TCP port 993 with SSL support.
  .
  If in doubt, pick imap2 and imaps.
+
+Template: uw-imapd/force_debconf_choice
+Type: boolean
+Default: false
+_Description: Enforce port selection?
+ The ports selected for enabling may be overridden by locally configured
+ services. By default the port selection is respected only on initial
+ installs, and is ignored on later reconfiguration.
+ .
+ Do you want to ignore possible local tweaks and always use selected ports?

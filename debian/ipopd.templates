@@ -10,69 +10,144 @@ Description: Which ports should the server listen on?
  pop3s = POP 3 on TCP port 995 with SSL support.
  .
  If in doubt, choose pop3 and pop3s.
-Description-ca: Quins ports ha d'escoltar el servidor?
- pop2= El POP 2 al port de TCP 109 amb el suport de TLS. Est� obsolet.
+Description-ca.UTF-8: Quins ports ha d'escoltar el servidor?
+ pop2= El POP 2 al port de TCP 109 amb el suport de TLS. Està obsolet.
  .
  pop3 = El POP 3 al port de TCP 110 amb el suport de TLS.
  .
  pop3s = El POP 3 al port de TCP 995 amb el suport d'SSL.
  .
  Si dubteu escolliu el pop3 i el pop3s.
-Description-cs: Na kter�ch portech m� server naslouchat?
- pop2  = POP 2 na TCP portu 109 s podporou TLS. Tento je zastaral�.
+Description-cs.UTF-8: Na kterých portech má server naslouchat?
+ pop2  = POP 2 na TCP portu 109 s podporou TLS. Tento je zastaralý.
  .
  pop3  = POP 3 na TCP portu 110 s podporou TLS.
  .
  pop3s = POP 3 na TCP portu 995 s podporou SSL.
  .
  Pokud si nejste jisti, vyberte pop3 a pop3s.
-Description-da: Hvilke porte skal serveren lytte p�?
- pop2 = POP 2 p� TCP port 109 med TLS-underst�ttelse. Dette er for�ldet.
+Description-da.UTF-8: Hvilke porte skal serveren lytte på?
+ pop2 = POP 2 på TCP port 109 med TLS-understøttelse. Dette er forældet.
  .
- pop3 = POP 3 p� TCP port 110 med TLS-underst�ttelse.
+ pop3 = POP 3 på TCP port 110 med TLS-understøttelse.
  .
- pop3s = POP 3 p� TCP port 995 med SSL-underst�ttelse.
+ pop3s = POP 3 på TCP port 995 med SSL-understøttelse.
  .
- Er du i tvivl s� v�lg pop3 og pop3s.
-Description-es: �En qu� puertos debe escuchar el servidor?
+ Er du i tvivl så vælg pop3 og pop3s.
+Description-es.UTF-8: ¿En qué puertos debe escuchar el servidor?
  pop2 = POP 2 en el puerto TCP 109 con soporte para TLS. Obsoleto.
  .
  pop3 = POP 3 en el puerto TCP 110 con soporte para TLS.
  .
  pop3s = POP 3 en el puerto TCP 995 con soporte para SSL.
  .
- Si tiene dudas, elija pop3 y pop3s.
-Description-fr: Ports o� le serveur doit �tre � l'�coute�:
- POP2  - port TCP 109 avec gestion TLS. Ce choix est obsol�te.
+ Elija pop3 y pop3s si tiene alguna duda.
+Description-fr.UTF-8: Ports où le serveur doit être à l'écoute :
+ POP2  - port TCP 109 avec gestion TLS. Ce choix est obsolète.
  .
  POP3  - port TCP 110 avec gestion TLS.
  .
  POP3S - port TCP 995 avec gestion SSL.
  .
  Dans le doute, vous devriez choisir POP3 et POP3S.
-Description-ja: �����ФǤɤΥݡ��Ȥ�ꥹ�󤷤ޤ���?
- pop2  = TCP �ݡ��� 109 ��ư��� TLS ���ݡ����դ� POP
- 2������Ϥ⤦�����٤�Τ�ΤǤ���
+Description-ja.UTF-8: サーバでどのポートをリスンしますか?
+ pop2  = TCP ポート 109 で動作する TLS サポート付き POP
+ 2。これはもう時代遅れのものです。
  .
- pop3  = TCP �ݡ��� 110 ��ư��� TLS ���ݡ����դ� POP 3��
+ pop3  = TCP ポート 110 で動作する TLS サポート付き POP 3。
  .
- pop3s = TCP �ݡ��� 995 ��ư��� SSL ���ݡ����դ� POP 3��
+ pop3s = TCP ポート 995 で動作する SSL サポート付き POP 3。
  .
- �褯�狼��ʤ���С�pop3 �� pop3s ������Ǥ���������
-Description-pt_BR: Em quais portas o servidor deve ouvir ?
- pop2 = POP 2 na porta TCP 109 com suporte TLS. Isto � obsoleto.
+ よくわからなければ、pop3 と pop3s を選んでください。
+Description-pt_BR.UTF-8: Em quais portas o servidor deve ouvir ?
+ pop2 = POP 2 na porta TCP 109 com suporte TLS. Isto é obsoleto.
  .
  pop3 = POP 3 na porta TCP 110 com suporte TLS.
  .
  pop3s = POP 3 na porta TCP 995 com suporte SSL.
  .
- Em caso de d�vidas, escolha pope 3 pop3s.
-Description-tr: Sunucu hangi portlar� dinlemeli?
- pop2 =  TCP port 109 �zerinde TLS deste�iyle POP 2.  Bu ayar art�k
- eskimi�tir.
+ Em caso de dúvidas, escolha pope 3 pop3s.
+Description-sv.UTF-8: Vilka portar ska servern lyssna på?
+ pop2 =  POP 2 på TCP port 109 med TLS-stöd.  Denna är föråldrad.
  .
- pop3  = TCP port 110 �zerinde TLS deste�i ile POP 3.
+ pop3  = POP 3 på TCP port 110 med TLS-stöd.
  .
- pop3s = TCP port 995 �zerinde SSL deste�i ile POP 3.
+ pop3s = POP 3 på TCP port 995 med SSL-stöd.
  .
- E�er karars�z kald�ysan�z, pop3 ve pop3s'i se�iniz.
+ Om du är osäker, välj pop3 och pop3s.
+Description-tr.UTF-8: Sunucu hangi portları dinlemeli?
+ pop2 =  TCP port 109 üzerinde TLS desteğiyle POP 2.  Bu ayar artık
+ eskimiştir.
+ .
+ pop3  = TCP port 110 üzerinde TLS desteği ile POP 3.
+ .
+ pop3s = TCP port 995 üzerinde SSL desteği ile POP 3.
+ .
+ Eğer kararsız kaldıysanız, pop3 ve pop3s'i seçiniz.
+Description-vi.UTF-8: Trình phục vụ nên lắng nghe những cổng nào?
+ pop2 = POP 2 trên cổng TCP 109 với sự hỗ trợ TLS. Nó quá
+ thời.
+ .
+ pop3 = POP 3 trên cổng TCP 110 với sự hỗ trợ TLS.
+ .
+ pop3s = POP 3 trên cổng TCP 995 với sự hỗ trợ SSL.
+ .
+ Nếu chưa chắc thì hãy chọn pop3 và pop3s.
+
+Template: ipopd/force_debconf_choice
+Type: boolean
+Default: false
+Description: Enforce port selection?
+ The ports selected for enabling may be overridden by locally configured
+ services. By default the port selection is respected only on initial
+ installs, and is ignored on later reconfiguration.
+ .
+ Do you want to ignore possible local tweaks and always use selected ports?
+Description-cs.UTF-8: Vynutit výběr portů?
+ Vybrané porty mohou být přepsány lokálně nastavenými službami.
+ Implicitně se výběr portů respektuje pouze při úvodní instalaci,
+ ale ne při pozdějších rekonfiguracích.
+ .
+ Chcete ignorovat potenciální místní úpravy a vždy používat
+ vybrané porty?
+Description-da.UTF-8: Tving port-valg?
+ Portene der er valgt som slået til, kan tilsidesættes ved at konfigurere
+ services lokalt. Som standard er port valget respekteret på initielle
+ installationer, og ignoreret ved senere genopsætning.
+ .
+ Vil du ignorere mulige lokale ændringer og altid bruge de valgte porte?
+Description-es.UTF-8: ¿Desea forzar la selección de puerto?
+ Los puertos seleccionados para habilitarse pueden ser sobreescritos por
+ servicios configurados localmente. Por omisión la selección de puertos
+ se respeta sólo en instalaciones nuevas y se ignora en posteriores
+ reconfiguraciones.
+ .
+ ¿Quiere ignorar posibles ajustes locales y usar siempre los puertos
+ seleccionados?
+Description-fr.UTF-8: Faut-il appliquer le choix des ports ?
+ Les ports choisis pour être activés peuvent être remplacés par des
+ services locaux. Le choix des ports n'est respecté, par défaut, que lors
+ de l'installation initiale et est ignoré lors des reconfigurations
+ ultérieures.
+ .
+ Veuillez confirmer si vous préférez ignorer les modifications locales et
+ toujours utiliser les ports choisis.
+Description-ja.UTF-8: ポートの選択を強制しますか?
+ 有効として選択されたポートは、ローカルに設定されたサービスによって上書きされる可能性があります。デフォルトでは、ポートの選択は初期インストールのときのみ尊重され、その後の再設定では無視されます。
+ .
+ ローカル調整の可能性を無視して、常に選択されたポートを使いますか?
+Description-sv.UTF-8: Framtvinga portval?
+ Portarna som valts för aktivering kan köras över av lokalt
+ konfigurerade tjänster. Som standard respekteras portvalen bara vid
+ initiella installation och ignoreras senare vid omkonfigurationer.
+ .
+ Vill du ignorera tänkbara lokala ändringar och alltid använda de valda
+ portarna?
+Description-vi.UTF-8: Ép buộc chọn cổng không?
+ Những cổng được chọn để hiệu lực vẫn còn có thể
+ bị đè bằng dịch vụ đã cấu hình một cách địa phương.
+ Mặc định là lựa chọn cổng được theo chỉ khi cài đặt
+ đầu tiên, rồi bị bỏ qua khi cấu hình sau.
+ .
+ Bạn có muốn bỏ qua cách điều chỉnh địa phương có thể,
+ và luôn luôn dùng những cổng được chọn không?

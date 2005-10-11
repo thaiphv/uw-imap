@@ -10,3 +10,13 @@ _Description: Which ports should the server listen on?
  pop3s = POP 3 on TCP port 995 with SSL support.
  .
  If in doubt, choose pop3 and pop3s.
+
+Template: ipopd/force_debconf_choice
+Type: boolean
+Default: false
+_Description: Enforce port selection?
+ The ports selected for enabling may be overridden by locally configured
+ services. By default the port selection is respected only on initial
+ installs, and is ignored on later reconfiguration.
+ .
+ Do you want to ignore possible local tweaks and always use selected ports?

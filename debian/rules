@@ -2,8 +2,8 @@
 # Made with the aid of debmake, by Christoph Lameter,
 # based on the sample debian/rules file for GNU hello by Ian Jackson.
 
+include /usr/share/cdbs/1/class/langcore.mk
 ## official debhelper rule may not work on woody backports...
-#include /usr/share/cdbs/1/class/makefile.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
 #include debian/cdbs/1/rules/debhelper.mk
 include debian/cdbs/1/rules/po-debconf.mk
@@ -18,15 +18,26 @@ VERSION := $(shell expr '$(DEBVERSION_)' : '\([0-9][0-9a-z]*debian\)')
 REVISION := $(shell expr $(DEBVERSION_) : '.*debian\([^-]\+\)-')
 # FIXME: Make sure epoch is included/stripped correctly
 
-SEDRULE_FILENAME=-e s/__VER__/$(VERSION)/g -e s/\\.in$$//
-SEDRULE_CONTENT=-e s/__DEBIANVER__/$(DEBVERSION)/g -e s/__UPSTREAMVER__/$(UPSTREAMVER)/g -e s/__FULLVER__/$(VERSION).$(REVISION)/g -e s/__VER__/$(VERSION)/g
+SEDRULE_FILENAME = -e 's/__VER__/$(VERSION)/g'
+SEDRULE_CONTENT = -e 's/__DEBIANVER__/$(DEBVERSION)/g' -e 's/__UPSTREAMVER__/$(UPSTREAMVER)/g' -e 's/__FULLVER__/$(VERSION).$(REVISION)/g' -e 's/__VER__/$(VERSION)/g'
 
-CFLAGS = -Wall -g -D_REENTRANT -DDISABLE_POP_PROXY
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-CFLAGS += -O0
-else
-CFLAGS += -O2
-endif
+SEDRULE_PKGCONTENT = $(SEDRULE_CONTENT) -e 's/__PKG__/$(cdbs_curpkg)/g' -e 's/__CERT__/$(CERT_$(cdbs_curpkg))/g' -e 's/__PAMSERVICE__/$(PAMSERVICE_$(cdbs_curpkg))/g' -e 's/__DESC__/$(DESC_$(cdbs_curpkg))/g' -e 's/__DAEMONSETS__/$(DAEMONSETS_$(cdbs_curpkg))/g'
+SEDPACKAGES = ipopd uw-imapd
+
+CERT_ipopd = ipop3d
+PAMSERVICE_ipopd = pop
+DESC_ipopd = University of Washington POP3 daemon
+DAEMONSETS_ipopd = pop2:ipop2d pop3:ipop3d pop3s:ipop3d
+CERT_uw-imapd = imapd
+PAMSERVICE_uw-imapd = imap
+DESC_uw-imapd = University of Washington IMAP daemon
+DAEMONSETS_uw-imapd = imap2:imapd imap3:imapd imaps:imapd
+
+CFLAGS += -D_REENTRANT -DDISABLE_POP_PROXY
+
+# Suppress seemingly non-fatal warnings to easer spot more important ones.
+CFLAGS += -Wno-parentheses -Wno-strict-aliasing
+#CFLAGS += -Wno-implicit-function-declaration
 
 DEB_PHONY_RULES += update-control
 
@@ -41,7 +52,8 @@ EXTRAAUTHENTICATORS = gss
 #DEB_DH_SHLIBDEPS_ARGS = -Llibc-client$(VERSION) -ldebian/libc-client$(VERSION)/usr/lib
 DEB_DH_SHLIBDEPS_ARGS =	-ldebian/libc-client$(VERSION)/usr/lib -- -Ldebian/libc-client$(VERSION).shlibs
 
-#export DH_VERBOSE=1
+# Upstream README is more of a README.build
+DEB_INSTALL_DOCS_ALL =
 
 pre-build::
 	sed $(SEDRULE_CONTENT) <debian/control.in | diff -u debian/control - || ( \
@@ -74,16 +86,39 @@ clean::
 	rm -f debian/stamp-*
 	rm -f debian/mlock.1
 	rm -rf RCS
-	for file in `find debian -type f -name '*.in' -not -name control.in -not -name POTFILES.in -not -name watch.in`; do \
-		eval targetfile=`echo $$file | sed $(SEDRULE_FILENAME)`; \
-		rm -f $$targetfile; \
-		done
 
+# Setup (and tear down) files containing variables static per build
 pre-build::
-	for file in `find debian -type f -name '*.in' -not -name control.in -not -name POTFILES.in`; do \
-		eval targetfile=`echo $$file | sed $(SEDRULE_FILENAME)`; \
+	for file in `find debian -type f -maxdepth 2 -name '*.in' -not -name control.in -not -name POTFILES.in`; do \
+		targetfile=`echo $$file | sed $(SEDRULE_FILENAME) -e 's/\\.in$$//'`; \
 		sed $(SEDRULE_CONTENT) <$$file >$$targetfile; \
-		done
+	done
+
+clean::
+	for file in `find debian -type f -maxdepth 2 -name '*.in' -not -name control.in -not -name POTFILES.in -not -name 'watch.in'`; do \
+		targetfile=`echo $$file | sed $(SEDRULE_FILENAME) -e 's/\\.in$$//'`; \
+		rm -f $$targetfile; \
+	done
+
+# Setup (and tear down) files containing variables static per package
+$(patsubst %,configure/%,$(SEDPACKAGES)) ::
+	for file in `find debian -type f -maxdepth 2 -name '*._in'`; do \
+		targetfile=`echo $$file | sed $(SEDRULE_PKGFILENAME) -e 's/\\._in$$//' -e 's/__PKG__/$(cdbs_curpkg)/g'`; \
+		sed $(SEDRULE_PKGCONTENT) <$$file >$$targetfile; \
+	done
+
+$(patsubst %,binary-post-install/%,$(SEDPACKAGES)) ::
+	if [ "$(cdbs_curpkg)" != "$(PAMSERVICE_$(cdbs_curpkg))" ]; then \
+		mv debian/$(cdbs_curpkg)/etc/pam.d/$(cdbs_curpkg) debian/$(cdbs_curpkg)/etc/pam.d/$(PAMSERVICE_$(cdbs_curpkg)); \
+	fi
+
+clean::
+	for file in `find debian -type f -maxdepth 2 -name '*._in'`; do \
+		for pkg in $(SEDPACKAGES); do \
+			targetfile=`echo $$file | sed $(SEDRULE_PKGFILENAME) -e 's/\\._in$$//' -e "s/__PKG__/$$pkg/g"`; \
+			rm -f $$targetfile; \
+		done; \
+	done
 
 # TODO: Use d-shlibmove instead (we already depend on it)
 binary-post-install/libc-client$(VERSION)::
@@ -92,12 +127,6 @@ binary-post-install/libc-client$(VERSION)::
 # Automatically calculate development package dependencies
 common-binary-post-install-arch::
 	d-devlibdeps debian/libc-client-dev.substvars debian/libc-client$(VERSION)/usr/lib/libc-client.so.$(VERSION).$(REVISION)
-
-# Daemon and PAM names are not equal
-binary-post-install/ipopd::
-	mv debian/$(cdbs_curpkg)/etc/pam.d/ipopd debian/$(cdbs_curpkg)/etc/pam.d/pop
-binary-post-install/uw-imapd::
-	mv debian/$(cdbs_curpkg)/etc/pam.d/uw-imapd debian/$(cdbs_curpkg)/etc/pam.d/imap
 
 binary-predeb/ipopd::
 	chown root.mail debian/$(cdbs_curpkg)/usr/sbin/ipop2d

@@ -15,8 +15,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-03 17:51+0100\n"
-"PO-Revision-Date: 2004-04-03 11:54+0900\n"
+"POT-Creation-Date: 2005-03-31 16:55+0200\n"
+"PO-Revision-Date: 2005-04-29 23:44+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -54,6 +54,28 @@ msgstr "pop3s = TCP ポート 995 で動作する SSL サポート付き POP 3。"
 #: ../ipopd.templates.master:5
 msgid "If in doubt, choose pop3 and pop3s."
 msgstr "よくわからなければ、pop3 と pop3s を選んでください。"
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid "Enforce port selection?"
+msgstr "ポートの選択を強制しますか?"
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"The ports selected for enabling may be overridden by locally configured "
+"services. By default the port selection is respected only on initial "
+"installs, and is ignored on later reconfiguration."
+msgstr "有効として選択されたポートは、ローカルに設定されたサービスによって上書きされる可能性があります。デフォルトでは、ポートの選択は初期インストールのときのみ尊重され、その後の再設定では無視されます。"
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"Do you want to ignore possible local tweaks and always use selected ports?"
+msgstr "ローカル調整の可能性を無視して、常に選択されたポートを使いますか?"
 
 #. Type: boolean
 #. Description
@@ -113,40 +135,3 @@ msgstr "imaps = TCP ポート 993 で動作する SSL サポート付き IMAP 4Rev1。"
 #: ../uw-imapd.templates.master:5
 msgid "If in doubt, pick imap2 and imaps."
 msgstr "よくわからなければ、imap2 と imaps を選んでください。"
-
-#~ msgid "pop2, pop3, pop3s"
-#~ msgstr "pop2, pop3, pop3s"
-
-#~ msgid "imap2, imap3, imaps"
-#~ msgstr "imap2, imap3, imaps"
-
-#~ msgid "Allow insecure authentication using plaintext passwords?"
-#~ msgstr "プレインテキストパスワードを使った安全でない認証を許可しますか?"
-
-#~ msgid ""
-#~ "The use of unencrypted plaintext passwords is generally insecure, and the "
-#~ "current version of libc-client by default only allows network access "
-#~ "through either TLS or SSL connections.  This affects uw-imapd, ipopd and "
-#~ "any other programs that use libc-client for mail access through the "
-#~ "network.  However, this functionality can be changed by using the semi-"
-#~ "official /etc/c-client.cf configuration file.  Read more about this in /"
-#~ "usr/share/doc/libc-client__VER__/README.Debian."
-#~ msgstr ""
-#~ "暗号化されていないプレインテキストパスワードの使用は一般に安全でなく、"
-#~ "libc-client の現在のバージョンではデフォルトで TLS または SSL 接続のいずれ"
-#~ "かを経由してのネットワークアクセスのみに許可されています。これはネットワー"
-#~ "ク経由でメールにアクセスするために libc-client を使う uw-imapd、ipopd およ"
-#~ "びその他のプログラムに波及します。ただし、この機能は、準公式の /etc/c-"
-#~ "client.cf 設定ファイルを使って変更できます。詳細については /usr/share/doc/"
-#~ "libc-client__VER__/README.Debian を参照してください。"
-
-#~ msgid ""
-#~ "Do you want to allow email access authentication using insecure plaintext "
-#~ "passwords?"
-#~ msgstr ""
-#~ "安全でないプレインテキストパスワードを使ったメールアクセス認証を許可します"
-#~ "か?"
-
-#~ msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
-#~ msgstr ""
-#~ "注意: cram-md5 パスワードはプレインテキストパスワードとして扱われます!"

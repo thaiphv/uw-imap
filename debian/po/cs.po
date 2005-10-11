@@ -15,25 +15,25 @@ msgid ""
 msgstr ""
 "Project-Id-Version: uw-imap\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-03 17:51+0100\n"
-"PO-Revision-Date: 2004-12-21 22:00+0100\n"
+"POT-Creation-Date: 2005-03-31 16:55+0200\n"
+"PO-Revision-Date: 2005-06-12 21:45+0200\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
-"Language-Team: Czech <provoz@debian.cz>\n"
+"Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
 msgid "Which ports should the server listen on?"
-msgstr "Na kterıch portech má server naslouchat?"
+msgstr "Na kterÃ½ch portech mÃ¡ server naslouchat?"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates.master:5
 msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
-msgstr "pop2  = POP 2 na TCP portu 109 s podporou TLS. Tento je zastaralı."
+msgstr "pop2  = POP 2 na TCP portu 109 s podporou TLS. Tento je zastaralÃ½."
 
 #. Type: multiselect
 #. Description
@@ -55,9 +55,35 @@ msgstr "Pokud si nejste jisti, vyberte pop3 a pop3s."
 
 #. Type: boolean
 #. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid "Enforce port selection?"
+msgstr "Vynutit vÃ½bÄ›r portÅ¯?"
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"The ports selected for enabling may be overridden by locally configured "
+"services. By default the port selection is respected only on initial "
+"installs, and is ignored on later reconfiguration."
+msgstr ""
+"VybranÃ© porty mohou bÃ½t pÅ™epsÃ¡ny lokÃ¡lnÄ› nastavenÃ½mi sluÅ¾bami. ImplicitnÄ› se "
+"vÃ½bÄ›r portÅ¯ respektuje pouze pÅ™i ÃºvodnÃ­ instalaci, ale ne pÅ™i pozdÄ›jÅ¡Ã­ch "
+"rekonfiguracÃ­ch."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"Do you want to ignore possible local tweaks and always use selected ports?"
+msgstr ""
+"Chcete ignorovat potenciÃ¡lnÃ­ mÃ­stnÃ­ Ãºpravy a vÅ¾dy pouÅ¾Ã­vat vybranÃ© porty?"
+
+#. Type: boolean
+#. Description
 #: ../libc-client__VER__.templates.in.master:4
 msgid "Continue installing libc-client without Maildir support?"
-msgstr "Pokraèovat v instalaci libc-client bez podpory Maildiru?"
+msgstr "PokraÄovat v instalaci libc-client bez podpory Maildiru?"
 
 #. Type: boolean
 #. Description
@@ -69,18 +95,18 @@ msgid ""
 "changed your system configuration or other installed programs depend on libc-"
 "client then upgrading may result in broken mail handling."
 msgstr ""
-"Libc-client døívìj¹í ne¾ verze 2002d (a vıvojové verze 2003) obsahovaly "
-"neoficiální záplatu pro podporu scchránek typu Maildir. Implicitnì se tyto "
-"schránky nepou¾ívaly ani v uw-imapd ani v ipopd. Pokud jste ale zmìnili "
-"nastavení, nebo pokud na libc-client závisí jiné instalované programy, tak "
-"se mù¾e stát, ¾e aktualizace programu zpùsobí poru¹ené zpracování po¹ty."
+"Libc-client dÅ™Ã­vÄ›jÅ¡Ã­ neÅ¾ verze 2002d (a vÃ½vojovÃ© verze 2003) obsahovaly "
+"neoficiÃ¡lnÃ­ zÃ¡platu pro podporu schrÃ¡nek typu Maildir. ImplicitnÄ› se tyto "
+"schrÃ¡nky nepouÅ¾Ã­valy ani v uw-imapd ani v ipopd. Pokud jste ale zmÄ›nili "
+"nastavenÃ­, nebo pokud na libc-client zÃ¡visÃ­ jinÃ© instalovanÃ© programy, tak "
+"se mÅ¯Å¾e stÃ¡t, Å¾e aktualizace programu zpÅ¯sobÃ­ poruÅ¡enÃ© zpracovÃ¡nÃ­ poÅ¡ty."
 
 #. Type: boolean
 #. Description
 #: ../libc-client__VER__.templates.in.master:4
 msgid ""
 "Do you want to continue installing a libc-client without Maildir support?"
-msgstr "Chcete pokraèovat v instalaci libc-client bez podpory Maildiru?"
+msgstr "Chcete pokraÄovat v instalaci libc-client bez podpory Maildiru?"
 
 #. Type: multiselect
 #. Description
@@ -94,7 +120,7 @@ msgstr "imap2 = IMAP 4Rev1 na TCP portu 143 s podporou TLS."
 #. Description
 #: ../uw-imapd.templates.master:5
 msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
-msgstr "imap3 = IMAP 3 na TCP portu 220 s podporou TLS. Tento je zastaralı."
+msgstr "imap3 = IMAP 3 na TCP portu 220 s podporou TLS. Tento je zastaralÃ½."
 
 #. Type: multiselect
 #. Description
@@ -112,7 +138,7 @@ msgstr "Pokud si nejste jisti, vyberte imap2 a imaps."
 #~ msgstr "pop2, pop3, pop3s"
 
 #~ msgid "Allow insecure authentication using plaintext passwords?"
-#~ msgstr "Povolit nebezpeènou autentizaci pomocí ne¹ifrovanıch hesel?"
+#~ msgstr "Povolit nebezpeÄnou autentizaci pomocÃ­ neÅ¡ifrovanÃ½ch hesel?"
 
 #~ msgid ""
 #~ "The use of unencrypted plaintext passwords is generally insecure, and the "
@@ -123,22 +149,22 @@ msgstr "Pokud si nejste jisti, vyberte imap2 a imaps."
 #~ "official /etc/c-client.cf configuration file.  Read more about this in /"
 #~ "usr/share/doc/libc-client__VER__/README.Debian."
 #~ msgstr ""
-#~ "Pou¾ití ne¹ifrovanıch hesel je obecnì nebezpeèné a aktuální verze libc-"
-#~ "client dovoluje implicitnì pouze pøístup pøes TLS nebo SSL spojení. To má "
-#~ "vliv na uw-imapd, ipopd a v¹echny ostatní programy, které k po¹tì na síti "
-#~ "pøistupují pøes libc-client. Toto chování se dá zmìnit polooficiálním "
-#~ "konfiguraèním souborem /etc/c-client.cf. Více se dozvíte v /usr/share/doc/"
+#~ "PouÅ¾itÃ­ neÅ¡ifrovanÃ½ch hesel je obecnÄ› nebezpeÄnÃ© a aktuÃ¡lnÃ­ verze libc-"
+#~ "client dovoluje implicitnÄ› pouze pÅ™Ã­stup pÅ™es TLS nebo SSL spojenÃ­. To mÃ¡ "
+#~ "vliv na uw-imapd, ipopd a vÅ¡echny ostatnÃ­ programy, kterÃ© k poÅ¡tÄ› na sÃ­ti "
+#~ "pÅ™istupujÃ­ pÅ™es libc-client. Toto chovÃ¡nÃ­ se dÃ¡ zmÄ›nit polooficiÃ¡lnÃ­m "
+#~ "konfiguraÄnÃ­m souborem /etc/c-client.cf. VÃ­ce se dozvÃ­te v /usr/share/doc/"
 #~ "libc-client__VER__/README.Debian."
 
 #~ msgid ""
 #~ "Do you want to allow email access authentication using insecure plaintext "
 #~ "passwords?"
 #~ msgstr ""
-#~ "Chcete povolit autentizaci pro pøístup k po¹tì pomocí nebezpeènıch "
-#~ "ne¹ifrovanıch hesel?"
+#~ "Chcete povolit autentizaci pro pÅ™Ã­stup k poÅ¡tÄ› pomocÃ­ nebezpeÄnÃ½ch "
+#~ "neÅ¡ifrovanÃ½ch hesel?"
 
 #~ msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
-#~ msgstr "Poznámka: hesla cramd-md5 se berou jako neza¹ifrovaná!"
+#~ msgstr "PoznÃ¡mka: hesla cramd-md5 se berou jako nezaÅ¡ifrovanÃ¡!"
 
 #~ msgid "imap2, imap3, imaps"
 #~ msgstr "imap2, imap3, imaps"

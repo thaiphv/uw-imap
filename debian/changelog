@@ -1,3 +1,140 @@
+uw-imap (7:2002edebian1-12) unstable; urgency=high
+
+  * Patch src/c-client/mail.c against remote exploitable buffer overflow
+    allowing attacker to execute arbitrary code - CAN-2005-2933. This
+    closes: bug#332215 (thanks to iDEFENCE and Martin Pitt
+    <martin.pitt@canonical.com>).
+  * Add/update debconf l10n:
+    + Catalan (ca). Closes: Bug#248762 (thanks to Debian L10n Catalan
+      Team).
+    + Czech (cs). Closes: bug#313261 (thanks to Miroslav Kure
+      <kurem@upcase.inf.upol.cz>).
+    + French (fr). Closes: Bug#241986 (thanks to debian-l10n-french
+      mailing list contributors).
+    + Japanese (ja) Closes: Bug#241804 (thanks to Kenshi Muto
+      <kmuto@debian.org>).
+    + Spanish (es). Closes: bug#323375 (thanks to Carlos Galisteo de
+      Cabo <cgalisteo@k-rolus.net>),
+    + Swedish (sv). Closes: bug#333346 (thanks to Daniel Nylander
+      <yeager@lidkoping.net>).
+    + Turkish (tr). Closes: Bug#249129 (thanks to Mehmet Turker).
+    + Vietnamese (vi). Closes: bug#324073 (thanks to Vietnamese free-
+      software translation team / nhóm Việt hóa phần mềm tự
+      do).
+  * Modernize maintainer scripts (thanks to lintian):
+    + Use `chown uid:gid` (not `chown uid.gid`).
+    + Use [ test1 ] && [ test2 ] (not [ test1 -a test2 ]).
+  * Source debconf in libc-clientXXX postinst even if unused (thanks to
+    lintian).
+  * Claim compliance with Policy 3.6.2 (no changes needed).
+  * Set urgency=high due to security fix.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 11 Oct 2005 19:33:40 +0200
+
+uw-imap (7:2002edebian1-11) unstable; urgency=high
+
+  * Update l12n:
+    + Japanese (ja). Closes: bug#306940 (thanks to Kenshi Muto
+      <kmuto@debian.org>).
+    + French (fr). Closes: bug#303982 (thanks to Christian Perrier
+      <bubulle@debian.org>).
+    + Danish (da). Closes: bug#303443 (thanks to Morten Brix Pedersen
+      <morten@wtf.dk>).
+  * Setting urgency=high as this contains only l12n updates and is
+    wanted for sarge.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 16 May 2005 02:43:11 +0200
+
+uw-imap (7:2002edebian1-10) unstable; urgency=high
+
+  * Have uw-imapd and ipopd depend on netbase (I thought that package
+    was required but it is "just" important). Closes (but only when this
+    has entered sarge): bug#308401 (thanks to Frank Lichtenfeld
+    <djpig@debian.org>).
+  * Set urgency high as this is policy violating and should go into
+    sarge if at all possible.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 11 May 2005 09:14:52 +0200
+
+uw-imap (7:2002edebian1-9) unstable; urgency=high
+
+  * Remove cache file before filling it for idempotency (in particular
+    to avoid reuse of imap entries in the ipop cache file generated at
+    failed attempts to install broken 7:2002edebian1-6.1).
+  * Fix postinst of daemon packages to only append binary when adding to
+    inetd, not when enabling (the space in front of the binary is what
+    you've all seen as "The service name may not include a whitespace
+    character!"). This closes: bug#301727, 301926, 302302 (thanks to
+    Paul Traina <reportbug@st04.pst.org>, Michael R Head
+    <burner@suppressingfire.org> and especially to Wen-chien Jesse Sung
+    <jesse@cola.voip.idv.tw> for insisting in something being wrong).
+  * ...and now that the code actually works, it reveals that debconf
+    choices are ignored except at initial install. So add another
+    debconf question on enforcing debconf choices or not.
+  * Handle disabling ports through debconf (if enforced). If unenforced,
+    emit a warning (this is getting pretty ugly).
+  * Setting urgency=high to (hopefully) straighten out the last mess of
+    bug#295306.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 31 Mar 2005 11:07:24 +0200
+
+uw-imap (7:2002edebian1-8.0.jones.2) unstable; urgency=low
+
+  * Change per-package names from "_*.in" to "*._in" to simplify regex.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 29 Mar 2005 22:51:16 +0200
+
+uw-imap (7:2002edebian1-8.0.jones.1) unstable; urgency=low
+
+  * Lower priority only for libc-client-dev. Revert default to optional.
+  * Unite debconf daemon handling in single files in source, to avoid
+    future NMU bugs like the one created in -6.1 (mistaking the daemon).
+  * When packaging, avoid too deep searches for files to sed.
+  * Add README.build to source documenting special filenames.
+  * Use cdbs for basic CFLAGS setup.
+  * Avoid installing upstream README (it is more a README.build).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 28 Mar 2005 12:40:22 +0200
+
+uw-imap (7:2002edebian1-8) unstable; urgency=high
+
+  * Oddly enough, last upload disappeared while processed. Bumping up
+    version number instead of risking more trouble and delay. This still
+    closes: bug#295306, #301213.
+  * Changing priority to extra to follow libkrb5-dev and comerr-dev.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 28 Mar 2005 03:20:41 +0200
+
+uw-imap (7:2002edebian1-7) unstable; urgency=high
+
+  * Acknowledge NMU. Closes: bug#295306 (thanks to Steve Langasek
+    <vorlon@debian.org> and others helping out).
+  * Fix patch in NMU to not fail in preinst if grep provides no result.
+    Closes: bug#301213 (thanks to Adam Sjøgren <asjo@koldfront.dk> and
+    Rene Konasz <oe4@gmx.at> for reporting, and Darren Salt
+    <linux@youmustbejoking.demon.co.uk> and Steve Langasek
+    <vorlon@debian.org> for help fixing).
+  * Fix grep'ing for imap in prerm of ipopd.
+    WARNING: If you've managed
+  * Adjust indenting of NMU patch to coding style of remianing scripts.
+  * Set urgency=high for same reason as the NMU.
+  * Respect the word "reasonable" in Debian Policy about enabling
+    warnings: Suppress excessive but seemingly non-fatal warnings to
+    easer spot more important ones.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 27 Mar 2005 01:02:28 +0100
+
+uw-imap (7:2002edebian1-6.1) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * High-urgency upload for sarge-targetted RC bugfix
+  * Handle inetd.conf correctly on upgrades, to not lose local
+    configuration changes; thanks to Pierre Habouzit
+    <pierre.habouzit@m4x.org> and Adeodato Simó <asp16@alu.ua.es> for
+    their work on this fix (closes: #295306).
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 21 Mar 2005 04:59:48 -0800
+
 uw-imap (7:2002edebian1-6) unstable; urgency=high
 
   * Fix CERT security bug VU#702777: CRAM-MD5 authentication (disabled

@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: uw-imapd-6:2003debian0.0303051641-2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-03 17:51+0100\n"
+"POT-Creation-Date: 2005-03-31 16:55+0200\n"
 "PO-Revision-Date: 2003-03-22 15:00-0300\n"
 "Last-Translator: André Luís Lopes <andrelop@ig.com.br>\n"
 "Language-Team: Debian-BR Project <debian-l10n-portuguese@lists.debian.org>\n"
@@ -52,6 +52,28 @@ msgstr "pop3s = POP 3 na porta TCP 995 com suporte SSL."
 #: ../ipopd.templates.master:5
 msgid "If in doubt, choose pop3 and pop3s."
 msgstr "Em caso de dúvidas, escolha pope 3 pop3s."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid "Enforce port selection?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"The ports selected for enabling may be overridden by locally configured "
+"services. By default the port selection is respected only on initial "
+"installs, and is ignored on later reconfiguration."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"Do you want to ignore possible local tweaks and always use selected ports?"
+msgstr ""
 
 #. Type: boolean
 #. Description
