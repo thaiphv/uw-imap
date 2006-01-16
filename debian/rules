@@ -1,11 +1,18 @@
 #!/usr/bin/make -f
-# Made with the aid of debmake, by Christoph Lameter,
-# based on the sample debian/rules file for GNU hello by Ian Jackson.
+# -*- mode: makefile; coding: utf-8 -*-
+# Copyright © 2003-2006 Jonas Smedegaard <dr@jones.dk>
 
+# This needs to run before cdbs auto-update rule
+ifneq (,$(findstring update,$(DEB_BUILD_OPTIONS)))
+debian/control:: debian/control.in
+DEB_PHONY_RULES += debian/control.in
+debian/control.in::
+	sed $(SEDRULE_CONTENT) <debian/control.in.in >debian/control.in
+endif
+
+include debian/cdbs/1/rules/auto-update.mk
 include /usr/share/cdbs/1/class/langcore.mk
-## official debhelper rule may not work on woody backports...
-include /usr/share/cdbs/1/rules/debhelper.mk
-#include debian/cdbs/1/rules/debhelper.mk
+include debian/cdbs/1/rules/debhelper.mk
 include debian/cdbs/1/rules/po-debconf.mk
 include /usr/share/cdbs/1/rules/simple-patchsys.mk
 include debian/cdbs/1/rules/buildinfo.mk
@@ -56,10 +63,10 @@ DEB_DH_SHLIBDEPS_ARGS =	-ldebian/libc-client$(VERSION)/usr/lib -- -Ldebian/libc-
 DEB_INSTALL_DOCS_ALL =
 
 pre-build::
-	sed $(SEDRULE_CONTENT) <debian/control.in | diff -u debian/control - || ( \
+	sed $(SEDRULE_CONTENT) <debian/control.in.in | diff -u debian/control.in - || ( \
 		echo; \
-		echo "Upstream version has changed (or debian/control.in is out of sync)"; \
-		echo "Please do a 'debian/rules update-control' or edit manually..."; \
+		echo "Upstream version has changed (or debian/control.in.in is out of sync)"; \
+		echo "Do a 'DEB_BUILD_OPTIONS=update fakeroot debian/rules clean' or edit manually."; \
 		exit 1)
 
 build: build-stamp
@@ -89,20 +96,20 @@ clean::
 
 # Setup (and tear down) files containing variables static per build
 pre-build::
-	for file in `find debian -type f -maxdepth 2 -name '*.in' -not -name control.in -not -name POTFILES.in`; do \
+	for file in `find debian -maxdepth 2 -type f -name '*.in' -not -name control.in -not -name control.in.in -not -name POTFILES.in`; do \
 		targetfile=`echo $$file | sed $(SEDRULE_FILENAME) -e 's/\\.in$$//'`; \
 		sed $(SEDRULE_CONTENT) <$$file >$$targetfile; \
 	done
 
 clean::
-	for file in `find debian -type f -maxdepth 2 -name '*.in' -not -name control.in -not -name POTFILES.in -not -name 'watch.in'`; do \
+	for file in `find debian -maxdepth 2 -type f -name '*.in' -not -name control.in -not -name control.in.in -not -name POTFILES.in -not -name 'watch.in'`; do \
 		targetfile=`echo $$file | sed $(SEDRULE_FILENAME) -e 's/\\.in$$//'`; \
 		rm -f $$targetfile; \
 	done
 
 # Setup (and tear down) files containing variables static per package
 $(patsubst %,configure/%,$(SEDPACKAGES)) ::
-	for file in `find debian -type f -maxdepth 2 -name '*._in'`; do \
+	for file in `find debian -maxdepth 2 -type f -name '*._in'`; do \
 		targetfile=`echo $$file | sed $(SEDRULE_PKGFILENAME) -e 's/\\._in$$//' -e 's/__PKG__/$(cdbs_curpkg)/g'`; \
 		sed $(SEDRULE_PKGCONTENT) <$$file >$$targetfile; \
 	done
@@ -113,7 +120,7 @@ $(patsubst %,binary-post-install/%,$(SEDPACKAGES)) ::
 	fi
 
 clean::
-	for file in `find debian -type f -maxdepth 2 -name '*._in'`; do \
+	for file in `find debian -maxdepth 2 -type f -name '*._in'`; do \
 		for pkg in $(SEDPACKAGES); do \
 			targetfile=`echo $$file | sed $(SEDRULE_PKGFILENAME) -e 's/\\._in$$//' -e "s/__PKG__/$$pkg/g"`; \
 			rm -f $$targetfile; \
@@ -141,10 +148,3 @@ binary-predeb/uw-imapd::
 binary-predeb/mlock::
 	chown root.mail debian/$(cdbs_curpkg)/usr/bin/mlock
 	chmod 2755 debian/$(cdbs_curpkg)/usr/bin/mlock
-
-# Run this rule whenever you edit debian/control.in (do not mess
-# directly with debian/control!)
-# TODO: Integrate with cdbs auto-update.
-update-control:
-	sed $(SEDRULE_CONTENT) <debian/control.in >debian/control
-	echo "Done!"

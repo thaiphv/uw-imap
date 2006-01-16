@@ -45,7 +45,7 @@ Package: libc-client-dev
 Priority: extra
 Section: libdevel
 Architecture: any
-Depends: libc-client2002edebian (= ${Source-Version}), ${devlibs:Depends}
+Depends: libc-client__VER__ (= ${Source-Version}), ${devlibs:Depends}
 Conflicts: c-client-dev, libc-client4.7-dev, libc-client2000-dev, libc-client2001-dev, libc-client2002-dev, libc-client2002ddebian-dev
 Replaces: c-client-dev, libc-client4.7-dev, libc-client2000-dev, libc-client2001-dev, libc-client2002-dev, libc-client2002ddebian-dev
 Description: UW c-client library for mail protocols
@@ -56,7 +56,7 @@ Description: UW c-client library for mail protocols
  This package contains the static lib and headers for using the c-client mail
  handling library.
 
-Package: libc-client2002edebian
+Package: libc-client__VER__
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${debconf-depends}, libpam-modules, mlock

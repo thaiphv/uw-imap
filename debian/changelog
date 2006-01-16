@@ -1,3 +1,19 @@
+uw-imap (7:2002edebian1-13) unstable; urgency=low
+
+  * Apply patch fixing IPv6 for ipopd. Closes: bug#348369 (thanks to
+    Sjoerd Simons <sjoerd@debian.org>).
+  * Improve local cdbs snippets:
+    + Fix namespaces.
+    + Use newer local debhelper snippet again, this time appending to
+      dh_gencontrol rather than override it. Adjust po-debconf.
+    + Add and enable new auto-update snippet. Move debian/control.in to
+      debian/control.in.in.
+  * Correct copyright info for debian/rules (debmake skeleton is long
+    gone).
+  * Fix order of parameters/options to find in debian/rules.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 16 Jan 2006 18:29:51 +0100
+
 uw-imap (7:2002edebian1-12) unstable; urgency=high
 
   * Patch src/c-client/mail.c against remote exploitable buffer overflow

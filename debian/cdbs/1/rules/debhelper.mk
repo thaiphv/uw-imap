@@ -134,7 +134,7 @@ $(patsubst %,binary-install/%,$(DEB_PACKAGES)) :: binary-install/%:
 	dh_installmenu -p$(cdbs_curpkg) $(DEB_DH_INSTALL_MENU_ARGS)
 	dh_installcron -p$(cdbs_curpkg) $(DEB_DH_INSTALL_CRON_ARGS)
 	dh_installinit -p$(cdbs_curpkg) $(if $(DEB_UPDATE_RCD_PARAMS),--update-rcd-params=$(DEB_UPDATE_RCD_PARAMS),$(if $(DEB_UPDATE_RCD_PARAMS_$(cdbs_curpkg)),--update-rcd-params=$(DEB_UPDATE_RCD_PARAMS_$(cdbs_curpkg)))) $(DEB_DH_INSTALLINIT_ARGS) 
-#	dh_installdebconf -p$(cdbs_curpkg) $(DEB_DH_INSTALLDEBCONF_ARGS)
+	dh_installdebconf -p$(cdbs_curpkg) $(DEB_DH_INSTALLDEBCONF_ARGS)
 	dh_installemacsen -p$(cdbs_curpkg) $(if $(DEB_EMACS_PRIORITY),--priority=$(DEB_EMACS_PRIORITY)) $(if $(DEB_EMACS_FLAVOR),--flavor=$(DEB_EMACS_FLAVOR)) $(DEB_DH_INSTALLEMACSEN_ARGS)
 	dh_installpam -p$(cdbs_curpkg) $(DEB_DH_INSTALLPAM_ARGS)
 	dh_installlogrotate -p$(cdbs_curpkg) $(DEB_DH_INSTALLLOGROTATE_ARGS)
@@ -183,7 +183,7 @@ $(patsubst %,binary-makedeb/%,$(DEB_ARCH_REGULAR_PACKAGES)) :: binary-makedeb/% 
 $(patsubst %,binary-makedeb/%,$(DEB_INDEP_REGULAR_PACKAGES)) :: binary-makedeb/% : common-binary-predeb-indep binary-makedeb-IMPL/%
 $(patsubst %,binary-makedeb-IMPL/%,$(DEB_PACKAGES)) :: binary-makedeb-IMPL/% : 
 	dh_shlibdeps -p$(cdbs_curpkg) $(DEB_DH_SHLIBDEPS_ARGS)
-	dh_gencontrol -p$(cdbs_curpkg) $(DEB_DH_GENCONTROL_ARGS)
+	dh_gencontrol -p$(cdbs_curpkg) $(DEB_DH_GENCONTROL_ARGS) $(if $(DEB_DH_GENCONTROL_DASHDASHARGS),-- $(DEB_DH_GENCONTROL_DASHDASHARGS))
 	dh_md5sums -p$(cdbs_curpkg) $(DEB_DH_MD5SUMS_ARGS)
 	$(DEB_DH_BUILDDEB_ENV) dh_builddeb -p$(cdbs_curpkg) $(DEB_DH_BUILDDEB_ARGS)
 
@@ -198,7 +198,7 @@ common-binary-predeb:: common-binary-predeb-arch common-binary-predeb-indep
 
 $(patsubst %,binary-install-udeb/%,$(DEB_UDEB_PACKAGES)) :: binary-install-udeb/%:
 	dh_installcron -p$(cdbs_curpkg) $(DEB_DH_INSTALLCRON_ARGS)
-#	dh_installdebconf -p$(cdbs_curpkg) $(DEB_DH_INSTALLDEBCONF_ARGS)
+	dh_installdebconf -p$(cdbs_curpkg) $(DEB_DH_INSTALLDEBCONF_ARGS)
 	dh_installpam -p$(cdbs_curpkg) $(DEB_DH_INSTALLPAM_ARGS)
 	dh_installinit -p$(cdbs_curpkg) $(DEB_DH_INSTALLINIT_ARGS)
 	dh_install -p$(cdbs_curpkg) $(DEB_DH_INSTALL_ARGS)

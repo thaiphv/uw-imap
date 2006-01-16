@@ -1,6 +1,15 @@
 # -*- mode: makefile; coding: utf-8 -*-
-# Copyright © 2003-2004 Jonas Smedegaard <dr@jones.dk>
+# Copyright © 2003-2005 Jonas Smedegaard <dr@jones.dk>
 # Description: Woody-compatible debconf template l12n
+#  Usage: Add this to all debconf-using packages in debian/control:
+#	Depends: ${debconf-depends} (where applicable)
+#  If using debhelper.mk, make sure to include this first.
+#  If not using debhelper.mk, something like the following should be
+#  added to debian/rules:
+#	dpkg-gencontrol -V'debconf-depends=debconf (>= $(PODEBCONF_MINDEBCONFVER))'
+#  Based on this email by Colin Watson <cjwatson@flatline.org.uk>:
+#  http://lists.debian.org/debian-i18n/2003/debian-i18n-200307/msg00026.html
+
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -24,23 +33,14 @@
 # on it), the binary-arch target will generate a better version for
 # sarge.
 
-# Based on email by Colin Watson <cjwatson@flatline.org.uk>
-# http://lists.debian.org/debian-i18n/2003/debian-i18n-200307/msg00026.html
-
-# Usage: Add this to all debconf-using packages in debian/control:
-#     Depends: ${debconf-depends} (where applicable)
-#
-#   If not using debhelper.mk, extra args is also needed for
-#   dpkg-gencontrol (see podebconf-sanity-check rule below).
-
 ifndef _cdbs_bootstrap
 _cdbs_scripts_path ?= /usr/lib/cdbs
 _cdbs_rules_path ?= /usr/share/cdbs/1/rules
 _cdbs_class_path ?= /usr/share/cdbs/1/class
 endif
 
-ifndef _cdbs_class_podebconf
-_cdbs_class_podebconf := 1
+ifndef _cdbs_rules_podebconf
+_cdbs_rules_podebconf := 1
 
 include $(_cdbs_rules_path)/buildcore.mk$(_cdbs_makefile_suffix)
 
@@ -51,25 +51,17 @@ PODEBCONF_TEMPLATEFILES := $(basename $(shell sed 's|[^]]*] ||' debian/po/POTFIL
 
 ifeq (,$(wildcard /usr/bin/po2debconf))
 PODEBCONF_PO2DEBCONF := no
-PODEBCONF_MINDEBCONFVER := 0.5
+DEB_DH_GENCONTROL_DASHDASHARGS += -V'debconf-depends=debconf (>= 0.5)'
 else
 PODEBCONF_PO2DEBCONF := yes
-PODEBCONF_MINDEBCONFVER := 1.2.0
+DEB_DH_GENCONTROL_DASHDASHARGS += -V'debconf-depends=debconf (>= 1.2.0) | debconf-2.0'
 endif
-
-DEB_DH_GENCONTROL_ARGS = -- -V'debconf-depends=debconf (>= $(PODEBCONF_MINDEBCONFVER))'
 
 DEB_PHONY_RULES += podebconf-sanity-check
 
 clean:: podebconf-sanity-check
 
 podebconf-sanity-check:
-ifndef _cdbs_rules_debhelper
-	@if ! grep -s -e 'gencontrol .* $(PODEBCONF_MINDEBCONFVER)' debian/rules; then \
-		echo "WARNING: A command like this may be missing from debian/rules:"; \
-		echo "    dpkg-gencontrol -V'debconf-depends=debconf (>= $(PODEBCONF_MINDEBCONFVER))'"; \
-	fi
-endif
 	@if ! grep -s -e '$${debconf-depends}' debian/control; then \
 		echo 'ERROR: No packages depend on $${debconf-depends}!'; \
 		exit 1; \

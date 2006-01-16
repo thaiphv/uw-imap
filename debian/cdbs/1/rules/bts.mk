@@ -1,5 +1,5 @@
 # -*- mode: makefile; coding: utf-8 -*-
-# Copyright © 2004 Jonas Smedegaard <dr@jones.dk>
+# Copyright © 2004-2005 Jonas Smedegaard <dr@jones.dk>
 # Description: Install control files for the Debian Bug Tracking System
 #
 # This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@ _cdbs_rules_path ?= /usr/share/cdbs/1/rules
 _cdbs_class_path ?= /usr/share/cdbs/1/class
 endif
 
-ifndef _cdbs_class_bts
-_cdbs_class_bts := 1
+ifndef _cdbs_rules_bts
+_cdbs_rules_bts := 1
 
 include $(_cdbs_rules_path)/buildcore.mk$(_cdbs_makefile_suffix)
 

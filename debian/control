@@ -3,7 +3,7 @@ Priority: optional
 Section: mail
 Maintainer: Jonas Smedegaard <dr@jones.dk>
 Standards-Version: 3.6.2
-Build-Depends: cdbs, dh-buildinfo, libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, debhelper (>= 4.1), d-shlibs (>> 0.13), perl
+Build-Depends: cdbs (>= 0.4.23-1.1), , debhelper (>= 4.1.0), debhelper (>= 4.1.16), po-debconf, patchutils (>= 0.2.25), dh-buildinfo, libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, d-shlibs (>> 0.13), perl
 
 Package: uw-imapd
 Section: mail
