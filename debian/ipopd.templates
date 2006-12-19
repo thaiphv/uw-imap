@@ -51,8 +51,7 @@ Description-fr.UTF-8: Ports où le serveur doit être à l'écoute :
  .
  Dans le doute, vous devriez choisir POP3 et POP3S.
 Description-ja.UTF-8: サーバでどのポートをリスンしますか?
- pop2  = TCP ポート 109 で動作する TLS サポート付き POP
- 2。これはもう時代遅れのものです。
+ pop2  = TCP ポート 109 で動作する TLS サポート付き POP 2。これはもう時代遅れのものです。
  .
  pop3  = TCP ポート 110 で動作する TLS サポート付き POP 3。
  .
@@ -76,8 +75,7 @@ Description-sv.UTF-8: Vilka portar ska servern lyssna på?
  .
  Om du är osäker, välj pop3 och pop3s.
 Description-tr.UTF-8: Sunucu hangi portları dinlemeli?
- pop2 =  TCP port 109 üzerinde TLS desteğiyle POP 2.  Bu ayar artık
- eskimiştir.
+ pop2 =  TCP port 109 üzerinde TLS desteğiyle POP 2.  Bu ayar artık eskimiştir.
  .
  pop3  = TCP port 110 üzerinde TLS desteği ile POP 3.
  .
@@ -85,8 +83,7 @@ Description-tr.UTF-8: Sunucu hangi portları dinlemeli?
  .
  Eğer kararsız kaldıysanız, pop3 ve pop3s'i seçiniz.
 Description-vi.UTF-8: Trình phục vụ nên lắng nghe những cổng nào?
- pop2 = POP 2 trên cổng TCP 109 với sự hỗ trợ TLS. Nó quá
- thời.
+ pop2 = POP 2 trên cổng TCP 109 với sự hỗ trợ TLS. Nó quá thời.
  .
  pop3 = POP 3 trên cổng TCP 110 với sự hỗ trợ TLS.
  .
@@ -104,50 +101,30 @@ Description: Enforce port selection?
  .
  Do you want to ignore possible local tweaks and always use selected ports?
 Description-cs.UTF-8: Vynutit výběr portů?
- Vybrané porty mohou být přepsány lokálně nastavenými službami.
- Implicitně se výběr portů respektuje pouze při úvodní instalaci,
- ale ne při pozdějších rekonfiguracích.
+ Vybrané porty mohou být přepsány lokálně nastavenými službami. Implicitně se výběr portů respektuje pouze při úvodní instalaci, ale ne při pozdějších rekonfiguracích.
  .
- Chcete ignorovat potenciální místní úpravy a vždy používat
- vybrané porty?
+ Chcete ignorovat potenciální místní úpravy a vždy používat vybrané porty?
 Description-da.UTF-8: Tving port-valg?
- Portene der er valgt som slået til, kan tilsidesættes ved at konfigurere
- services lokalt. Som standard er port valget respekteret på initielle
- installationer, og ignoreret ved senere genopsætning.
+ Portene der er valgt som slået til, kan tilsidesættes ved at konfigurere services lokalt. Som standard er port valget respekteret på initielle installationer, og ignoreret ved senere genopsætning.
  .
  Vil du ignorere mulige lokale ændringer og altid bruge de valgte porte?
 Description-es.UTF-8: ¿Desea forzar la selección de puerto?
- Los puertos seleccionados para habilitarse pueden ser sobreescritos por
- servicios configurados localmente. Por omisión la selección de puertos
- se respeta sólo en instalaciones nuevas y se ignora en posteriores
- reconfiguraciones.
+ Los puertos seleccionados para habilitarse pueden ser sobreescritos por servicios configurados localmente. Por omisión la selección de puertos se respeta sólo en instalaciones nuevas y se ignora en posteriores reconfiguraciones.
  .
- ¿Quiere ignorar posibles ajustes locales y usar siempre los puertos
- seleccionados?
+ ¿Quiere ignorar posibles ajustes locales y usar siempre los puertos seleccionados?
 Description-fr.UTF-8: Faut-il appliquer le choix des ports ?
- Les ports choisis pour être activés peuvent être remplacés par des
- services locaux. Le choix des ports n'est respecté, par défaut, que lors
- de l'installation initiale et est ignoré lors des reconfigurations
- ultérieures.
+ Les ports choisis pour être activés peuvent être remplacés par des services locaux. Le choix des ports n'est respecté, par défaut, que lors de l'installation initiale et est ignoré lors des reconfigurations ultérieures.
  .
- Veuillez confirmer si vous préférez ignorer les modifications locales et
- toujours utiliser les ports choisis.
+ Veuillez confirmer si vous préférez ignorer les modifications locales et toujours utiliser les ports choisis.
 Description-ja.UTF-8: ポートの選択を強制しますか?
  有効として選択されたポートは、ローカルに設定されたサービスによって上書きされる可能性があります。デフォルトでは、ポートの選択は初期インストールのときのみ尊重され、その後の再設定では無視されます。
  .
  ローカル調整の可能性を無視して、常に選択されたポートを使いますか?
 Description-sv.UTF-8: Framtvinga portval?
- Portarna som valts för aktivering kan köras över av lokalt
- konfigurerade tjänster. Som standard respekteras portvalen bara vid
- initiella installation och ignoreras senare vid omkonfigurationer.
+ Portarna som valts för aktivering kan köras över av lokalt konfigurerade tjänster. Som standard respekteras portvalen bara vid initiella installation och ignoreras senare vid omkonfigurationer.
  .
- Vill du ignorera tänkbara lokala ändringar och alltid använda de valda
- portarna?
+ Vill du ignorera tänkbara lokala ändringar och alltid använda de valda portarna?
 Description-vi.UTF-8: Ép buộc chọn cổng không?
- Những cổng được chọn để hiệu lực vẫn còn có thể
- bị đè bằng dịch vụ đã cấu hình một cách địa phương.
- Mặc định là lựa chọn cổng được theo chỉ khi cài đặt
- đầu tiên, rồi bị bỏ qua khi cấu hình sau.
+ Những cổng được chọn để hiệu lực vẫn còn có thể bị đè bằng dịch vụ đã cấu hình một cách địa phương. Mặc định là lựa chọn cổng được theo chỉ khi cài đặt đầu tiên, rồi bị bỏ qua khi cấu hình sau.
  .
- Bạn có muốn bỏ qua cách điều chỉnh địa phương có thể,
- và luôn luôn dùng những cổng được chọn không?
+ Bạn có muốn bỏ qua cách điều chỉnh địa phương có thể, và luôn luôn dùng những cổng được chọn không?

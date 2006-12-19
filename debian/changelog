@@ -1,3 +1,10 @@
+uw-imap (7:2002edebian1-13ubuntu1) feisty; urgency=low
+
+  * debian/control debian/control.in debian/control.in.in : Add update-inetd to 
+    uw-imapd and ipopd's dependencies (Closes Ubuntu: #76492).
+
+ -- Lionel Porcheron <lionel@alveonet.org>  Tue, 19 Dec 2006 20:50:38 +0100
+
 uw-imap (7:2002edebian1-13) unstable; urgency=low
 
   * Apply patch fixing IPv6 for ipopd. Closes: bug#348369 (thanks to

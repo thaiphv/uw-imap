@@ -8,7 +8,7 @@ Build-Depends: @cdbs@, libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, d-shlibs
 Package: uw-imapd
 Section: mail
 Architecture: any
-Depends: ${shlibs:Depends}, ${debconf-depends}, openssl, libpam-runtime (>= 0.76-13.1), netbase
+Depends: ${shlibs:Depends}, ${debconf-depends}, openssl, libpam-runtime (>= 0.76-13.1), netbase, update-inetd
 Recommends: exim4 | mail-transport-agent
 Suggests: mutt | imap-client, logcheck
 Provides: imap-server
@@ -30,7 +30,7 @@ Description: remote mail folder access server
 Package: ipopd
 Section: mail
 Architecture: any
-Depends: ${shlibs:Depends}, ${debconf-depends}, openssl, libpam-runtime (>= 0.76-13.1), netbase
+Depends: ${shlibs:Depends}, ${debconf-depends}, openssl, libpam-runtime (>= 0.76-13.1), netbase, update-inetd
 Recommends: exim4 | mail-transport-agent
 Conflicts: imap (<< 4.4-1), pop3-server, pop2-server, logcheck (<< 1.1.1-9)
 Provides: pop3-server, pop2-server
