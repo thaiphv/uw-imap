@@ -35,6 +35,14 @@ Description-da.UTF-8: Hvilke porte skal serveren lytte på?
  imaps = IMAP 4Rev1 på TCP port 993 med SSL-understøttelse.
  .
  Er du i tvivl så vælg imap2 og imaps.
+Description-de.UTF-8: Welche Ports soll der Server verwenden?
+ imap2 = IMAP 4Rev1 (nicht 2, seltsamerweise) auf TCP-Port 143 mit TLS-Unterstützung.
+ .
+ imap3 = IMAP 3 auf TCP-Port 220 mit TLS-Unterstützung. Dies ist veraltet.
+ .
+ imaps = IMAP 4Rev1 auf TCP-Port 993 mit SSL-Unterstützung.
+ .
+ Falls Sie sich nicht sicher sind, wählen Sie imap2 und imaps.
 Description-es.UTF-8: ¿En qué puertos debe escuchar el servidor?
  imap2 = IMAP 4Rev1 (no 2, extrañamente) en el puerto TCP 143 con soporte para TLS
  .
@@ -51,6 +59,14 @@ Description-fr.UTF-8: Ports où le serveur doit être à l'écoute :
  IMAPS - IMAP4 version 1 sur le port TCP 993, avec gestion SSL.
  .
  Dans le doute, vous devriez choisir IMAP2 et IMAPS.
+Description-gl.UTF-8: ¿En que portos debería escoitar o servidor?
+ imap2 = IMAP 4Rev1 (non 2) no porto TCP 143 con soporte de TLS.
+ .
+ imap3 = IMAP 3 no porto TCP 220 con soporte de TLS. Obsoleto.
+ .
+ imap2 = IMAP 4Rev1 no porto TCP 993 con soporte de SSL.
+ .
+ Se non está seguro, escolla imap2 e imaps.
 Description-ja.UTF-8: サーバでどのポートをリスンしますか?
  imap2 = TCP ポート 143 で動作する TLS サポート付き IMAP 4Rev1 (奇妙なことですが 2 ではありません)。
  .
@@ -59,6 +75,22 @@ Description-ja.UTF-8: サーバでどのポートをリスンしますか?
  imaps = TCP ポート 993 で動作する SSL サポート付き IMAP 4Rev1。
  .
  よくわからなければ、imap2 と imaps を選んでください。
+Description-nl.UTF-8: Op welke poorten moet de server luisteren?
+ imap2 = IMAP 4Rev1 (merkwaardigerwijs niet 2) op TCP poort 143 met TLS-ondersteuning.
+ .
+ imap3 = IMAP 3 op TCP poort 220 met TLS-ondersteuning. Dit is verouderd.
+ .
+ imaps = IMAP 4Rev1 op TCP poort 993 met SSL-ondersteuning.
+ .
+ Als u twijfelt, kies dan imap2 en imaps.
+Description-pt.UTF-8: Que portos deve o servidor escutar?
+ imap2 = IMAP 4rev1 (não 2, por estranho que pareça) no porto TCP 143 com suporte para TLS.
+ .
+ imap3 = IMAP3 no porto TCP 200 com suporte para TLS.  Isto é obsoleto.
+ .
+ imaps = IMAP 4Rev1 no porto TCP 993 com suporte para SSL.
+ .
+ Em caso de dúvida, escolha imap2 e imaps.
 Description-pt_BR.UTF-8: Em quais portas o servidor deve ouvir ?
  imapd2 = IMAP 4Rev1 (não 2, estranho o bastante) na porta TCP 143 com suporte TLS.
  .
@@ -109,6 +141,10 @@ Description-da.UTF-8: Tving port-valg?
  Portene der er valgt som slået til, kan tilsidesættes ved at konfigurere services lokalt. Som standard er port valget respekteret på initielle installationer, og ignoreret ved senere genopsætning.
  .
  Vil du ignorere mulige lokale ændringer og altid bruge de valgte porte?
+Description-de.UTF-8: Port-Auswahl erzwingen?
+ Die Ports, die zur Aktivierung ausgewählt wurden, können von lokal konfigurierten Diensten überschrieben werden. In der Voreinstellung wird die Port-Auswahl nur bei der ersten Installation beachtet und bei einer späteren erneuten Konfiguration ignoriert.
+ .
+ Wollen Sie mögliche lokale Anpassungen ignorieren und immer die ausgewählten Ports verwenden?
 Description-es.UTF-8: ¿Desea forzar la selección de puerto?
  Los puertos seleccionados para habilitarse pueden ser sobreescritos por servicios configurados localmente. Por omisión la selección de puertos se respeta sólo en instalaciones nuevas y se ignora en posteriores reconfiguraciones.
  .
@@ -117,10 +153,22 @@ Description-fr.UTF-8: Faut-il appliquer le choix des ports ?
  Les ports choisis pour être activés peuvent être remplacés par des services locaux. Le choix des ports n'est respecté, par défaut, que lors de l'installation initiale et est ignoré lors des reconfigurations ultérieures.
  .
  Veuillez confirmer si vous préférez ignorer les modifications locales et toujours utiliser les ports choisis.
+Description-gl.UTF-8: ¿Forzar a selección do porto?
+ Os portos escollidos poden ser substituídos por servizos configurados localmente. Por defecto a selección de portos respéctase só nas instalacións iniciais e ignórase nas reconfiguracións posteriores.
+ .
+ ¿Quere ignorar os posibles axustes locais e empregar sempre os portos seleccionados?
 Description-ja.UTF-8: ポートの選択を強制しますか?
  有効として選択されたポートは、ローカルに設定されたサービスによって上書きされる可能性があります。デフォルトでは、ポートの選択は初期インストールのときのみ尊重され、その後の再設定では無視されます。
  .
  ローカル調整の可能性を無視して、常に選択されたポートを使いますか?
+Description-nl.UTF-8: Gekozen poorten afdwingen?
+ Locaal ingestelde diensten kunnen voorgaan op de poorten die handmatig zijn ingesteld. Standaard worden de handmatig ingestelde poorten alleen gebruikt bij de eerste installatie, maar niet bij latere herconfiguratie.
+ .
+ Wilt u mogelijke locale instellingen negeren en altijd de geselecteerde poorten gebruiken?
+Description-pt.UTF-8: Obrigar a selecção do porto?
+ Os portos seleccionados para habilitar podem ser ultrapassados configurando serviços localmente. Por omissão a selecção do porto é respeitada apenas nas instalações iniciais, e é ignorada em reconfigurações posteriores.
+ .
+ Deseja ignorar possíveis alterações locais e utilizar sempre os portos escolhidos?
 Description-sv.UTF-8: Framtvinga portval?
  Portarna som valts för aktivering kan köras över av lokalt konfigurerade tjänster. Som standard respekteras portvalen bara vid initiella installation och ignoreras senare vid omkonfigurationer.
  .

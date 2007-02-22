@@ -1,3 +1,23 @@
+uw-imap (7:2002edebian1-13.1ubuntu1) feisty; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - debian/control debian/control.in debian/control.in.in : Add 
+      update-inetd to uw-imapd and ipopd's dependencies
+  * debian/control: Change Maintainer/XSBC-Original-Maintainer field
+
+ -- Lionel Porcheron <lionel@alveonet.org>  Thu, 22 Feb 2007 15:24:43 +0100
+
+uw-imap (7:2002edebian1-13.1) unstable; urgency=low
+
+  * Non-maintainer upload to fix pending l10n issues.
+  * Debconf translations:
+    - Dutch. Closes: #364466
+    - German. Closes: #398609
+    - Galician. Closes: #407895
+    - Portuguese. Closes: #409409
+
+ -- Christian Perrier <bubulle@debian.org>  Sun, 18 Feb 2007 19:29:44 +0100
+
 uw-imap (7:2002edebian1-13ubuntu1) feisty; urgency=low
 
   * debian/control debian/control.in debian/control.in.in : Add update-inetd to 
@@ -949,3 +969,4 @@ uw-imap-ssl (2000debian-1) unstable; urgency=low
   * New package with SSL support compiled in.
 
  -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 14 Nov 2000 15:46:35 -0500
+

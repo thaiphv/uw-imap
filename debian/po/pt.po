@@ -1,0 +1,131 @@
+# Portuguese translation for uw-imap's debconf templates
+# Copyright (C) 2007 Miguel Figueiredo <elmig@debianpt.org>
+# This file is distributed under the same license as the uw-imap package.
+# Miguel Figueiredo <elmig@debianpt.org>, 2007
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: uw-imap\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-03-31 16:55+0200\n"
+"PO-Revision-Date: 2007-02-02 18:18+0000\n"
+"Last-Translator: Miguel Figueiredo <elmig@debianpt.org>\n"
+"Language-Team: Portuguese <traduz@debianpt.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
+msgid "Which ports should the server listen on?"
+msgstr "Que portos deve o servidor escutar?"
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
+msgstr "pop2 = POP 2 no porto TCP 109 com suporte para TLS.  Isto é obsoleto."
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop3  = POP 3 on TCP port 110 with TLS support."
+msgstr "pop3 = POP 3 no porto TCP 110 com suporte para TLS."
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop3s = POP 3 on TCP port 995 with SSL support."
+msgstr "pop3s = POP3 no porto TCP 995 com suporte para SSL."
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "If in doubt, choose pop3 and pop3s."
+msgstr "Em caso de dúvida, escolha pop3 e pop3s."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid "Enforce port selection?"
+msgstr "Obrigar a selecção do porto?"
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"The ports selected for enabling may be overridden by locally configured "
+"services. By default the port selection is respected only on initial "
+"installs, and is ignored on later reconfiguration."
+msgstr ""
+"Os portos seleccionados para habilitar podem ser ultrapassados configurando "
+"serviços localmente. Por omissão a selecção do porto é respeitada apenas nas "
+"instalações iniciais, e é ignorada em reconfigurações posteriores."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"Do you want to ignore possible local tweaks and always use selected ports?"
+msgstr ""
+"Deseja ignorar possíveis alterações locais e utilizar sempre os portos "
+"escolhidos?"
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid "Continue installing libc-client without Maildir support?"
+msgstr "Continuar a instalar o libc-client sem suporte para Maildir?"
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid ""
+"Libc-client earlier than version 2002d (and development versions of 2003) "
+"included an unofficial and no longer maintained patch to support Maildirs. "
+"By default Maildirs were not used by uw-imapd or ipopd, but if you have "
+"changed your system configuration or other installed programs depend on libc-"
+"client then upgrading may result in broken mail handling."
+msgstr ""
+"O Libc-client anterior à versão 2002d (e versões de desenvolvimento de 2003) "
+"incluíam um patch não oficial e já não mantido para suportar Maildirs. Por "
+"omissão, Maildirs não são utilizadas pelo uw-imapd ou pelo ipopd, mas se "
+"alterou a configuração do seu sistema ou outros programas instalados que "
+"dependam do libc-client então fazer um upgrade pode resultar em que deixe de "
+"funcionar o mail."
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid ""
+"Do you want to continue installing a libc-client without Maildir support?"
+msgstr "Quer continuar a instalar o libc-client sem suporte para Maildir?"
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid ""
+"imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
+"support."
+msgstr ""
+"imap2 = IMAP 4rev1 (não 2, por estranho que pareça) no porto TCP 143 com "
+"suporte para TLS."
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
+msgstr "imap3 = IMAP3 no porto TCP 200 com suporte para TLS.  Isto é obsoleto."
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
+msgstr "imaps = IMAP 4Rev1 no porto TCP 993 com suporte para SSL."
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "If in doubt, pick imap2 and imaps."
+msgstr "Em caso de dúvida, escolha imap2 e imaps."

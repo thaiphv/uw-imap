@@ -1,0 +1,147 @@
+# translation of po-debconf template to German
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans#
+#    Developers do not need to manually edit POT or PO files.
+#
+# Matthias Julius <mdeb@julius-net.net>, 2006.
+msgid ""
+msgstr ""
+"Project-Id-Version: uw-imap 7:2002edebian1-13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-03-31 16:55+0200\n"
+"PO-Revision-Date: 2006-11-13 22:16-0500\n"
+"Last-Translator: Matthias Julius <mdeb@julius-net.net>\n"
+"Language-Team: German <debian-l10n-german@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
+msgid "Which ports should the server listen on?"
+msgstr "Welche Ports soll der Server verwenden?"
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
+msgstr ""
+"pop2 =  POP 2 auf TCP-Port 109 mit TLS-Unterstützung. Dies ist veraltet."
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop3  = POP 3 on TCP port 110 with TLS support."
+msgstr "pop3 =  POP 3 auf TCP-Port 110 mit TLS-Unterstützung."
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "pop3s = POP 3 on TCP port 995 with SSL support."
+msgstr "pop3s = POP 3 auf TCP-Port 995 mit SSL-Unterstützung."
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates.master:5
+msgid "If in doubt, choose pop3 and pop3s."
+msgstr "Falls Sie sich nicht sicher sind, wählen Sie pop3 und pop3s."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid "Enforce port selection?"
+msgstr "Port-Auswahl erzwingen?"
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"The ports selected for enabling may be overridden by locally configured "
+"services. By default the port selection is respected only on initial "
+"installs, and is ignored on later reconfiguration."
+msgstr ""
+"Die Ports, die zur Aktivierung ausgewählt wurden, können von lokal "
+"konfigurierten Diensten überschrieben werden. In der Voreinstellung wird die "
+"Port-Auswahl nur bei der ersten Installation beachtet und bei einer späteren "
+"erneuten Konfiguration ignoriert."
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+msgid ""
+"Do you want to ignore possible local tweaks and always use selected ports?"
+msgstr ""
+"Wollen Sie mögliche lokale Anpassungen ignorieren und immer die ausgewählten "
+"Ports verwenden?"
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid "Continue installing libc-client without Maildir support?"
+msgstr ""
+"Die Installation von libc-client ohne Maildir-Unterstützung fortsetzen?"
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid ""
+"Libc-client earlier than version 2002d (and development versions of 2003) "
+"included an unofficial and no longer maintained patch to support Maildirs. "
+"By default Maildirs were not used by uw-imapd or ipopd, but if you have "
+"changed your system configuration or other installed programs depend on libc-"
+"client then upgrading may result in broken mail handling."
+msgstr ""
+"Libc-client-Versionen, die älter als Version 2002d sind (und "
+"Entwicklerversionen von 2003) enthielten einen nichtoffiziellen und nicht "
+"mehr gepflegten Patch zur Maildir-Unterstützung. In der Voreinstellung "
+"wurden Maildirs von uw-imapd oder ipopd nicht verwendet. Aber wenn Sie Ihre "
+"Systemeinstellungen geändert haben oder wenn andere installierte Programme "
+"von libc-client abhängen, kann das Upgrade zu einer defekten E-Mail-"
+"Verarbeitung führen."
+
+#. Type: boolean
+#. Description
+#: ../libc-client__VER__.templates.in.master:4
+msgid ""
+"Do you want to continue installing a libc-client without Maildir support?"
+msgstr ""
+"Wollen Sie die Installation von libc-client ohne Maildir-Unterstützung "
+"fortsetzen?"
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid ""
+"imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
+"support."
+msgstr ""
+"imap2 = IMAP 4Rev1 (nicht 2, seltsamerweise) auf TCP-Port 143 mit TLS-"
+"Unterstützung."
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
+msgstr ""
+"imap3 = IMAP 3 auf TCP-Port 220 mit TLS-Unterstützung. Dies ist veraltet."
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
+msgstr "imaps = IMAP 4Rev1 auf TCP-Port 993 mit SSL-Unterstützung."
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates.master:5
+msgid "If in doubt, pick imap2 and imaps."
+msgstr "Falls Sie sich nicht sicher sind, wählen Sie imap2 und imaps."

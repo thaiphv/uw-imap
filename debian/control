@@ -1,7 +1,8 @@
 Source: uw-imap
 Priority: optional
 Section: mail
-Maintainer: Jonas Smedegaard <dr@jones.dk>
+Maintainer: Ubuntu MOTU Developers <ubuntu-motu@lists.ubuntu.com>
+XSBC-Original-Maintainer: Jonas Smedegaard <dr@jones.dk>
 Standards-Version: 3.6.2
 Build-Depends: cdbs (>= 0.4.23-1.1), , debhelper (>= 4.1.0), debhelper (>= 4.1.16), po-debconf, patchutils (>= 0.2.25), dh-buildinfo, libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, d-shlibs (>> 0.13), perl
 
