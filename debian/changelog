@@ -1,11 +1,13 @@
-uw-imap (7:2002edebian1-13.1ubuntu1) feisty; urgency=low
+uw-imap (7:2002edebian1-13.2) unstable; urgency=high
 
-  * Merge from debian unstable, remaining changes:
-    - debian/control debian/control.in debian/control.in.in : Add 
-      update-inetd to uw-imapd and ipopd's dependencies
-  * debian/control: Change Maintainer/XSBC-Original-Maintainer field
+  * Non-maintainer upload.
+  * High-urgency upload for RC bugfix.
+  * Guard calls to debconf in the postrm so that package removal doesn't fail
+    if debconf was removed first.  Closes: #417138, #416780.
+  * Depend on update-inetd and inet-superserver now instead of netbase,
+    for the package split.
 
- -- Lionel Porcheron <lionel@alveonet.org>  Thu, 22 Feb 2007 15:24:43 +0100
+ -- Steve Langasek <vorlon@debian.org>  Sat, 19 May 2007 15:38:38 -0700
 
 uw-imap (7:2002edebian1-13.1) unstable; urgency=low
 
@@ -17,13 +19,6 @@ uw-imap (7:2002edebian1-13.1) unstable; urgency=low
     - Portuguese. Closes: #409409
 
  -- Christian Perrier <bubulle@debian.org>  Sun, 18 Feb 2007 19:29:44 +0100
-
-uw-imap (7:2002edebian1-13ubuntu1) feisty; urgency=low
-
-  * debian/control debian/control.in debian/control.in.in : Add update-inetd to 
-    uw-imapd and ipopd's dependencies (Closes Ubuntu: #76492).
-
- -- Lionel Porcheron <lionel@alveonet.org>  Tue, 19 Dec 2006 20:50:38 +0100
 
 uw-imap (7:2002edebian1-13) unstable; urgency=low
 
@@ -969,4 +964,3 @@ uw-imap-ssl (2000debian-1) unstable; urgency=low
   * New package with SSL support compiled in.
 
  -- Jaldhar H. Vyas <jaldhar@debian.org>  Tue, 14 Nov 2000 15:46:35 -0500
-
