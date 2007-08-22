@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2006 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	c-client master include for application programs
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	19 May 2000
- * Last Edited:	7 February 2003
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 1988-2003 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	6 December 2006
  */
 
 #ifndef __CCLIENT_H		/* nobody should include this twice... */
@@ -32,15 +40,12 @@ extern "C" {
 
 #include "mail.h"		/* primary interfaces */
 #include "osdep.h"		/* OS-dependent routines */
-#include "misc.h"		/* miscellaneous utility routines */
 #include "rfc822.h"		/* RFC822 and MIME routines */
 #include "smtp.h"		/* SMTP sending routines */
-
-#ifdef LOCAL
-#undef LOCAL			/* just in case */
-#endif
 #include "nntp.h"		/* NNTP sending routines */
-#undef LOCAL			/* undo driver mischief */
+#include "utf8.h"		/* Unicode and charset routines */
+#include "utf8aux.h"		/* Unicode auxillary routines */
+#include "misc.h"		/* miscellaneous utility routines */
 
 #ifdef __cplusplus		/* undo the C++ mischief */
 #undef private

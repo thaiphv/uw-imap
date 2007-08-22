@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2006 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	GSSAPI Kerberos Shim 5 for Windows 2000/XP IMAP Toolkit
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	6 March 2000
- * Last Edited:	4 March 2003
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 1988-2003 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	30 August 2006
  */
 
 /*  The purpose of this module is to be a shim, so that the auth_gss.c module
@@ -51,7 +59,6 @@ typedef ULONG gss_qop_t;
 
 #define GSS_S_COMPLETE SEC_E_OK
 #define GSS_S_BAD_MECH SEC_E_SECPKG_NOT_FOUND
-#define GSS_S_BAD_QOP SEC_E_QOP_NOT_SUPPORTED
 #define GSS_S_CONTINUE_NEEDED SEC_I_CONTINUE_NEEDED
 #define GSS_S_CREDENTIALS_EXPIRED SEC_E_CERT_EXPIRED
 #define GSS_S_FAILURE SEC_E_INTERNAL_ERROR
@@ -66,6 +73,7 @@ typedef ULONG gss_qop_t;
 #define GSS_C_REPLAY_FLAG ISC_REQ_REPLAY_DETECT
 #define GSS_C_SEQUENCE_FLAG ISC_REQ_SEQUENCE_DETECT
 #define GSS_C_CONF_FLAG ISC_REQ_CONFIDENTIALITY
+#define GSS_C_INTEG_FLAG ISC_REQ_INTEGRITY
 
 
 /* Credential usage options */
@@ -190,7 +198,7 @@ OM_uint32 gss_unwrap (OM_uint32 *minor_status,gss_ctx_id_t context_handle,
 /* Kerberos definitions */
 
 long kerberos_server_valid (void);
-long kerberos_try_kinit (OM_uint32 error,char *host);
+long kerberos_try_kinit (OM_uint32 error);
 char *kerberos_login (char *user,char *authuser,int argc,char *argv[]);
 
 
@@ -276,7 +284,7 @@ OM_uint32 gss_import_name (OM_uint32 *minor_status,
  *	    buffer to return output token
  *	    pointer to return flags
  *	    pointer to return context lifetime
- * Returns: GSS_S_FAILURE, always
+ * Returns: major status, always
  */
 
 OM_uint32 gss_init_sec_context (OM_uint32 *minor_status,
@@ -384,18 +392,18 @@ OM_uint32 gss_display_status (OM_uint32 *minor_status,OM_uint32 status_value,
       s = "Bad name"; break;
     case GSS_S_BAD_NAMETYPE:
       s = "Bad name type"; break;
-    case GSS_S_BAD_QOP:
-      s = "Bad quality of protection"; break;
     case GSS_S_BAD_STATUS:
       s = "Bad status"; break;
     case GSS_S_NO_CONTEXT:
       s = "Invalid context handle"; break;
     case GSS_S_NO_CRED:
-      s = "Invalid credentials handle"; break;
+      s = "Unable to authenticate to Kerberos service";
+      mail_parameters (NIL,DISABLE_AUTHENTICATOR,"GSSAPI");
+      break;
     case SEC_E_NO_AUTHENTICATING_AUTHORITY:
       s = "No authenticating authority"; break;
     case SEC_E_TARGET_UNKNOWN:
-      s = "target is unknown or unreachable"; break;
+      s = "Destination server unknown to Kerberos service"; break;
     default:
       sprintf (s = tmp,"SSPI code %lx",status_value);
     }
@@ -479,15 +487,20 @@ OM_uint32 gss_wrap (OM_uint32 *minor_status,gss_ctx_id_t context_handle,
   SecPkgContext_Sizes sizes;
   *minor_status = NIL;		/* never any minor status */
   *conf_state = conf_req_flag;	/* same as requested */
-				/* can't do non-default QOP */
-  if (qop_req != GSS_C_QOP_DEFAULT) return GSS_S_BAD_QOP;
   if ((major_status =		/* get trailer and padding sizes */
        QueryContextAttributes (context_handle,SECPKG_ATTR_SIZES,&sizes)) ==
       SEC_E_OK) {
-				/* create output buffer */
+				/* create big enough output buffer */
     output_message_buffer->value =
       fs_get (sizes.cbSecurityTrailer + input_message_buffer->length +
 	      sizes.cbBlockSize);
+    /* MSDN claims that for EncryptMessage() in Kerberos, you need an
+     * uninitialized SECBUFFER_STREAM_HEADER; a SECBUFFER_DATA that "contains
+     * the message to be encrypted.  The message is encrypted in place,
+     * overwriting the original contents of its buffer"; an uninitialized
+     * SECBUFFER_STREAM_TRAILER, and an uninitialized SECBUFFER_EMPTY.  I've
+     * never been able to get it to work that way.
+     */
     bufs.cBuffers = 3;		/* set up buffer descriptor */
     bufs.pBuffers = buf;
     bufs.ulVersion = SECBUFFER_VERSION;
@@ -501,9 +514,9 @@ OM_uint32 gss_wrap (OM_uint32 *minor_status,gss_ctx_id_t context_handle,
     memcpy (buf[1].pvBuffer,input_message_buffer->value,buf[1].cbBuffer);
     buf[2].BufferType = SECBUFFER_PADDING;
     buf[2].pvBuffer = ((char *) buf[1].pvBuffer) + buf[1].cbBuffer;
-    if ((major_status = EncryptMessage (context_handle,
-					conf_req_flag ? 0:KERB_WRAP_NO_ENCRYPT,
-					&bufs,0)) == GSS_S_COMPLETE) {
+    buf[2].cbBuffer = sizes.cbBlockSize;
+    if ((major_status = EncryptMessage (context_handle,qop_req,&bufs,0)) ==
+	GSS_S_COMPLETE) {
 				/* slide data as necessary (how annoying!) */
       unsigned long i = sizes.cbSecurityTrailer - buf[0].cbBuffer;
       if (i) buf[1].pvBuffer =
@@ -538,6 +551,18 @@ OM_uint32 gss_unwrap (OM_uint32 *minor_status,gss_ctx_id_t context_handle,
   OM_uint32 major_status;
   SecBuffer buf[2];
   SecBufferDesc bufs;
+  *minor_status = NIL;		/* never any minor status */
+  *conf_state = NIL;		/* or confidentiality state */
+  /* MSDN implies that all that is needed for DecryptMessage() in Kerberos
+   * is a single SECBUFFER_DATA which "contains the encrypted message.  The
+   * encrypted message is decrypted in place, overwriting the original
+   * contents of its buffer."  I've never been able to get it to work without
+   * using a SECBUFFER_STREAM for input and an uninitialized SECBUFFER_DATA
+   * for output.
+   * It *does* overwrite the input buffer, but not at the same point; e.g.
+   * with an input pointer of 0xa140a8 and size of 53, the output ends up
+   * at 0xa140d5 and size of 4.
+   */
   bufs.cBuffers = 2;		/* set up buffer descriptor */
   bufs.pBuffers = buf;
   bufs.ulVersion = SECBUFFER_VERSION;
@@ -549,14 +574,11 @@ OM_uint32 gss_unwrap (OM_uint32 *minor_status,gss_ctx_id_t context_handle,
   buf[1].BufferType = SECBUFFER_DATA;
   buf[1].pvBuffer = NIL;
   buf[1].cbBuffer = 0;
-  major_status = DecryptMessage (context_handle,&bufs,0,(PULONG) conf_state);
-  *minor_status = NIL;		/* never any minor status */
-  *qop_state = GSS_C_QOP_DEFAULT;
-				/* set output buffer */
-  output_message_buffer->value = buf[1].pvBuffer;
-  memcpy (output_message_buffer->value = fs_get (buf[1].cbBuffer),
-	  buf[1].pvBuffer,buf[1].cbBuffer);
-  output_message_buffer->length = buf[1].cbBuffer;
+				/* decrypt and copy to output buffer */
+  if ((major_status = DecryptMessage (context_handle,&bufs,0,qop_state)) ==
+      SEC_E_OK)
+   memcpy (output_message_buffer->value = fs_get (buf[1].cbBuffer),
+	   buf[1].pvBuffer,output_message_buffer->length = buf[1].cbBuffer);
   return major_status;		/* return status */
 }
 
@@ -572,7 +594,7 @@ OM_uint32 gss_unwrap (OM_uint32 *minor_status,gss_ctx_id_t context_handle,
  *	    pointer to return credentials handle
  *	    pointer to return mechanisms
  *	    pointer to return lifetime
- * Returns: major status, always
+ * Returns: GSS_S_FAILURE, always
  */
 
 OM_uint32 gss_acquire_cred (OM_uint32 *minor_status,gss_name_t desired_name,
@@ -654,11 +676,11 @@ long kerberos_server_valid ()
 }
 
 
-/* Kerberos check for missing credentials
- * Returns: T if missing credentials, NIL if should do standard message
+/* Kerberos check for missing or expired credentials
+ * Returns: T if should suggest running kinit, NIL otherwise
  */
 
-long kerberos_try_kinit (OM_uint32 error,char *host)
+long kerberos_try_kinit (OM_uint32 error)
 {
   return NIL;
 }

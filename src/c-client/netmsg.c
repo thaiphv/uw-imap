@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2006 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	Network message (SMTP/NNTP/POP2/POP3) routines
  *
@@ -10,21 +23,14 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	8 June 1995
- * Last Edited:	21 May 2001
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2001 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	6 December 2006
  */
 
 
 #include <stdio.h>
 #include <errno.h>
 extern int errno;		/* just in case */
-#include "mail.h"
-#include "osdep.h"
-#include "misc.h"
+#include "c-client.h"
 #include "netmsg.h"
 #include "flstring.h"
 
@@ -91,7 +97,7 @@ FILE *netmsg_slurp (NETSTREAM *stream,unsigned long *size,unsigned long *hsiz)
     fs_give ((void **) &s);	/* free the line */
   }
 				/* if making a file, rewind to start of file */
-  if (f) fseek (f,(unsigned long) 0,L_SET);
+  if (f) fseek (f,(unsigned long) 0,SEEK_SET);
 				/* header consumes entire message */
   if (hsiz && !*hsiz) *hsiz = *size;
   return f;			/* return the file descriptor */

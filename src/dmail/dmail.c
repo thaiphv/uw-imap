@@ -1,5 +1,18 @@
+/* ========================================================================
+ * Copyright 1988-2007 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
- * Program:	Mail Delivery Module
+ * Program:	Procmail-Callable Mail Delivery Module
  *
  * Author:	Mark Crispin
  *		Networks and Distributed Computing
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	5 April 1993
- * Last Edited:	2 September 2003
- *
- * The IMAP tools software provided in this Distribution is
- * Copyright 2003 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	18 June 2007
  */
 
 #include <stdio.h>
@@ -33,12 +41,13 @@ extern int errno;		/* just in case */
 
 /* Globals */
 
-char *version = "2003(12)";	/* dmail release version */
+char *version = "16";		/* dmail edit version */
 int debug = NIL;		/* debugging (don't fork) */
 int flagseen = NIL;		/* flag message as seen */
 int trycreate = NIL;		/* flag saying gotta create before appending */
 int critical = NIL;		/* flag saying in critical code */
 char *sender = NIL;		/* message origin */
+char *keywords = NIL;		/* keyword list */
 
 
 /* Function prototypes */
@@ -141,8 +150,14 @@ int main (int argc,char *argv[])
     break;
   case 'f':
   case 'r':			/* flag giving return path */
+    if (sender) _exit (fail ("duplicate -r",EX_USAGE));
     if (argc--) sender = cpystr (*++argv);
     else _exit (fail ("missing argument to -r",EX_USAGE));
+    break;
+  case 'k':
+    if (keywords) _exit (fail ("duplicate -k",EX_USAGE));
+    if (argc--) keywords = cpystr (*++argv);
+    else _exit (fail ("missing argument to -k",EX_USAGE));
     break;
   default:			/* anything else */
     _exit (fail ("unknown switch",EX_USAGE));
@@ -153,7 +168,7 @@ int main (int argc,char *argv[])
 				/* build delivery headers */
   if (sender) fprintf (f,"Return-Path: <%s>\015\012",sender);
 				/* start Received line: */
-  fprintf (f,"Received: via dmail-%s for %s; ",version,
+  fprintf (f,"Received: via dmail-%s.%s for %s; ",CCLIENTVERSION,version,
 	   (argc == 1) ? *argv : myusername ());
   rfc822_date (tmp);
   fputs (tmp,f);
@@ -302,7 +317,8 @@ long ibxpath (MAILSTREAM *ds,char **mailbox,char *path)
 {
   char *s,tmp[MAILTMPLEN];
   long ret = T;
-  if (!strcmp (ds->dtb->name,"unix") || !strcmp (ds->dtb->name,"mmdf"))
+  if (!ds) return NIL;
+  else if (!strcmp (ds->dtb->name,"unix") || !strcmp (ds->dtb->name,"mmdf"))
     strcpy (path,sysinbox ());	/* use system INBOX for unix and MMDF */
   else if (!strcmp (ds->dtb->name,"tenex"))
     ret = (mailboxfile (path,"mail.txt") == path) ? T : NIL;
@@ -335,6 +351,7 @@ int deliver_safely (MAILSTREAM *prt,STRING *st,char *mailbox,char *path,
 		    char *tmp)
 {
   struct stat sbuf;
+  char *flags = NIL;
   int i = delivery_unsafe (path,&sbuf,tmp);
   if (i) return i;		/* give up now if delivery unsafe */
 				/* directory, not file */
@@ -367,8 +384,13 @@ int deliver_safely (MAILSTREAM *prt,STRING *st,char *mailbox,char *path,
 	   prt ? prt->dtb->name : "default",mailbox,
 	   ((sbuf.st_mode & S_IFMT) == S_IFDIR) ? "directory" : "file",path);
   mm_dlog (tmp);
+  if (keywords) {		/* any keywords requested? */
+    if (flagseen) sprintf (flags = tmp,"\\Seen %.1000s",keywords);
+    else flags = keywords;
+  }
+  else if (flagseen) flags = "\\Seen";
 				/* do the append now! */
-  if (!mail_append_full (prt,mailbox,flagseen ? "\\Seen" : NIL,NIL,st)) {
+  if (!mail_append_full (prt,mailbox,flags,NIL,st)) {
     sprintf (tmp,"message delivery failed to %.80s",path);
     return fail (tmp,EX_CANTCREAT);
   }
@@ -395,24 +417,23 @@ int delivery_unsafe (char *path,struct stat *sbuf,char *tmp)
   sprintf (tmp,"delivery to %.80s unsafe: ",path);
 				/* unsafe if can't get its status */
   if (lstat (path,sbuf)) strcat (tmp,strerror (errno));
-				/* unsafe if not a regular file */
-  else if (((type = sbuf->st_mode & (S_IFMT | S_ISUID | S_ISGID)) != S_IFREG)&&
-	   (type != S_IFDIR)) {
-    strcat (tmp,"can't deliver to ");
-				/* unsafe if setuid */
-    if (type & S_ISUID) strcat (tmp,"setuid file");
-				/* unsafe if setgid */
-    else if (type & S_ISGID) strcat (tmp,"setgid file");
-    else switch (type) {
-    case S_IFCHR: strcat (tmp,"character special"); break;
-    case S_IFBLK: strcat (tmp,"block special"); break;
-    case S_IFLNK: strcat (tmp,"symbolic link"); break;
-    case S_IFSOCK: strcat (tmp,"socket"); break;
-    default:
-      sprintf (tmp + strlen (tmp),"file type %07o",(unsigned int) type);
-    }
+				/* check file type */
+  else switch (sbuf->st_mode & S_IFMT) {
+  case S_IFDIR:			/* directory is always OK */
+    return NIL;
+  case S_IFREG:			/* file is unsafe if setuid */
+    if (sbuf->st_mode & S_ISUID) strcat (tmp,"setuid file");
+				/* or setgid */
+    else if (sbuf->st_mode & S_ISGID) strcat (tmp,"setgid file");
+    else return NIL;		/* otherwise safe */
+    break;
+  case S_IFCHR: strcat (tmp,"character special"); break;
+  case S_IFBLK: strcat (tmp,"block special"); break;
+  case S_IFLNK: strcat (tmp,"symbolic link"); break;
+  case S_IFSOCK: strcat (tmp,"socket"); break;
+  default:
+    sprintf (tmp + strlen (tmp),"file type %07o",(unsigned int) type);
   }
-  else return NIL;		/* OK to deliver */
   return fail (tmp,EX_CANTCREAT);
 }
 

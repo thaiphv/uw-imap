@@ -1,5 +1,18 @@
+/* ========================================================================
+ * Copyright 1988-2006 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
- * Program:	Operating-system dependent routines -- OSF/1 version
+ * Program:	Operating-system dependent routines -- OSF/Digital UNIX/Tru64
  *
  * Author:	Mark Crispin
  *		Networks and Distributed Computing
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	1 August 1988
- * Last Edited:	24 October 2000
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2000 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	30 August 2006
  */
 
 #include <stdlib.h>
@@ -32,7 +40,6 @@
 /* OSF/1 gets this wrong */
 
 #define setpgrp setpgid
-#define flock safe_flock	/* use ours instead of theirs */
 
 #define direct dirent
 
@@ -41,3 +48,4 @@
 #include "ftl.h"
 #include "nl.h"
 #include "tcp.h"
+#include "flocksim.h"

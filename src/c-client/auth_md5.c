@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2007 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	CRAM-MD5 authenticator
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	21 October 1998
- * Last Edited:	29 May 2002
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2002 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	30 January 2007
  */
 
 /* MD5 context */
@@ -133,7 +141,7 @@ long auth_md5_client (authchallenge_t challenger,authrespond_t responder,
  * the password data.
  */
 
-static int md5try = 3;
+static int md5try = MAXLOGINTRIALS;
 
 char *auth_md5_server (authresponse_t responder,int argc,char *argv[])
 {
@@ -153,7 +161,7 @@ char *auth_md5_server (authresponse_t responder,int argc,char *argv[])
 				/* get password */
       if (p = auth_md5_pwd ((authuser && *authuser) ? authuser : user)) {
 	pl = strlen (p);
-	u = (md5try && strcmp (hash,hmac_md5 (chal,cl,p,pl))) ? NIL : user;
+	u = (md5try && !strcmp (hash,hmac_md5 (chal,cl,p,pl))) ? user : NIL;
 	memset (p,0,pl);	/* erase sensitive information */
 	fs_give ((void **) &p);	/* flush erased password */
 				/* now log in for real */
@@ -179,17 +187,18 @@ char *auth_md5_pwd (char *user)
 {
   struct stat sbuf;
   int fd = open (MD5ENABLE,O_RDONLY,NIL);
-  char *s,*t,*buf,*lusr,*lret;
+  unsigned char *s,*t,*buf,*lusr,*lret;
+  char *r;
   char *ret = NIL;
   if (fd >= 0) {		/* found the file? */
     fstat (fd,&sbuf);		/* yes, slurp it into memory */
     read (fd,buf = (char *) fs_get (sbuf.st_size + 1),sbuf.st_size);
 				/* see if any uppercase characters in user */
-    for (s = user; *s && !isupper (*s); s++);
+    for (s = user; *s && ((*s < 'A') || (*s > 'Z')); s++);
 				/* yes, make lowercase copy */
     lusr = *s ? lcase (cpystr (user)) : NIL;
-    for (s = strtok (buf,"\015\012"),lret = NIL; s;
-	 s = ret ? NIL : strtok (NIL,"\015\012"))
+    for (s = strtok_r ((char *) buf,"\015\012",&r),lret = NIL; s;
+	 s = ret ? NIL : strtok_r (NIL,"\015\012",&r))
 				/* must be valid entry line */
       if (*s && (*s != '#') && (t = strchr (s,'\t')) && t[1]) {
 	*t++ = '\0';		/* found tab, tie off user, point to pwd */

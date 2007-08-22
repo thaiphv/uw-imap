@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2007 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	Mail Delivery Module
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	5 April 1993
- * Last Edited:	14 July 2002
- *
- * The IMAP tools software provided in this Distribution is
- * Copyright 2002 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	21 May 2007
  */
 
 #include <stdio.h>
@@ -33,7 +41,7 @@ extern int errno;		/* just in case */
 
 /* Globals */
 
-char *version = "2002(14)";	/* tmail release version */
+char *version = "19";		/* tmail edit version */
 int debug = NIL;		/* debugging (don't fork) */
 int trycreate = NIL;		/* flag saying gotta create before appending */
 int critical = NIL;		/* flag saying in critical code */
@@ -159,7 +167,7 @@ int main (int argc,char *argv[])
   else {			/* build delivery headers */
     if (sender) fprintf (f,"Return-Path: <%s>\015\012",sender);
 				/* start Received line: */
-    fprintf (f,"Received: via tmail-%s",version);
+    fprintf (f,"Received: via tmail-%s.%s",CCLIENTVERSION,version);
 				/* not root or daemon? */
     if (ruid && !((pwd = getpwnam ("daemon")) && (ruid == pwd->pw_uid))) {
       pwd = getpwuid (ruid);	/* get unprivileged user's information */
@@ -255,14 +263,11 @@ int deliver (FILE *f,unsigned long msglen,char *user)
     return fail ("absurd folder name",EX_NOUSER);
 				/* big security hole if this is allowed */
   if (!(duid = pwd->pw_uid)) return fail ("mail to root prohibited",EX_NOUSER);
-  if (duid != euid) {		/* avoid obnoxious initgroups() msg if self */
-    setgid (pwd->pw_gid);	/* initialize groups */
-    initgroups (user,pwd->pw_gid);
-    if (setuid (duid)) {	/* log in as that user */
-      sprintf (tmp,"unable to log in UID %ld from UID %ld",
-	       (long) duid,(long) euid);
-      return fail (tmp,EX_NOUSER);
-    }
+				/* log in as user if different than euid */
+  if ((duid != euid) && !loginpw (pwd,1,&user)) {
+    sprintf (tmp,"unable to log in UID %ld from UID %ld",
+	     (long) duid,(long) euid);
+    return fail (tmp,EX_NOUSER);
   }
 				/* can't use pwd after this point */
   env_init (pwd->pw_name,pwd->pw_dir);
@@ -409,7 +414,8 @@ long ibxpath (MAILSTREAM *ds,char **mailbox,char *path)
 {
   char *s,tmp[MAILTMPLEN];
   long ret = T;
-  if (!strcmp (ds->dtb->name,"unix") || !strcmp (ds->dtb->name,"mmdf"))
+  if (!ds) ret = NIL;
+  else if (!strcmp (ds->dtb->name,"unix") || !strcmp (ds->dtb->name,"mmdf"))
     strcpy (path,sysinbox ());	/* use system INBOX for unix and MMDF */
   else if (!strcmp (ds->dtb->name,"tenex"))
     ret = (mailboxfile (path,"mail.txt") == path) ? T : NIL;
@@ -507,24 +513,23 @@ int delivery_unsafe (char *path,uid_t uid,struct stat *sbuf,char *tmp)
   else if (sbuf->st_uid != uid)	/* unsafe if UID does not match */
     sprintf (tmp + strlen (tmp),"uid mismatch (%ld != %ld)",
 	     (long) sbuf->st_uid,(long) uid);
-				/* unsafe if not a regular file */
-  else if (((type = sbuf->st_mode & (S_IFMT | S_ISUID | S_ISGID)) != S_IFREG)&&
-	   (type != S_IFDIR)) {
-    strcat (tmp,"can't deliver to ");
-				/* unsafe if setuid */
-    if (type & S_ISUID) strcat (tmp,"setuid file");
-				/* unsafe if setgid */
-    else if (type & S_ISGID) strcat (tmp,"setgid file");
-    else switch (type) {
-    case S_IFCHR: strcat (tmp,"character special"); break;
-    case S_IFBLK: strcat (tmp,"block special"); break;
-    case S_IFLNK: strcat (tmp,"symbolic link"); break;
-    case S_IFSOCK: strcat (tmp,"socket"); break;
-    default:
-      sprintf (tmp + strlen (tmp),"file type %07o",(unsigned int) type);
-    }
+				/* check file type */
+  else switch (sbuf->st_mode & S_IFMT) {
+  case S_IFDIR:			/* directory is always OK */
+    return NIL;
+  case S_IFREG:			/* file is unsafe if setuid */
+    if (sbuf->st_mode & S_ISUID) strcat (tmp,"setuid file");
+				/* or setgid */
+    else if (sbuf->st_mode & S_ISGID) strcat (tmp,"setgid file");
+    else return NIL;		/* otherwise safe */
+    break;
+  case S_IFCHR: strcat (tmp,"character special"); break;
+  case S_IFBLK: strcat (tmp,"block special"); break;
+  case S_IFLNK: strcat (tmp,"symbolic link"); break;
+  case S_IFSOCK: strcat (tmp,"socket"); break;
+  default:
+    sprintf (tmp + strlen (tmp),"file type %07o",(unsigned int) type);
   }
-  else return NIL;		/* OK to deliver */
   return fail (tmp,EX_CANTCREAT);
 }
 
