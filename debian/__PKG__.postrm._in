@@ -6,6 +6,10 @@ pkg="__PKG__"	# basename of package
 cert="__CERT__"	# basename of certificate
 daemonsets="__DAEMONSETS__"	# space-seperated list of colon-seperated list of port and binary name (or path if not /usr/sbin)
 
+# Source debconf library.
+. /usr/share/debconf/confmodule
+db_version 2.0
+
 ##
 ## Remove imapd from inetd.conf
 ##
@@ -17,27 +21,23 @@ else
 	UPDATE_INETD_ARG='--disable'
 fi
 
-# Source debconf library.
-if [ -e /usr/share/debconf/confmodule ]; then
-	. /usr/share/debconf/confmodule
-	db_version 2.0
-	db_get "$pkg/protocol"
-	for debconf_entry in `echo "$RET" | tr ',' ' '`; do
-		seen=""
-		for daemonset in $daemonsets; do
-			service="`echo "$daemonset" | awk -F: '{ print $1 }'`"
-			if [ "$debconf_entry" = "$service" ]; then
+db_get "$pkg/protocol"
+for debconf_entry in `echo "$RET" | tr ',' ' '`; do
+	seen=""
+	for daemonset in $daemonsets; do
+		service="`echo "$daemonset" | awk -F: '{ print $1 }'`"
+		if [ "$debconf_entry" = "$service" ]; then
+			if [ -x /usr/sbin/update-inetd ]; then
 				update-inetd $UPDATE_INETD_ARG "${service}"
-				seen="yes"
-				break
 			fi
-		done
-		if [ "$seen" != "yes" ]; then
-			echo "WARNING: Unsupported debconf value \"$debconf_entry\" in \"$pkg/protocol\"" >/dev/stderr
+			seen="yes"
+			break
 		fi
 	done
-
-fi
+	if [ "$seen" != "yes" ]; then
+		echo "WARNING: Unsupported debconf value \"$debconf_entry\" in \"$pkg/protocol\"" >/dev/stderr
+	fi
+done
 
 if [ "$1" = "purge" ] && [ -f /etc/ssl/certs/$cert.pem ]; then
 	echo "SSL certificate /etc/ssl/certs/$cert.pem is NOT removed."

@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-03-31 16:55+0200\n"
+"Report-Msgid-Bugs-To: dr@jones.dk\n"
+"POT-Creation-Date: 2007-03-20 14:42+0100\n"
 "PO-Revision-Date: 2005-04-29 23:44+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
@@ -25,13 +25,13 @@ msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
-msgid "Which ports should the server listen on?"
-msgstr "サーバでどのポートをリスンしますか?"
+#: ../ipopd.templates:1001 ../uw-imapd.templates:1001
+msgid "Wanted server ports:"
+msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
 msgstr ""
 "pop2  = TCP ポート 109 で動作する TLS サポート付き POP 2。これはもう時代遅れ"
@@ -39,76 +39,99 @@ msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop3  = POP 3 on TCP port 110 with TLS support."
 msgstr "pop3  = TCP ポート 110 で動作する TLS サポート付き POP 3。"
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop3s = POP 3 on TCP port 995 with SSL support."
 msgstr "pop3s = TCP ポート 995 で動作する SSL サポート付き POP 3。"
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001 ../uw-imapd.templates:1001
+msgid ""
+"Confusingly, the choice of ports made with this package may have been "
+"overridden by locally configured services (or by a broken package)."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001 ../uw-imapd.templates:1001
+#: ../uw-imapd.templates:2001
+msgid ""
+"If you want to enforce your choice of ports made with this package, "
+"disregarding any local changes, then you need to *both* select ports *and* "
+"enforce the selection."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001 ../uw-imapd.templates:1001
+#: ../uw-imapd.templates:2001
+msgid ""
+"To make sure you've done both, you can run the following command after "
+"finishing your current installation/reconfiguration:"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001
+msgid "dpkg-reconfigure -plow ipopd"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates:1001
 msgid "If in doubt, choose pop3 and pop3s."
 msgstr "よくわからなければ、pop3 と pop3s を選んでください。"
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid "Enforce port selection?"
 msgstr "ポートの選択を強制しますか?"
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001
 msgid ""
-"The ports selected for enabling may be overridden by locally configured "
-"services. By default the port selection is respected only on initial "
-"installs, and is ignored on later reconfiguration."
-msgstr "有効として選択されたポートは、ローカルに設定されたサービスによって上書きされる可能性があります。デフォルトでは、ポートの選択は初期インストールのときのみ尊重され、その後の再設定では無視されます。"
-
-#. Type: boolean
-#. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
-msgid ""
-"Do you want to ignore possible local tweaks and always use selected ports?"
-msgstr "ローカル調整の可能性を無視して、常に選択されたポートを使いますか?"
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid "Continue installing libc-client without Maildir support?"
-msgstr "Maildir サポートなしで libc-client のインストールを続けますか?"
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid ""
-"Libc-client earlier than version 2002d (and development versions of 2003) "
-"included an unofficial and no longer maintained patch to support Maildirs. "
-"By default Maildirs were not used by uw-imapd or ipopd, but if you have "
-"changed your system configuration or other installed programs depend on libc-"
-"client then upgrading may result in broken mail handling."
+"The ipopd daemon supports listening on several ports simultaneously. A "
+"default choice of ports is provided, which you can adjust."
 msgstr ""
-"libc-client のバージョン 2002d 以下 (および 2003 の開発バージョン) では "
-"Maildirs をサポートする非公式でもうメンテナンスされていないパッチが含まれてい"
-"ました。デフォルトでは uw-imapd や ipopd では Maildirs を使いませんが、システ"
-"ム設定を変更していたり、その他のインストール済みプログラムが libc-client に依"
-"存しているのであれば、この更新はメール操作に障害をもたらす結果となります。"
 
 #. Type: boolean
 #. Description
-#: ../libc-client__VER__.templates.in.master:4
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid ""
-"Do you want to continue installing a libc-client without Maildir support?"
-msgstr "Maildir サポートなしで libc-client のインストールを続けますか?"
+"Confusingly, the choice of ports made with this package may have been "
+"overridden by locally configured services (and by broken packages messing "
+"with the configuration in a bad way)."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
+#, fuzzy
+msgid ""
+"By default the port selection is respected only on initial installs, and is "
+"ignored on later updates and reconfiguration."
+msgstr ""
+"有効として選択されたポートは、ローカルに設定されたサービスによって上書きされ"
+"る可能性があります。デフォルトでは、ポートの選択は初期インストールのときのみ"
+"尊重され、その後の再設定では無視されます。"
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid ""
 "imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
 "support."
@@ -118,7 +141,7 @@ msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
 msgstr ""
 "imap3 = TCP ポート 220 で動作する TLS サポート付き IMAP 3。これはもう時代遅れ"
@@ -126,12 +149,59 @@ msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
 msgstr "imaps = TCP ポート 993 で動作する SSL サポート付き IMAP 4Rev1。"
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
-msgid "If in doubt, pick imap2 and imaps."
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:1001 ../uw-imapd.templates:2001
+msgid "dpkg-reconfigure -plow uw-imapd"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates:1001
+#, fuzzy
+msgid "If in doubt, choose imap2 and imaps."
 msgstr "よくわからなければ、imap2 と imaps を選んでください。"
+
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:2001
+msgid ""
+"The uw-imap daemon supports listening on several ports simultaneously. A "
+"default choice of ports is provided, which you can adjust."
+msgstr ""
+
+#, fuzzy
+#~ msgid ""
+#~ "You can choose to ignore possible local tweaks and always use selected "
+#~ "ports."
+#~ msgstr "ローカル調整の可能性を無視して、常に選択されたポートを使いますか?"
+
+#~ msgid "Which ports should the server listen on?"
+#~ msgstr "サーバでどのポートをリスンしますか?"
+
+#~ msgid "Continue installing libc-client without Maildir support?"
+#~ msgstr "Maildir サポートなしで libc-client のインストールを続けますか?"
+
+#~ msgid ""
+#~ "Libc-client earlier than version 2002d (and development versions of 2003) "
+#~ "included an unofficial and no longer maintained patch to support "
+#~ "Maildirs. By default Maildirs were not used by uw-imapd or ipopd, but if "
+#~ "you have changed your system configuration or other installed programs "
+#~ "depend on libc-client then upgrading may result in broken mail handling."
+#~ msgstr ""
+#~ "libc-client のバージョン 2002d 以下 (および 2003 の開発バージョン) では "
+#~ "Maildirs をサポートする非公式でもうメンテナンスされていないパッチが含まれ"
+#~ "ていました。デフォルトでは uw-imapd や ipopd では Maildirs を使いません"
+#~ "が、システム設定を変更していたり、その他のインストール済みプログラムが "
+#~ "libc-client に依存しているのであれば、この更新はメール操作に障害をもたらす"
+#~ "結果となります。"
+
+#~ msgid ""
+#~ "Do you want to continue installing a libc-client without Maildir support?"
+#~ msgstr "Maildir サポートなしで libc-client のインストールを続けますか?"

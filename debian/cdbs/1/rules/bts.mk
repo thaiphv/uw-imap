@@ -1,5 +1,5 @@
 # -*- mode: makefile; coding: utf-8 -*-
-# Copyright © 2004-2005 Jonas Smedegaard <dr@jones.dk>
+# Copyright © 2004-2007 Jonas Smedegaard <dr@jones.dk>
 # Description: Install control files for the Debian Bug Tracking System
 #
 # This program is free software; you can redistribute it and/or
@@ -29,18 +29,21 @@ _cdbs_rules_bts := 1
 
 include $(_cdbs_rules_path)/buildcore.mk$(_cdbs_makefile_suffix)
 
+DEB_BTS_SUITES_EXCLUDE = stable testing unstable experimental
+DEB_BTS_EMAIL = $(DEBEMAIL)
+
+deb_bts_suite := $(shell head -n 1 debian/changelog | awk '{print $3}' | sed 's/;$$//')
+
 $(patsubst %,install/%,$(DEB_ALL_PACKAGES)) :: install/% :
-	@if test -e "debian/$(cdbs_curpkg).bts" || test -e "debian/bts" || test -n "$(DEBEMAIL)"; then \
+	@if [ -n "$(filter-out $DEB_BTS_SUITES_EXCLUDE,$(deb_bts_suite))" ]; then \
 		mkdir -p "debian/$(cdbs_curpkg)/usr/share/bug/$(cdbs_curpkg)"; \
-			if test -e "debian/$(cdbs_curpkg).bts"; then \
+		if test -e "debian/$(cdbs_curpkg).bts"; then \
 			install "debian/$(cdbs_curpkg).bts" "debian/$(cdbs_curpkg)/usr/share/bug/$(cdbs_curpkg)/bts"; \
 		elif test -e "debian/bts"; then \
 			install "debian/bts" "debian/$(cdbs_curpkg)/usr/share/bug/$(cdbs_curpkg)/bts"; \
-		elif test -n "$(DEBEMAIL)"; then \
-			echo "Send-To: $(DEBEMAIL)" > "debian/$(cdbs_curpkg)/usr/share/bug/$(cdbs_curpkg)/bts"; \
+		elif test -n "$(DEB_BTS_EMAIL)"; then \
+			echo "Send-To: $(DEB_BTS_EMAIL)" > "debian/$(cdbs_curpkg)/usr/share/bug/$(cdbs_curpkg)/bts"; \
 		fi; \
-	else \
-		echo "DEBEMAIL unset and no bts file for $(cdbs_curpkg); not diverting"; \
 	fi
 
 endif

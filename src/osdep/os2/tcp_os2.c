@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2007 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	MS-DOS TCP/IP routines
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	11 April 1989
- * Last Edited:	24 October 2000
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2000 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	9 January 2007
  */
 
 static tcptimeout_t tmoh = NIL;	/* TCP timeout handler routine */
@@ -95,6 +103,16 @@ TCPSTREAM *tcp_open (char *host,char *service,unsigned long port)
     fs_give ((void **) &host);
     return NIL;
   }
+#if 0
+  /* needed? */
+  else if (sock >= FD_SETSIZE) {/* unselectable sockets are useless */
+    sprintf (tmp,"Unable to create selectable TCP socket (%d >= %d)",
+	     sock,FD_SETSIZE);
+    close (sock);
+    errno = ENOBUFS;		/* just in case */
+    return NIL;
+  }
+#endif
 				/* open connection */
   if (connect (sock,(struct sockaddr *) &sin,sizeof (sin)) < 0) {
     switch (errno) {		/* analyze error */
@@ -167,22 +185,22 @@ char *tcp_getline (TCPSTREAM *stream)
   }
 				/* copy partial string from buffer */
   memcpy ((ret = stp = (char *) fs_get (n)),st,n);
-				/* get more data from the net */
-  if (!tcp_getdata (stream)) return NIL;
+  if (tcp_getdata (stream)) {	/* get more data from the net */
 				/* special case of newline broken by buffer */
-  if ((c == '\015') && (*stream->iptr == '\012')) {
-    stream->iptr++;		/* eat the line feed */
-    stream->ictr--;
-    ret[n - 1] = '\0';		/* tie off string with null */
-  }
+    if ((c == '\015') && (*stream->iptr == '\012')) {
+      stream->iptr++;		/* eat the line feed */
+      stream->ictr--;
+      ret[n - 1] = '\0';	/* tie off string with null */
+    }
 				/* else recurse to get remainder */
-  else if (st = tcp_getline (stream)) {
-    ret = (char *) fs_get (n + 1 + (m = strlen (st)));
-    memcpy (ret,stp,n);		/* copy first part */
-    memcpy (ret + n,st,m);	/* and second part */
-    fs_give ((void **) &stp);	/* flush first part */
-    fs_give ((void **) &st);	/* flush second part */
-    ret[n + m] = '\0';		/* tie off string with null */
+    else if (st = tcp_getline (stream)) {
+      ret = (char *) fs_get (n + 1 + (m = strlen (st)));
+      memcpy (ret,stp,n);	/* copy first part */
+      memcpy (ret + n,st,m);	/* and second part */
+      fs_give ((void **) &stp);	/* flush first part */
+      fs_give ((void **) &st);	/* flush second part */
+      ret[n + m] = '\0';	/* tie off string with null */
+    }
   }
   return ret;
 }

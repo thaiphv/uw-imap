@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2006 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	IMAP Wildcard Matching Routines (case-dependent)
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	15 June 2000
- * Last Edited:	24 October 2000
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2000 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	30 August 2006
  */
 
 /* Wildcard pattern match
@@ -25,7 +33,7 @@
  * Returns: T if pattern matches base, else NIL
  */
 
-long pmatch_full (char *s,char *pat,char delim)
+long pmatch_full (unsigned char *s,unsigned char *pat,unsigned char delim)
 {
   switch (*pat) {
   case '%':			/* non-recursive */
@@ -56,7 +64,7 @@ long pmatch_full (char *s,char *pat,char delim)
  * Returns: T if base is a matching directory of pattern, else NIL
  */
 
-long dmatch (char *s,char *pat,char delim)
+long dmatch (unsigned char *s,unsigned char *pat,unsigned char delim)
 {
   switch (*pat) {
   case '%':			/* non-recursive */

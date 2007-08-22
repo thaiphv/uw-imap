@@ -1,24 +1,216 @@
-uw-imap (7:2002edebian1-13.2) unstable; urgency=high
+uw-imap (7:2006j2.dfsg-3) unstable; urgency=low
 
-  * Non-maintainer upload.
-  * High-urgency upload for RC bugfix.
-  * Guard calls to debconf in the postrm so that package removal doesn't fail
-    if debconf was removed first.  Closes: #417138, #416780.
-  * Depend on update-inetd and inet-superserver now instead of netbase,
-    for the package split.
+  * Release for unstable.
+  * Describe Maildir support as EXPERIMENTAL in NEWS.Debian.
 
- -- Steve Langasek <vorlon@debian.org>  Sat, 19 May 2007 15:38:38 -0700
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 22 Aug 2007 17:32:35 +0200
 
-uw-imap (7:2002edebian1-13.1) unstable; urgency=low
+uw-imap (7:2006j2.dfsg-2) experimental; urgency=low
 
-  * Non-maintainer upload to fix pending l10n issues.
-  * Debconf translations:
-    - Dutch. Closes: #364466
-    - German. Closes: #398609
-    - Galician. Closes: #407895
-    - Portuguese. Closes: #409409
+  * Acknowledge NMUs (applied while 2006x was in experimental or
+    incoming (editing history is forbidden by policy: See changelog
+    entries of those NMUs in BTS):
+    + 7:2002edebian1-13.1: Add dutch (nl), german (de), galician (gl)
+      and portuguese (pt) l10n. Closes: #364466, #398609, #407895,
+      #409409, thanks to Christian Perrier.
+    + 7:2002edebian1-13.2: Gracefully handle update-inetd missing in
+      postrm scripts. Closes: #417138, #416780, thanks to Steve
+      Langasek.
+    + 7:2002edebian1-13.3: Gracefully handle debconf missing in postrm
+      scripts. Closes: #431527, 431525, thanks to Mario Iseli.
+  * Update cdbs tweaks:
+    + Preserve upstream name for original source if repackaging.
 
- -- Christian Perrier <bubulle@debian.org>  Sun, 18 Feb 2007 19:29:44 +0100
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 08 Aug 2007 12:41:57 +0200
+
+uw-imap (7:2006j2.dfsg-1) experimental; urgency=low
+
+  * New upstream release.
+  * Update local cdbs tweaks:
+    + Improved upstream.tarball.mk to support the odd version number.
+  * Unfuzz patches.
+  * Update references to Maildir patch.
+  * Fix __VER__ expansion of debian/copyright.
+  * Declare (and cleanup) build-dependencies in debian/rules.
+  * Use binNMU-safe ${binary:Version} (not ${Source-Version}) in
+    debian/control.
+  * Have packages ipopd and uw-imapd depend on openbsd-inetd or
+    inet-superserver (not netbase).
+  * Add russian (ru) locale. Closes: bug#433107, thanks to Yuri Kozlov.
+  * Update brazilian portuguese (pt_BR) locale. Closes: bug#421521,
+    thanks to André Luís Lopes.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 30 Jul 2007 11:50:02 +0200
+
+uw-imap (7:2006g.dfsg-1) experimental; urgency=low
+
+  * New upstream release.
+  * Fix SONAME versioning, and install using d-shlibmove.
+  * Build-depend on po-debconf.
+  * Update turkish (tr) debocnf l10n. Closes: bug#417552.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 08 Apr 2007 12:34:33 +0200
+
+uw-imap (7:2006f.dfsg-1) experimental; urgency=low
+
+  * New upstream release.
+  * Repackage source to not include RFCs (as was also done with 2006b
+    and 2006d too). Closes: bug#393417.
+  * Unfuzz patches.
+  * Update local cdbs tweaks:
+    + Add new local cdbs tweak upstream.tarball.mk to add a
+      get-orig-source target and more.
+    + Actually load standard buildcore when overloading buildcore.
+    + Emit list of suspects if new copyrights are found.
+    + Check for copyrights at pre-build (at clean we might run before
+      actual cleanup has finished).
+    + Suppress BTS report redirection for official Debian suites.
+    + Update README.cdbs-tweaks.
+  * Update debian/copyright to include the year 2007 in main copyright,
+    thanks to copyright-check.mk.
+  * Semi-auto-update debian/control
+    + This updates library package names in debian/control, and thus
+      closes: bug#414290, thanks to Magnus Holmgren.
+  * Add rule to fail if building with out-of-sync library version names,
+    to avoid the above from reoccuring.
+  * Improve debconf templates, thanks to lintian.
+  * Depend on ${misc:Depends} (not bogus ${debhelper-depends}), thanks
+    to lintian.
+  * Fix SONAME (stripping repackaging hint from library version name
+    broke it).
+  * Rewrite debconf templates to better explain the risk of port choices
+    getting ignored. Closes: bug#302577, #302579, #303612.
+  * Invoke debconf-updatepo in clean target to ensure debconf
+    translations are always up-to-date. Thanks to lintian.
+  * Unfuzz danish localization.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 20 Mar 2007 09:49:42 +0100
+
+uw-imap (7:2006d.dfsg-1) experimental; urgency=low
+
+  * Mew upstream release.
+  * Maildir patch updated to November 18, 2006 release.
+  * Unfuzz other patches.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 19 Dec 2006 22:03:51 +0100
+
+uw-imap (7:2006b.dfsg-1) experimental; urgency=low
+
+  * New upstream release.
+  * Make IPv6 brokenness build-time warning non-interactive.
+  * Patch Maildir patch to use CHUNKSIZE (instead of no longer available
+    MAXMESSAGESIZE).
+  * Improved patch handling:
+    + Use quilt patchsystem (instead of internal cdbs simple-patchsys).
+    + Renumber patches to indicate their scope.
+    + Add debian/patches/README documenting new numbering scheme.
+  * Fix manpage symlinks for ipopd.
+  * Drop support for backporting to non-Unicode l10n:
+    + No longer use custom po-debconf (and tweaked debhelper) cdbs rule.
+    + Simplify l10n templates (drop the use of *.template.master files).
+    + No longer mention the special handling in README.build.
+    + Run debconf-updatepo.
+  * No longer mention licensing-mandated version tweak in README.build.
+  * Beautify shlib version (strip trailing ".dfsg" from string).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon,  9 Oct 2006 20:40:44 +0200
+
+uw-imap (7:2006a.dfsg-1) experimental; urgency=low
+
+  * New upstream release.
+  * Upstream source relicensed to use the Apache 2.0 license:
+    + Simplify packaging to no longer tweak version number of binaries.
+    + Update debian/copyright and debian/copyright_hints.
+  * Strip RFCs (as usual) and append .dfsg to version number of source
+    package (instead of the now dropped .debianN).
+  * Use version resolving provided by cdbs (instead of homemade rules),
+    and define revision within debian/rules (not in upstream version).
+  * Improve watch file to use dversionmangle (and no hardcoded version).
+  * Maildir patch updated to March 12, 2006 release (the one included
+    with the below 7:2004g.debian1-1 was the August 03, 2005 release).
+  * Unfuzz remeaining patches.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue,  3 Oct 2006 17:21:59 +0200
+
+uw-imap (7:2004g.debian1-1) experimental; urgency=low
+
+  * New upstream release. Closes: Bug#254238 (thanks to Peter
+    Marschall, and to Tzafrir Cohen for spiritual support making it
+    finally compile correctly).
+  * Strip DFSG-nonfree RFCs and RFC drafts from source.
+  * Drop patches applied upstream:
+    + 03_avoid_hardcoded_optimization
+    + 05_CAN-2005-0198
+    + 06_CAN-2005-2933
+    + 11_manpages_are_not_local
+    + 12_mailutil_manpage_typo
+  * Drop part of patch 04_no_binaries_below_etc (that should have been a
+    separate patch) about md5 and apop, applied upstream.
+  * Remove no longer used md5 code from (Debian patches to) source.
+  * Merge patches 01_shlib and 02_mailutils_use_shlib into 01_shlib.
+  * Separate part of patch 01_shlib about MAILSPOOL into new patch
+    02_mailspool.
+  * Unfuzz remaining 2 patches and compact them (speeds patching a bit).
+  * Enable IPv6 support. Closes: bug#299818.
+  * Improve logcheck rules. Closes: Bug#244324 (thanks to Paul Traina).
+  * Improve Debian version handling:
+    + Change version number scheme to ${upstream}.debian${debianver}
+      (separate upstream and "debian" with a dot) to properly handle
+      alphanumerics in upstream version ( 2004debian1 !> 2004ddebian ).
+    + Parse more cleverly: Reuse simply expanded variables.
+    + Handle UPSTREAMVER and use it to automatically update watch file.
+  * Several updates to debian/TODO.Debian.
+  * Patch _after_ checking for up-to-date debian/rules, not before.
+  * Update cdbs snippets related to po-debconf. Closes: bug#332136
+    (thanks to Joey Hess).
+  * Add new local cdbs snippet copyright-check.
+  * Update remaining cdbs files, and add debian/README.cdbs-tweaks
+    documenting their purpose.
+  * Add myself as author of debian/rules (nothing is left from debmake).
+  * Raise priority again for libc-client-dev from extra to optional, to
+    match current overrides.
+  * Add new promising Maildir patch. Closes: bug#273678, #230343,
+    #312401 (thanks to Tomas Pospisek).
+  * Now that Maildir support is added back the high priority debconf
+    warning is no longer relevant. Closes: bug#268192 (thanks to
+    Christian Perrier).
+  * Cleaned up debian/copyright:
+    + Update copyright and licensing info:
+      - Year 2004 included.
+      - Clarified distribution with proprietary systems.
+      - Include notes about Maildir patch.
+    + Replace info contained in changelog with note on "GNU systems".
+    + Declare each topic more strictly.
+    + Mention "licensing info" together with copyright.
+    + Add (historical) copyright info of Stanford University.
+  * Silence some tests in debian/rules.
+  * Bump standards-version to 3.7.2 (no changes needed).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 17 Sep 2006 05:46:42 +0200
+
+uw-imap (7:2002edebian1-14) unstable; urgency=low
+
+  * Cleanup dependencies in debian/control:
+    + Drop conflicts for packages older than oldstable.
+    + Use versioned dev package with conflicts/replaces/provides for
+      virtual unversioned package.
+    + Stop providing policy-violating virtual package pop2-server.
+  * Cleanup debian/rules:
+    + Drop no longer used update-control from DEB_PHONY_RULES.
+    + Use -L option in DEB_DH_SHLIBDEPS_ARGS (drops support for woody).
+    + Always update debian/control.in (only debian/control is holy).
+  * Cleanup debian/*.README.Debian:
+    + Update (currently unused) maildir notes.
+    + Correct typo: s/ipod/ipopd/.
+  * Rewrite long descriptions, based on texts from upstream homepage:
+    + Advertise the c-client library in uw-imapd and ipopd packages.
+    + Drop advertising smtp servers.
+    + Warn about lack of Maildir support.
+    + Warn about disabling encryption at the library.
+    + Add homepage URL.
+  * Drop no longer needed transition packages.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 20 Apr 2006 11:59:30 +0200
 
 uw-imap (7:2002edebian1-13) unstable; urgency=low
 
@@ -67,7 +259,7 @@ uw-imap (7:2002edebian1-12) unstable; urgency=high
   * Claim compliance with Policy 3.6.2 (no changes needed).
   * Set urgency=high due to security fix.
 
- -- Jonas Smedegaard <dr@jones.dk>  Tue, 11 Oct 2005 19:33:40 +0200
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 11 Oct 2005 16:24:14 +0200
 
 uw-imap (7:2002edebian1-11) unstable; urgency=high
 

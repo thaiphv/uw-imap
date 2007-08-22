@@ -1,0 +1,13 @@
+diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/src/osdep/unix/maildir.c
+--- uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c	2006-12-19 22:19:11.000000000 +0100
++++ uw-imap-2006d.dfsg/src/osdep/unix/maildir.c	2006-12-19 22:35:24.000000000 +0100
+@@ -495,7 +495,8 @@
+     stream->mailbox = cpystr(tmp);
+   }
+ 
+-  LOCAL->buf = (char *) fs_get ((LOCAL->buflen = MAXMESSAGESIZE) + 1);
++  LOCAL->buf = (char *) fs_get (CHUNKSIZE);
++  LOCAL->buflen = CHUNKSIZE - 1;
+   stream->sequence++;
+   stream->nmsgs = stream->recent = 0;
+ 

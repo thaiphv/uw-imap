@@ -1,0 +1,6 @@
+1001_shlibs.patch
+1003_maildir.patch
+1011_maildir_fixup.patch
+2002_mailspool.patch
+2004_no_binaries_below_etc.patch
+2010_disallow_escaping_home.patch

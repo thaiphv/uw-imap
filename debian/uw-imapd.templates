@@ -2,7 +2,7 @@ Template: uw-imapd/protocol
 Type: multiselect
 Choices: imap2, imap3, imaps
 Default: imap2, imaps
-Description: Which ports should the server listen on?
+_Description: Wanted server ports:
  imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS
  support.
  .
@@ -10,170 +10,39 @@ Description: Which ports should the server listen on?
  .
  imaps = IMAP 4Rev1 on TCP port 993 with SSL support.
  .
- If in doubt, pick imap2 and imaps.
-Description-ca.UTF-8: Quins ports ha d'escoltar el servidor?
- imap2 = L'IMAP 4Rev1 (no la 2, suficientment estrany) al port de TCP 143 amb el suport de TLS.
+ Confusingly, the choice of ports made with this package may have been
+ overridden by locally configured services (or by a broken package).
  .
- imap3 = L'IMAP 3 al port de TCP 220 amb el suport de TLS. És obsolet.
+ If you want to enforce your choice of ports made with this package,
+ disregarding any local changes, then you need to *both* select ports
+ *and* enforce the selection.
  .
- imaps = L'IMAP 4Rev1 al port de TCP 993 amb el suport d'SSL.
+ To make sure you've done both, you can run the following command after
+ finishing your current installation/reconfiguration:
  .
- Si dubteu escolliu l'imap2 i l'imaps.
-Description-cs.UTF-8: Na kterých portech má server naslouchat?
- imap2 = IMAP 4Rev1 na TCP portu 143 s podporou TLS.
+ dpkg-reconfigure -plow uw-imapd
  .
- imap3 = IMAP 3 na TCP portu 220 s podporou TLS. Tento je zastaralý.
- .
- imaps = IMAP 4Rev1 na TCP portu 993 s podporou SSL.
- .
- Pokud si nejste jisti, vyberte imap2 a imaps.
-Description-da.UTF-8: Hvilke porte skal serveren lytte på?
- imap2 = IMAP 4Rev1 (ikke 2, spøjst nok) på TCP port 143 med TLS-understøttelse.
- .
- imap3 = IMAP 3 på TCP port 220 med TLS-understøttelse. Dette er forældet.
- .
- imaps = IMAP 4Rev1 på TCP port 993 med SSL-understøttelse.
- .
- Er du i tvivl så vælg imap2 og imaps.
-Description-de.UTF-8: Welche Ports soll der Server verwenden?
- imap2 = IMAP 4Rev1 (nicht 2, seltsamerweise) auf TCP-Port 143 mit TLS-Unterstützung.
- .
- imap3 = IMAP 3 auf TCP-Port 220 mit TLS-Unterstützung. Dies ist veraltet.
- .
- imaps = IMAP 4Rev1 auf TCP-Port 993 mit SSL-Unterstützung.
- .
- Falls Sie sich nicht sicher sind, wählen Sie imap2 und imaps.
-Description-es.UTF-8: ¿En qué puertos debe escuchar el servidor?
- imap2 = IMAP 4Rev1 (no 2, extrañamente) en el puerto TCP 143 con soporte para TLS
- .
- imap3 = IMAP 3 en el puerto TCP 220 con soporte para TLS. Obsoleto.
- .
- imaps = IMAP 4Rev1 en el puerto TCP 993 con soporte para SSL.
- .
- Escoja imap2 e imaps si tiene alguna duda.
-Description-fr.UTF-8: Ports où le serveur doit être à l'écoute :
- IMAP2 - IMAP4 version 1 (et non 2, assez étonnamment) sur le port TCP 143, avec gestion TLS.
- .
- IMAP3 - IMAP3 sur le port TCP 220, avec gestion TLS. Ce choix est obsolète.
- .
- IMAPS - IMAP4 version 1 sur le port TCP 993, avec gestion SSL.
- .
- Dans le doute, vous devriez choisir IMAP2 et IMAPS.
-Description-gl.UTF-8: ¿En que portos debería escoitar o servidor?
- imap2 = IMAP 4Rev1 (non 2) no porto TCP 143 con soporte de TLS.
- .
- imap3 = IMAP 3 no porto TCP 220 con soporte de TLS. Obsoleto.
- .
- imap2 = IMAP 4Rev1 no porto TCP 993 con soporte de SSL.
- .
- Se non está seguro, escolla imap2 e imaps.
-Description-ja.UTF-8: サーバでどのポートをリスンしますか?
- imap2 = TCP ポート 143 で動作する TLS サポート付き IMAP 4Rev1 (奇妙なことですが 2 ではありません)。
- .
- imap3 = TCP ポート 220 で動作する TLS サポート付き IMAP 3。これはもう時代遅れのものです。
- .
- imaps = TCP ポート 993 で動作する SSL サポート付き IMAP 4Rev1。
- .
- よくわからなければ、imap2 と imaps を選んでください。
-Description-nl.UTF-8: Op welke poorten moet de server luisteren?
- imap2 = IMAP 4Rev1 (merkwaardigerwijs niet 2) op TCP poort 143 met TLS-ondersteuning.
- .
- imap3 = IMAP 3 op TCP poort 220 met TLS-ondersteuning. Dit is verouderd.
- .
- imaps = IMAP 4Rev1 op TCP poort 993 met SSL-ondersteuning.
- .
- Als u twijfelt, kies dan imap2 en imaps.
-Description-pt.UTF-8: Que portos deve o servidor escutar?
- imap2 = IMAP 4rev1 (não 2, por estranho que pareça) no porto TCP 143 com suporte para TLS.
- .
- imap3 = IMAP3 no porto TCP 200 com suporte para TLS.  Isto é obsoleto.
- .
- imaps = IMAP 4Rev1 no porto TCP 993 com suporte para SSL.
- .
- Em caso de dúvida, escolha imap2 e imaps.
-Description-pt_BR.UTF-8: Em quais portas o servidor deve ouvir ?
- imapd2 = IMAP 4Rev1 (não 2, estranho o bastante) na porta TCP 143 com suporte TLS.
- .
- imap3 = IMAP 3 na porta TCP 220 com suporte TLS. Isto é obsoleto.
- .
- imaps = IMAP 4Rev1 na porta TCP 993 com suporte SSL.
- .
- Em caso de dúvidas, escolha imap2 e imaps
-Description-sv.UTF-8: Vilka portar ska servern lyssna på?
- imap2 = IMAP 4Rev1 (inte 2, konstigt nog) på TCP port 143 med TLS stöd.
- .
- imap3 = IMAP 3 på TCP port 220 med TLS-stöd.  Denna är föråldrad.
- .
- imaps = IMAP 4Rev1 på TCP port 993 med SSL-stöd.
- .
- Om du är osäker, välj imap2 och imaps.
-Description-tr.UTF-8: Sunucu hangi portları dinlemeli?
- imap2 = TCP port 143 üzerinde TLS desteğiyle IMAP 4Rev1 (tuhaf şekilde, 2 değil).
- .
- imap3 = TCP port 220 üzerinde TLS desteğiyle IMAP 3.  Bu ayar artık eskimiştir.
- .
- imaps = TCP port 993 üzerinde SSL desteğiyle IMAP 4Rev1.
- .
- Eğer kararsız kaldıysanız, imap2 ve imaps'i seçin.
-Description-vi.UTF-8: Trình phục vụ nên lắng nghe những cổng nào?
- imap2 = IMAP 4Rev1 (không phải 2, mà lạ) trên cổng TCP 143 với sự hỗ trợ TLS.
- .
- imap3 = IMAP 3 trên cổng TCP 220 với sự hỗ trợ TLS. Nó quá thời.
- .
- imaps = IMAP 4Rev1 trên cổng TCP 993 với sự hỗ trợ SSL.
- .
- Nếu chưa chắc thì hãy chọn imap2 và imaps.
+ If in doubt, choose imap2 and imaps.
 
 Template: uw-imapd/force_debconf_choice
 Type: boolean
 Default: false
-Description: Enforce port selection?
- The ports selected for enabling may be overridden by locally configured
- services. By default the port selection is respected only on initial
- installs, and is ignored on later reconfiguration.
+_Description: Enforce port selection?
+ The uw-imap daemon supports listening on several ports simultaneously.
+ A default choice of ports is provided, which you can adjust.
  .
- Do you want to ignore possible local tweaks and always use selected ports?
-Description-cs.UTF-8: Vynutit výběr portů?
- Vybrané porty mohou být přepsány lokálně nastavenými službami. Implicitně se výběr portů respektuje pouze při úvodní instalaci, ale ne při pozdějších rekonfiguracích.
+ Confusingly, the choice of ports made with this package may have been
+ overridden by locally configured services (and by broken packages
+ messing with the configuration in a bad way).
  .
- Chcete ignorovat potenciální místní úpravy a vždy používat vybrané porty?
-Description-da.UTF-8: Tving port-valg?
- Portene der er valgt som slået til, kan tilsidesættes ved at konfigurere services lokalt. Som standard er port valget respekteret på initielle installationer, og ignoreret ved senere genopsætning.
+ By default the port selection is respected only on initial installs,
+ and is ignored on later updates and reconfiguration.
  .
- Vil du ignorere mulige lokale ændringer og altid bruge de valgte porte?
-Description-de.UTF-8: Port-Auswahl erzwingen?
- Die Ports, die zur Aktivierung ausgewählt wurden, können von lokal konfigurierten Diensten überschrieben werden. In der Voreinstellung wird die Port-Auswahl nur bei der ersten Installation beachtet und bei einer späteren erneuten Konfiguration ignoriert.
+ If you want to enforce your choice of ports made with this package,
+ disregarding any local changes, then you need to *both* select ports
+ *and* enforce the selection.
  .
- Wollen Sie mögliche lokale Anpassungen ignorieren und immer die ausgewählten Ports verwenden?
-Description-es.UTF-8: ¿Desea forzar la selección de puerto?
- Los puertos seleccionados para habilitarse pueden ser sobreescritos por servicios configurados localmente. Por omisión la selección de puertos se respeta sólo en instalaciones nuevas y se ignora en posteriores reconfiguraciones.
+ To make sure you've done both, you can run the following command after
+ finishing your current installation/reconfiguration:
  .
- ¿Quiere ignorar posibles ajustes locales y usar siempre los puertos seleccionados?
-Description-fr.UTF-8: Faut-il appliquer le choix des ports ?
- Les ports choisis pour être activés peuvent être remplacés par des services locaux. Le choix des ports n'est respecté, par défaut, que lors de l'installation initiale et est ignoré lors des reconfigurations ultérieures.
- .
- Veuillez confirmer si vous préférez ignorer les modifications locales et toujours utiliser les ports choisis.
-Description-gl.UTF-8: ¿Forzar a selección do porto?
- Os portos escollidos poden ser substituídos por servizos configurados localmente. Por defecto a selección de portos respéctase só nas instalacións iniciais e ignórase nas reconfiguracións posteriores.
- .
- ¿Quere ignorar os posibles axustes locais e empregar sempre os portos seleccionados?
-Description-ja.UTF-8: ポートの選択を強制しますか?
- 有効として選択されたポートは、ローカルに設定されたサービスによって上書きされる可能性があります。デフォルトでは、ポートの選択は初期インストールのときのみ尊重され、その後の再設定では無視されます。
- .
- ローカル調整の可能性を無視して、常に選択されたポートを使いますか?
-Description-nl.UTF-8: Gekozen poorten afdwingen?
- Locaal ingestelde diensten kunnen voorgaan op de poorten die handmatig zijn ingesteld. Standaard worden de handmatig ingestelde poorten alleen gebruikt bij de eerste installatie, maar niet bij latere herconfiguratie.
- .
- Wilt u mogelijke locale instellingen negeren en altijd de geselecteerde poorten gebruiken?
-Description-pt.UTF-8: Obrigar a selecção do porto?
- Os portos seleccionados para habilitar podem ser ultrapassados configurando serviços localmente. Por omissão a selecção do porto é respeitada apenas nas instalações iniciais, e é ignorada em reconfigurações posteriores.
- .
- Deseja ignorar possíveis alterações locais e utilizar sempre os portos escolhidos?
-Description-sv.UTF-8: Framtvinga portval?
- Portarna som valts för aktivering kan köras över av lokalt konfigurerade tjänster. Som standard respekteras portvalen bara vid initiella installation och ignoreras senare vid omkonfigurationer.
- .
- Vill du ignorera tänkbara lokala ändringar och alltid använda de valda portarna?
-Description-vi.UTF-8: Ép buộc chọn cổng không?
- Những cổng được chọn để hiệu lực vẫn còn có thể bị đè bằng dịch vụ đã cấu hình một cách địa phương. Mặc định là lựa chọn cổng được theo chỉ khi cài đặt đầu tiên, rồi bị bỏ qua khi cấu hình sau.
- .
- Bạn có muốn bỏ qua cách điều chỉnh địa phương có thể, và luôn luôn dùng những cổng được chọn không?
+ dpkg-reconfigure -plow uw-imapd

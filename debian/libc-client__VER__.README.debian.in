@@ -192,5 +192,13 @@ document):
     set restrictedBox NIL
 
 
+Enhanced maildir support
+========================
+
+This package has been patched to Support maildir format mailboxes.  See 
+/usr/share/doc/libc-client__VER__/README.maildir.gz for further info.
+
+
+
 Jaldhar H. Vyas <jaldhar@debian.org>, Sun, 20 Oct 2002 11:23:00 -0400
 Updates: Jonas Smedegaard <dr@jones.dk>  Sat, 15 Mar 2003 21:10:00 +0100

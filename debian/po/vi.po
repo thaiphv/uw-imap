@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: uw-imap 7/2002edebian1-11\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-03-31 16:55+0200\n"
+"Report-Msgid-Bugs-To: dr@jones.dk\n"
+"POT-Creation-Date: 2007-03-20 14:42+0100\n"
 "PO-Revision-Date: 2005-08-20 12:24+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <gnomevi-list@lists.sourceforge.net>\n"
@@ -18,102 +18,183 @@ msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
-msgid "Which ports should the server listen on?"
-msgstr "Trình phục vụ nên lắng nghe những cổng nào?"
+#: ../ipopd.templates:1001 ../uw-imapd.templates:1001
+msgid "Wanted server ports:"
+msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
 msgstr "pop2 = POP 2 trên cổng TCP 109 với sự hỗ trợ TLS. Nó quá thời."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop3  = POP 3 on TCP port 110 with TLS support."
 msgstr "pop3 = POP 3 trên cổng TCP 110 với sự hỗ trợ TLS."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop3s = POP 3 on TCP port 995 with SSL support."
 msgstr "pop3s = POP 3 trên cổng TCP 995 với sự hỗ trợ SSL."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001 ../uw-imapd.templates:1001
+msgid ""
+"Confusingly, the choice of ports made with this package may have been "
+"overridden by locally configured services (or by a broken package)."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001 ../uw-imapd.templates:1001
+#: ../uw-imapd.templates:2001
+msgid ""
+"If you want to enforce your choice of ports made with this package, "
+"disregarding any local changes, then you need to *both* select ports *and* "
+"enforce the selection."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001 ../uw-imapd.templates:1001
+#: ../uw-imapd.templates:2001
+msgid ""
+"To make sure you've done both, you can run the following command after "
+"finishing your current installation/reconfiguration:"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001
+msgid "dpkg-reconfigure -plow ipopd"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates:1001
 msgid "If in doubt, choose pop3 and pop3s."
 msgstr "Nếu chưa chắc thì hãy chọn pop3 và pop3s."
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid "Enforce port selection?"
 msgstr "Ép buộc chọn cổng không?"
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001
 msgid ""
-"The ports selected for enabling may be overridden by locally configured "
-"services. By default the port selection is respected only on initial "
-"installs, and is ignored on later reconfiguration."
-msgstr "Những cổng được chọn để hiệu lực vẫn còn có thể bị đè bằng dịch vụ đã cấu hình một cách địa phương. Mặc định là lựa chọn cổng được theo chỉ khi cài đặt đầu tiên, rồi bị bỏ qua khi cấu hình sau."
+"The ipopd daemon supports listening on several ports simultaneously. A "
+"default choice of ports is provided, which you can adjust."
+msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid ""
-"Do you want to ignore possible local tweaks and always use selected ports?"
-msgstr "Bạn có muốn bỏ qua cách điều chỉnh địa phương có thể, và luôn luôn dùng những cổng được chọn không?"
+"Confusingly, the choice of ports made with this package may have been "
+"overridden by locally configured services (and by broken packages messing "
+"with the configuration in a bad way)."
+msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid "Continue installing libc-client without Maildir support?"
-msgstr "Tiếp tục cài đặt khách « libc-client » không có hỗ trợ Maildir không?"
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
+#, fuzzy
 msgid ""
-"Libc-client earlier than version 2002d (and development versions of 2003) "
-"included an unofficial and no longer maintained patch to support Maildirs. "
-"By default Maildirs were not used by uw-imapd or ipopd, but if you have "
-"changed your system configuration or other installed programs depend on libc-"
-"client then upgrading may result in broken mail handling."
-msgstr "Trình khách « libc-client » trước phiên bản 2002d (và các phiên bản phát triển trong năm 2003) bao gồm một đắp vá không chính thức và không còn được bảo quản lại, để hỗ trợ các Maildir. Mặc định là hai trình nền uw-imapd và ipopd không dùng Maildir, nhưng mà nếu bạn đã sửa đổi cấu hình hệ thống, hoặc nếu chương trình đã cài đặt khác còn phụ thuộc vào « libc-client » thì việc nâng cấp có thể hỏng khả năng quản lý thư tin."
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid ""
-"Do you want to continue installing a libc-client without Maildir support?"
-msgstr "Bạn có muốn tiếp tục cài đặt một trình khách « libc-client » không có sự hỗ trợ Maildir không?"
+"By default the port selection is respected only on initial installs, and is "
+"ignored on later updates and reconfiguration."
+msgstr ""
+"Những cổng được chọn để hiệu lực vẫn còn có thể bị đè bằng dịch vụ đã cấu "
+"hình một cách địa phương. Mặc định là lựa chọn cổng được theo chỉ khi cài "
+"đặt đầu tiên, rồi bị bỏ qua khi cấu hình sau."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid ""
 "imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
 "support."
-msgstr "imap2 = IMAP 4Rev1 (không phải 2, mà lạ) trên cổng TCP 143 với sự hỗ trợ TLS."
+msgstr ""
+"imap2 = IMAP 4Rev1 (không phải 2, mà lạ) trên cổng TCP 143 với sự hỗ trợ TLS."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
 msgstr "imap3 = IMAP 3 trên cổng TCP 220 với sự hỗ trợ TLS. Nó quá thời."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
 msgstr "imaps = IMAP 4Rev1 trên cổng TCP 993 với sự hỗ trợ SSL."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
-msgid "If in doubt, pick imap2 and imaps."
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:1001 ../uw-imapd.templates:2001
+msgid "dpkg-reconfigure -plow uw-imapd"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates:1001
+#, fuzzy
+msgid "If in doubt, choose imap2 and imaps."
 msgstr "Nếu chưa chắc thì hãy chọn imap2 và imaps."
+
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:2001
+msgid ""
+"The uw-imap daemon supports listening on several ports simultaneously. A "
+"default choice of ports is provided, which you can adjust."
+msgstr ""
+
+#, fuzzy
+#~ msgid ""
+#~ "You can choose to ignore possible local tweaks and always use selected "
+#~ "ports."
+#~ msgstr ""
+#~ "Bạn có muốn bỏ qua cách điều chỉnh địa phương có thể, và luôn luôn dùng "
+#~ "những cổng được chọn không?"
+
+#~ msgid "Which ports should the server listen on?"
+#~ msgstr "Trình phục vụ nên lắng nghe những cổng nào?"
+
+#~ msgid "Continue installing libc-client without Maildir support?"
+#~ msgstr ""
+#~ "Tiếp tục cài đặt khách « libc-client » không có hỗ trợ Maildir không?"
+
+#~ msgid ""
+#~ "Libc-client earlier than version 2002d (and development versions of 2003) "
+#~ "included an unofficial and no longer maintained patch to support "
+#~ "Maildirs. By default Maildirs were not used by uw-imapd or ipopd, but if "
+#~ "you have changed your system configuration or other installed programs "
+#~ "depend on libc-client then upgrading may result in broken mail handling."
+#~ msgstr ""
+#~ "Trình khách « libc-client » trước phiên bản 2002d (và các phiên bản phát "
+#~ "triển trong năm 2003) bao gồm một đắp vá không chính thức và không còn "
+#~ "được bảo quản lại, để hỗ trợ các Maildir. Mặc định là hai trình nền uw-"
+#~ "imapd và ipopd không dùng Maildir, nhưng mà nếu bạn đã sửa đổi cấu hình "
+#~ "hệ thống, hoặc nếu chương trình đã cài đặt khác còn phụ thuộc vào « libc-"
+#~ "client » thì việc nâng cấp có thể hỏng khả năng quản lý thư tin."
+
+#~ msgid ""
+#~ "Do you want to continue installing a libc-client without Maildir support?"
+#~ msgstr ""
+#~ "Bạn có muốn tiếp tục cài đặt một trình khách « libc-client » không có sự "
+#~ "hỗ trợ Maildir không?"

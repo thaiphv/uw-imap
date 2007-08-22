@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2006 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	NT environment routines
  *
@@ -10,21 +23,23 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	1 August 1988
- * Last Edited:	24 October 2000
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2000 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	30 August 2006
  */
 
 
 #define SUBSCRIPTIONFILE(t) sprintf (t,"%s\\MAILBOX.LST",myhomedir ())
 #define SUBSCRIPTIONTEMP(t) sprintf (t,"%s\\MAILBOX.TMP",myhomedir ())
+
+/* Note: the \CRAM-MD5.PWD file only works on DOS-based Windows (Win9x/Me)
+ * and not on NT-based Windows (WinNT/2K/XP).  If installed on NT-based
+ * Windows, servers will advertise CRAM-MD5 authentication but it will
+ * never succeed.
+ */
+
 #define MD5ENABLE "\\cram-md5.pwd"
 
 #define L_SET SEEK_SET
-
+
 /* Function prototypes */
 
 #include "env.h"

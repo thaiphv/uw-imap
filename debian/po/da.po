@@ -11,10 +11,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: uw-imap 2002edebian1\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-03-31 16:55+0200\n"
-"PO-Revision-Date: 2005-04-06 18:38+0200\n"
-"Last-Translator: Morten Brix Pedersen <morten@wtf.dk>\n"
+"Report-Msgid-Bugs-To: dr@jones.dk\n"
+"POT-Creation-Date: 2007-03-20 14:42+0100\n"
+"PO-Revision-Date: 2007-03-20 12:33+0100\n"
+"Last-Translator: Jonas Smedegaard <dr@jones.dk>\n"
 "Language-Team: Danish <dansk@klid.dk>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -22,95 +22,122 @@ msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
-msgid "Which ports should the server listen on?"
-msgstr "Hvilke porte skal serveren lytte på?"
+#: ../ipopd.templates:1001 ../uw-imapd.templates:1001
+msgid "Wanted server ports:"
+msgstr "Ønskede serverporte"
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
 msgstr ""
 "pop2 = POP 2 på TCP port 109 med TLS-understøttelse. Dette er forældet."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop3  = POP 3 on TCP port 110 with TLS support."
 msgstr "pop3 = POP 3 på TCP port 110 med TLS-understøttelse."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop3s = POP 3 on TCP port 995 with SSL support."
 msgstr "pop3s = POP 3 på TCP port 995 med SSL-understøttelse."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001 ../uw-imapd.templates:1001
+msgid ""
+"Confusingly, the choice of ports made with this package may have been "
+"overridden by locally configured services (or by a broken package)."
+msgstr ""
+"Portvalget for denne pakke kan, ret forvirende, blive undertrykt af lokale "
+"tilretninger (eller af en defekt pakke)."
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001 ../uw-imapd.templates:1001
+#: ../uw-imapd.templates:2001
+msgid ""
+"If you want to enforce your choice of ports made with this package, "
+"disregarding any local changes, then you need to *both* select ports *and* "
+"enforce the selection."
+msgstr ""
+"Hvis du ønsker at gennemtvinge dit portvalg for denne pakke, og ignorere "
+"mulige lokale tilretninger, skal du *både* vælge porte *og* gennemtvinge "
+"valget."
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001 ../uw-imapd.templates:1001
+#: ../uw-imapd.templates:2001
+msgid ""
+"To make sure you've done both, you can run the following command after "
+"finishing your current installation/reconfiguration:"
+msgstr ""
+"For at sikre at du har gjort begge dele, kan du køre følgnde kommando når du "
+"har afsluttet den nuværende installation/omkonfiguration:"
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001
+msgid "dpkg-reconfigure -plow ipopd"
+msgstr "dpkg-reconfigure -plow ipopd"
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates:1001
 msgid "If in doubt, choose pop3 and pop3s."
 msgstr "Er du i tvivl så vælg pop3 og pop3s."
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid "Enforce port selection?"
 msgstr "Tving port-valg?"
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001
 msgid ""
-"The ports selected for enabling may be overridden by locally configured "
-"services. By default the port selection is respected only on initial "
-"installs, and is ignored on later reconfiguration."
+"The ipopd daemon supports listening on several ports simultaneously. A "
+"default choice of ports is provided, which you can adjust."
 msgstr ""
-"Portene der er valgt som slået til, kan tilsidesættes ved at "
-"konfigurere services lokalt. Som standard er port valget respekteret "
-"på initielle installationer, og ignoreret ved senere genopsætning."
+"Ipopd dæmonen understøtter at lytte på flere porte samtidigt. Et standard "
+"portvalg tilbydes, som du kan tilrette."
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid ""
-"Do you want to ignore possible local tweaks and always use selected ports?"
+"Confusingly, the choice of ports made with this package may have been "
+"overridden by locally configured services (and by broken packages messing "
+"with the configuration in a bad way)."
 msgstr ""
-"Vil du ignorere mulige lokale ændringer og altid bruge de valgte porte?"
+"Portvalget for denne pakke kan, ret forvirende, blive undertrykt af lokale "
+"tilretninger (eller af defekte pakker som piller ved opsætningerne på en "
+"dårlig måde."
 
 #. Type: boolean
 #. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid "Continue installing libc-client without Maildir support?"
-msgstr "Fortsæt installation af libc-client uden understøttelse for Maildir?"
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid ""
-"Libc-client earlier than version 2002d (and development versions of 2003) "
-"included an unofficial and no longer maintained patch to support Maildirs. "
-"By default Maildirs were not used by uw-imapd or ipopd, but if you have "
-"changed your system configuration or other installed programs depend on libc-"
-"client then upgrading may result in broken mail handling."
+"By default the port selection is respected only on initial installs, and is "
+"ignored on later updates and reconfiguration."
 msgstr ""
-"Libc-client tidligere end version 2002d (og udvikler-versioner af 2003) "
-"indeholdt en uofficiel og ikke længere vedligeholdt rettelse til "
-"understøttelse af Maildir. Som standard blev Maildir ikke benyttet af uw-"
-"imapd eller ipopd, men hvis du har ændret din systemopsætning eller andre "
-"installerede programmer som afhænger af libc-client vil denne opgradering "
-"medføre at fejl i håndtering af emails."
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid ""
-"Do you want to continue installing a libc-client without Maildir support?"
-msgstr ""
-"Vil du fortsætte installation af libc-client uden Maildir understøttelse?"
+"Som standard respekteres portvalget kun ved nye installationer, og ignoreres "
+"ved senere opdateringer og omkonfigurationer."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid ""
 "imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
 "support."
@@ -120,19 +147,37 @@ msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
 msgstr ""
 "imap3 = IMAP 3 på TCP port 220 med TLS-understøttelse. Dette er forældet."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
 msgstr "imaps = IMAP 4Rev1 på TCP port 993 med SSL-understøttelse."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
-msgid "If in doubt, pick imap2 and imaps."
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:1001 ../uw-imapd.templates:2001
+msgid "dpkg-reconfigure -plow uw-imapd"
+msgstr "dpkg-reconfigure -plow uw-imapd"
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates:1001
+msgid "If in doubt, choose imap2 and imaps."
 msgstr "Er du i tvivl så vælg imap2 og imaps."
+
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:2001
+msgid ""
+"The uw-imap daemon supports listening on several ports simultaneously. A "
+"default choice of ports is provided, which you can adjust."
+msgstr ""
+"UW-imap dæmonen understøtter at lytte på flere porte samtidigt. Et standard "
+"portvalg tilbydes, som du kan tilrette."

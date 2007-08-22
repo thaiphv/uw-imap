@@ -13,6 +13,6 @@
   * Add note in README.Debian of other packages that more documentation
     is in libc-clientXXX.
   * Improve backport-compatibility based on Bug#224237
-  * Change version numbering scheme (again!): 2004debian will be wrongly
-    considered newer than 2004adebian and even 2004ddebian.
   * Check and eliminate all FIXMEs and TODOs within scripts.
+  * Replace 01_shlibs.patch with use of SPECIALS and (for static lib)
+    EXTRASPECIALS

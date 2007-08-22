@@ -1,5 +1,19 @@
+/* ========================================================================
+ * Copyright 1988-2006 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	Pluggable Authentication Modules login services, buggy systems
+ *		(use this instead of ckp_pam.c on Solaris)
  *
  * Author:	Mark Crispin
  *		Networks and Distributed Computing
@@ -10,20 +24,15 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	1 August 1988
- * Last Edited:	29 April 2002
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2002 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	31 August 2006
  */
-
+
+
 #include <security/pam_appl.h>
 
 static char *pam_uname;		/* user name */
 static char *pam_pass;		/* password */
-
-
+
 /* PAM conversation function
  * Accepts: number of messages
  *	    vector of messages
@@ -58,6 +67,20 @@ static int checkpw_conv (int num_msg,const struct pam_message **msg,
   *resp = reply;
   return PAM_SUCCESS;
 }
+
+
+/* PAM cleanup
+ * Accepts: handle
+ */
+
+static void checkpw_cleanup (pam_handle_t *hdl)
+{
+#if 0	/* see checkpw() for why this is #if 0 */
+  pam_close_session (hdl,NIL);	/* close session [uw]tmp */
+#endif
+  pam_setcred (hdl,PAM_DELETE_CRED);
+  pam_end (hdl,PAM_SUCCESS);
+}
 
 /* Server log in
  * Accepts: user name string
@@ -69,42 +92,37 @@ struct passwd *checkpw (struct passwd *pw,char *pass,int argc,char *argv[])
 {
   pam_handle_t *hdl;
   struct pam_conv conv;
+  char *name = cpystr (pw->pw_name);
   conv.conv = &checkpw_conv;
   pam_uname = pw->pw_name;
   pam_pass = pass;
-  if ((pam_start ((char *) mail_parameters (NIL,GET_SERVICENAME,NIL),
-		  pw->pw_name,&conv,&hdl) != PAM_SUCCESS) ||
-      (pam_set_item (hdl,PAM_RHOST,tcp_clientaddr ()) != PAM_SUCCESS) ||
-      (pam_authenticate (hdl,NIL) != PAM_SUCCESS) ||
-      (pam_acct_mgmt (hdl,NIL) != PAM_SUCCESS) ||
-      (pam_setcred (hdl,PAM_ESTABLISH_CRED) != PAM_SUCCESS)) {
-				/* clean up */
-    pam_setcred (hdl,PAM_DELETE_CRED);
-    pam_end (hdl,PAM_AUTH_ERR);	/* failed */
-    return NIL;
+  if (pw = ((pam_start ((char *) mail_parameters (NIL,GET_SERVICENAME,NIL),
+			pw->pw_name,&conv,&hdl) == PAM_SUCCESS) &&
+	    (pam_set_item (hdl,PAM_RHOST,tcp_clientaddr ()) == PAM_SUCCESS) &&
+	    (pam_authenticate (hdl,NIL) == PAM_SUCCESS) &&
+	    (pam_acct_mgmt (hdl,NIL) == PAM_SUCCESS) &&
+	    (pam_setcred (hdl,PAM_ESTABLISH_CRED) == PAM_SUCCESS)) ?
+      getpwnam (name) : NIL) {
+#if 0
+    /*
+     * Some people have reported that this causes a SEGV in strncpy() from
+     * pam_unix.so.1
+     */
+    /*
+     * This pam_open_session() call is inconsistant with how we handle other
+     * platforms, where we don't write [uw]tmp records.  However, unlike our
+     * code on other platforms, pam_acct_mgmt() will check those records for
+     * inactivity and deny the authentication.
+     */
+    pam_open_session (hdl,NIL);	/* make sure account doesn't go inactive */
+#endif
+				/* arm hook to delete credentials */
+    mail_parameters (NIL,SET_LOGOUTHOOK,(void *) checkpw_cleanup);
+    mail_parameters (NIL,SET_LOGOUTDATA,(void *) hdl);
   }
-#if 0
-  /*
-   * Some people have reported that this causes a SEGV in strncpy() from
-   * pam_unix.so.1
-   */
-  /*
-   * This pam_open_session() call is inconsistant with how we handle other
-   * platforms, where we don't write [uw]tmp records.  However, unlike our
-   * code on other platforms, pam_acct_mgmt() will check those records for
-   * inactivity and deny the authentication.  We'll let init clean up.
-   */
-  pam_open_session (hdl,NIL);	/* make sure account doesn't go inactive */
-#endif
-#if 0
-  /*
-   * This is also a problem.  Apparently doing this breaks access to DFS home
-   * space (hence the #if 0), but there is a report that not doing it causes
-   * the credentials to stick around long after the server process is gone.
-   */
-				/* clean up */
-  pam_setcred (hdl,PAM_DELETE_CRED);
-#endif
-  pam_end (hdl,PAM_SUCCESS);	/* return success */
+  else checkpw_cleanup (hdl);	/* clean up */
+  fs_give ((void **) &name);
+				/* reset log facility in case PAM broke it */
+  if (myServerName) openlog (myServerName,LOG_PID,syslog_facility);
   return pw;
 }

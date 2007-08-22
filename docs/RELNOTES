@@ -1,7 +1,321 @@
+/* ========================================================================
+ * Copyright 1988-2007 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
+Updated: 14 June 2007
+
+imap-2006j is a maintenance release, consisting primarily of bugfixes to
+problems discovered in the release that affected a small number of users.
+
+
+Updated: 5 June 2007
+
+imap-2006i is a maintenance release, consisting primarily of bugfixes to
+problems discovered in the release that affected a small number of users.
+
+imapd now supports the CHILDREN and ESEARCH extensions.
+
+imapd's attempt to return COPYUID/APPENDUID information for a traditional
+UNIX (and MMDF) format mailbox when the mailbox is open by another process
+has been declared to be a failure and is now revoked.  It was subject to a
+timing race, loss of which involved an expensive reset of the mailbox's UID
+regime.  Any imapd COPY or APPEND to a traditional UNIX or MMDF format that
+is open by some other process will now no longer return COPYUID/APPEND.
+Although this is technically in violation of RFC 4315, there is a loophole
+in that document and the timing race/performance problem is worse.
+
+
+Updated: 4 April 2007
+
+imap-2006h is a maintenance release, consisting primarily of bugfixes to
+problems discovered in the release that affected a small number of users.
+
+
+Updated: 30 March 2007
+
+imap-2006g is a maintenance release, consisting primarily of bugfixes to
+problems discovered in the release that affected a small number of users.
+
+
+Updated: 30 January 2007
+
+imap-2006f is a maintenance release, consisting primarily of bugfixes to
+problems discovered in the release that affected a small number of users.
+
+For the benefit of multi-threaded applications, use of strtok() has been
+abolished in the c-client library.  imapd and ipop3d stuff use it though.
+The TOPS-20 and VAX/VMS ports still use strtok() since they don't use UNIX
+threads.
+
+This version has been test-built on Linux, Mac OS X, NeXT, Windows XP,
+TOPS-20, and VAX/VMS.  This will probably be the last test-build on VAX/VMS
+since the system I use for that purpose is being shut down.  I have no way
+to test-build on DOS, legacy Mac OS (OS 9 and earlier), OS/2, or Windows CE;
+and the builds on those systems are probably broken.
+
+
+Updated: 26 January 2007
+
+imap-2006e is a maintenance release, consisting primarily of bugfixes to
+problems discovered in the release that affected a small number of users.
+
+
+Updated: 6 December 2006
+
+imap-2006d is a maintenance release, consisting primarily of bugfixes to
+problems discovered in the release that affected a small number of users.
+
+The decomposition mapping, title-case mapping, and character widths tables
+have been updated to comply with the Unicode 5.0 standard.
+
+Prototypes for the utf8aux.c functions have been moved to a new utf8aux.h.
+
+The general c-client modules now include c-client.h instead of the individual
+files.  Use of c-client.h instead of individual include files insulates
+against future shuffling of include files.
+
+
+Updated: 23 October 2006
+
+imap-2006c is a maintenance release, consisting primarily of bugfixes to
+problems discovered in the release that affected a small number of users.
+
+By popular request, if a user has a mix (or other dual-use) format INBOX,
+it will no longer be listed as \NoInferiors.  It's a bad idea to depend
+upon this due to the case ambiguity issue, but it's there.
+
+
+Updated: 26 September 2006
+
+imap-2006b is a maintenance release, consisting entirely of bugfixes to
+problems discovered in the release that affected a small number of users.
+
+
+Updated: 15 September 2006
+
+imap-2006a is a maintenance release, consisting entirely of bugfixes to
+problems discovered in the release that affected a small number of users.
+
+If it is necessary to build IPv4-only on one of the ports that has IPv6
+preconfigured (ldb, lfd, lmd, lrh, lsu, osx, oxp), this can be done by
+using IP6=4.  You can't do IP=4 in the build command directly since these
+ports set IP themselves; however, now instead of setting IP=6 they now set
+IP=$(IP6).
+
+
+Updated: 30 August 2006
+
+imap-2006 is a major release.  Programs written for imap-2004g should
+build with this version with minor or no modification.  imap-2005 was not
+released except as development snapshots.
+
+imap-2006 contains major extensions to its Unicode support.  Searching and
+sorting are now done with strings canonicalized to titlecase and decomposed
+form.  Among other things, this means that Latin letters with diacriticals
+will now sort with the basic Latin letter, and case-independent searching of
+such letters (e.g., German umlauts) now works.  Previously, sorting was done
+strictly by Unicode codepoint, and case-independence only worked with ASCII.
+
+imapd now supports the UIDPLUS extension for mailboxes in unix, mmdf, mbx, mx,
+and mix formats.  UID EXPUNGE is fully implemented.  Note that UIDPLUS is not
+supported in the little-used drivers (mh, mtx, tenex) in which meaningful
+APPENDUID/COPYUID data can not be returned.  Refer to bugs.txt for more
+details.
+
+The new mix format is a dual-use mailbox format designed for performance and
+reliability with large mailboxes.  mix is documented in file mixfmt.txt.
+
+SSL/TLS certificate validation on UNIX now checks the alternative names in the
+certificate if the CN does not match.
+
+The new /tls-sslv23 flag in a mailbox name causes a TLS session to use the
+(incorrect) SSLv23 client method instead of the TLSv1 client method.  Some
+broken servers use the SSLv23 server method, and this flag works around that
+problem.  WARNING: use of this flag will cause TLS negotiation to fail with
+a server which uses the proper TLSv1 server method.  Additionally, there are
+known security risks in SSLv2; so users should be suspicious if this switch
+suddenly becomes necesary.
+
+The silly mailbox flag combination /ssl/tls is now rejected as an invalid
+remote specification.  Previous versions tried to negotiate TLS over an SSL
+session; even if the server permitted such a thing it couldn't work.
+
+The memory management of several drivers has been redesigned to consume less
+memory and hopefully be faster.
+
+The private.data member of the MESSAGECACHE (elt) has been replaced with
+a union that contains private.spare.data and private.spare.ptr, the latter
+being a pointer.
+
+A new FT_RETURNSTRINGSTRUCT flag has been added for mail_fetch_body() and
+mail_fetch_text() calls.  If this flag is set, *and* if the function returns
+NIL, then the requested string data is available on a stringstruct on
+stream->private.string.  This is a special hack for the IMAP and POP servers
+and is subject to incompatible change.  The result is a major performance
+improvement in the servers with the mbx driver, particularly with large
+messages.
+
+
+Updated: 15 September 2005
+
+imap-2004g is a maintenance release, and consists solely of a bugfix to
+quoted string handling in the mailbox name parsing routine.
+
+
+Updated: 15 August 2005
+
+imap-2004f is a maintenance release, and consists solely of a bugfix to
+the TCP code.
+
+Also included is a new version of the UNIX SSL/TLS routines that allows the
+SSL/TLS certificate validation client code to validate alternative names in
+server certificates.  This code has not been thoroughly regression-tested but
+is believed to work.  To use this new code instead of the old support:
+	cd imap-2004f/src/osdep/unix
+	mv ssl_unix.c ssl_unix.old
+	mv ssl_unix.new ssl_unix.c
+Then rebuild.
+
+
+Updated: 21 June 2005
+
+imap-2004e is a maintenance release, consisting entirely of bugfixes.
+
+There are no user-visible functional enhancements in this version.
+
+
+Updated: 20 April 2005
+
+imap-2004d is a maintenance release, released concurrently with Pine
+4.63, and consists primarily of bugfixes
+
+There is now a workaround for RedHat breaking flock().  However, since
+RedHat has said that they don't support flock(), there is no guarantee
+that they won't break it in the future.  So you may want to consider some
+other Linux distribution or BSD instead.  See:
+	https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=123415
+for the gruesome details.
+
+There are no user-visible functional enhancements in this version.
+
+
+Updated: 18 January 2005
+
+imap-2004c is a maintenance release, released concurrently with Pine
+4.62, including fixes to quoted-printable encoding and CRAM-MD5
+authentication.
+
+NNTP proxy in imapd now supports the LIST and LSUB commands.
+
+There are no other user-visible functional enhancements in this version.
+
+
+Updated: 29 November 2004
+
+imap-2004b is a maintenance release, consisting primarily of bugfixes.
+Programs written for imap-2004a will build with this version without
+modifification.
+
+There are new ports for Solaris with Blastwave Community Open Source
+Software (gcs) and Mandrake Linux (lmd).
+
+SET_SNARFINTERVAL now controls how frequently local drivers will move new
+mail from the mail spool as well as from a maildrop.  Maildrops are still
+tied to a minimum interval of 1 minute, but there is now no minimum for the
+spool file.
+
+Character set conversions now map non-breaking space to space if the
+destination character set doesn't have nbsp.  JIS Roman yen sign is now
+mapped to Unicode yen sign.
+
+There are no user-visible functional enhancements in this version.
+
+
+Updated: 8 July 2004
+
+imap-2004a is a maintenance release, consisting primarily of critical
+bugfixes.  Programs written for imap-2004 will build with this version
+without modification.
+
+imapd now has a supported NNTP proxy capability.  If the file /etc/imapd.nntp
+exists, the contents of that file are used as the host name of an NNTP
+server which will be used whenever a #news. name is used.  For example, if
+/etc/imapd.nntp contains nntp.example.com, and the IMAP client SELECTs or
+EXAMINEs the name #news.comp.mail.imap, what will actually be opened in
+imapd is {nntp.example.com/nntp}comp.mail.imap
+
+The OSF/1 port (Digital UNIX, Tru64) now uses flocksim instead of flcksafe.
+Some cretin decided to delete the winning flock() call and make flock() use
+the losing fcntl() call instead.
+
+The unix[nt] and mmdf drivers now prevent mail_append() from writing Status:,
+X-Status:, X-UID, X-IMAP[base]:, and X-Keywords: header lines to a
+traditional UNIX or MMDF format mailbox.  If any such lines are in the
+text supplied to mail_append(), they will be quoted by prefixing with
+"X-Original-" (e.g. Status: will become X-Original-Status:).
+
+There are no user-visible functional enhancements in this version.
+
+
+Updated: 10 May 2004
+
+imap-2004 is a major release.  Programs written for imap-2002e should
+build with this version with minor modification.  imap-2003 was not
+released except as development snapshots.
+
+mailutil has three new commands: delete, rename, and prune.
+
+IPv6 support now exists for UNIX and W2K.  It is the default in W2K builds.
+On UNIX, add "IP=6" to the make command line.  Windows IPv6 support is
+only for W2K builds.
+
+The NNTP driver now supports NNTP SASL and TLS.
+
+The ldb (Debian) and lrh (RedHat) ports now look for mlock on
+/usr/sbin/mlock instead of /etc/mlock.
+
+imapd now supports the LITERAL+ and SASL-IR initial-response extensions.
+
+The IMAP driver has some additional checks to reduce the amount of network
+traffic, including executing "silly searches" (searches of sequence numbers
+only) locally.
+
+The IMAP, POP, SMTP, and NNTP drivers now have diagnostic code to provide
+better information about servers which violate SASL's empty challenge
+requirements (e.g. with the PLAIN mechanism).
+
+There is a new mail_fetch_overview_sequence() function which is like
+mail_fetch_overview() but takes a sequence number string as an argument.
+There should have been a flags argument and FT_UID bit as in all the other
+mail_fetch_???() functions but compatibility with the past... :-(
+
+The overview_t callback (from mail_fetch_overview()) now has a fourth
+argument which contains the message sequence number (as opposed to the UID
+which is in the second argument).  It turned out that some applications were
+calling mail_msgno() (which can be moderately expensive) to get the sequence
+number, and c-client already knew it.
+
+Many declarations which are completely internal to a driver have been removed
+from the driver .h file, and in those cases where there are no external
+declarations left the .h file has been eliminated entirely.  As part of this,
+the mbox driver routines are now incorporated with the unix driver routines
+as opposed to being a separate file.  The mbox driver still needs to be lunk
+in order to get the mbox functionality.
+
+
 Updated: 27 August 2003
 
-imap-2002e is a minor release, released concurrently with Pine 4.57, and
-contains primarily bugfixes.  Programs written for imap-2002d should build
+imap-2002e is a minor release, released concurrently with Pine 4.58, and
+contains primarily bugfixes.  Programs written for imap-2002d will build
 with this version without modification.
 
 The NNTP client code now tries to perform better with legacy NNTP servers
@@ -295,8 +609,7 @@ extremely unlikely that a program written for imap-3.x or earlier series will
 build with this version without modifications.  Drivers written for earlier
 versions will definitely need to be rewritten.
 
-In addition to the usual bugfixes, the following features are new in
-imap-2000:
+In addition to the usual bugfixes, the following features are new in imap-2000:
 
 SSL support is now available.  For UNIX, it is necessary to install some
 version of OpenSSL; see imap-2000/docs/SSLBUILD for more information.  SSL

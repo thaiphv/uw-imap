@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: uw-imap 7:2002edebian1-13\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-03-31 16:55+0200\n"
+"Report-Msgid-Bugs-To: dr@jones.dk\n"
+"POT-Creation-Date: 2007-03-20 14:42+0100\n"
 "PO-Revision-Date: 2006-04-21 21:00+0100\n"
 "Last-Translator: Vincent Zweije <zweije@xs4all.nl>\n"
 "Language-Team: Debian-Dutch <debian-l10n-dutch@lists.debian.org>\n"
@@ -25,116 +25,189 @@ msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
-msgid "Which ports should the server listen on?"
-msgstr "Op welke poorten moet de server luisteren?"
+#: ../ipopd.templates:1001 ../uw-imapd.templates:1001
+msgid "Wanted server ports:"
+msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
 msgstr "pop2 = POP 2 op TCP poort 109 met TLS-ondersteuning. Dit is verouderd."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop3  = POP 3 on TCP port 110 with TLS support."
 msgstr "pop3 = POP 3 op TCP poort 110 met TLS-ondersteuning."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001
 msgid "pop3s = POP 3 on TCP port 995 with SSL support."
 msgstr "pop3s = POP 3 op TCP poort 995 met SSL-ondersteuning."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
+#: ../ipopd.templates:1001 ../uw-imapd.templates:1001
+msgid ""
+"Confusingly, the choice of ports made with this package may have been "
+"overridden by locally configured services (or by a broken package)."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001 ../uw-imapd.templates:1001
+#: ../uw-imapd.templates:2001
+msgid ""
+"If you want to enforce your choice of ports made with this package, "
+"disregarding any local changes, then you need to *both* select ports *and* "
+"enforce the selection."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001 ../uw-imapd.templates:1001
+#: ../uw-imapd.templates:2001
+msgid ""
+"To make sure you've done both, you can run the following command after "
+"finishing your current installation/reconfiguration:"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:1001 ../ipopd.templates:2001
+msgid "dpkg-reconfigure -plow ipopd"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates:1001
 msgid "If in doubt, choose pop3 and pop3s."
 msgstr "Als u twijfelt, kies dan pop3 en pop3s."
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid "Enforce port selection?"
 msgstr "Gekozen poorten afdwingen?"
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001
 msgid ""
-"The ports selected for enabling may be overridden by locally configured "
-"services. By default the port selection is respected only on initial "
-"installs, and is ignored on later reconfiguration."
+"The ipopd daemon supports listening on several ports simultaneously. A "
+"default choice of ports is provided, which you can adjust."
 msgstr ""
-"Locaal ingestelde diensten kunnen voorgaan op de poorten die handmatig "
-"zijn ingesteld. Standaard worden de handmatig ingestelde poorten alleen "
-"gebruikt bij de eerste installatie, maar niet bij latere herconfiguratie."
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid ""
-"Do you want to ignore possible local tweaks and always use selected ports?"
+"Confusingly, the choice of ports made with this package may have been "
+"overridden by locally configured services (and by broken packages messing "
+"with the configuration in a bad way)."
 msgstr ""
-"Wilt u mogelijke locale instellingen negeren en altijd de geselecteerde poorten gebruiken?"
 
 #. Type: boolean
 #. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid "Continue installing libc-client without Maildir support?"
-msgstr "Verder gaan met het installeren van libc-client zonder Maildir-ondersteuning?"
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
+#, fuzzy
+#| msgid ""
+#| "The ports selected for enabling may be overridden by locally configured "
+#| "services. By default the port selection is respected only on initial "
+#| "installs, and is ignored on later reconfiguration."
 msgid ""
-"Libc-client earlier than version 2002d (and development versions of 2003) "
-"included an unofficial and no longer maintained patch to support Maildirs. "
-"By default Maildirs were not used by uw-imapd or ipopd, but if you have "
-"changed your system configuration or other installed programs depend on libc-"
-"client then upgrading may result in broken mail handling."
+"By default the port selection is respected only on initial installs, and is "
+"ignored on later updates and reconfiguration."
 msgstr ""
-"Libc-client versies voor 2002d (en ontwikkelaarsversies van 2003) "
-"bevatten een onofficiële en niet langer ondersteunde wijziging om "
-"Maildirs te ondersteunen. Standaard werden Maildirs niet gebruikt door "
-"uw-imapd of ipopd, maar indien u uw systeeminstellingen hebt gewijzigd "
-"of programma's hebt geïnstalleerd die afhankelijk zijn van libc-client, "
-"dan kan mail-afhandeling door de opwaardering defect raken."
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid ""
-"Do you want to continue installing a libc-client without Maildir support?"
-msgstr ""
-"Wilt u doorgaan met het installeren van een libc-client zonder "
-"Maildir-ondersteuning?"
+"Locaal ingestelde diensten kunnen voorgaan op de poorten die handmatig zijn "
+"ingesteld. Standaard worden de handmatig ingestelde poorten alleen gebruikt "
+"bij de eerste installatie, maar niet bij latere herconfiguratie."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid ""
 "imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
 "support."
 msgstr ""
-"imap2 = IMAP 4Rev1 (merkwaardigerwijs niet 2) op TCP poort 143 met "
-"TLS-ondersteuning."
+"imap2 = IMAP 4Rev1 (merkwaardigerwijs niet 2) op TCP poort 143 met TLS-"
+"ondersteuning."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
-msgstr "imap3 = IMAP 3 op TCP poort 220 met TLS-ondersteuning. Dit is verouderd."
+msgstr ""
+"imap3 = IMAP 3 op TCP poort 220 met TLS-ondersteuning. Dit is verouderd."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:1001
 msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
 msgstr "imaps = IMAP 4Rev1 op TCP poort 993 met SSL-ondersteuning."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
-msgid "If in doubt, pick imap2 and imaps."
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:1001 ../uw-imapd.templates:2001
+msgid "dpkg-reconfigure -plow uw-imapd"
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates:1001
+#, fuzzy
+#| msgid "If in doubt, pick imap2 and imaps."
+msgid "If in doubt, choose imap2 and imaps."
 msgstr "Als u twijfelt, kies dan imap2 en imaps."
+
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:2001
+msgid ""
+"The uw-imap daemon supports listening on several ports simultaneously. A "
+"default choice of ports is provided, which you can adjust."
+msgstr ""
+
+#~ msgid "Which ports should the server listen on?"
+#~ msgstr "Op welke poorten moet de server luisteren?"
+
+#~ msgid ""
+#~ "Do you want to ignore possible local tweaks and always use selected ports?"
+#~ msgstr ""
+#~ "Wilt u mogelijke locale instellingen negeren en altijd de geselecteerde "
+#~ "poorten gebruiken?"
+
+#~ msgid "Continue installing libc-client without Maildir support?"
+#~ msgstr ""
+#~ "Verder gaan met het installeren van libc-client zonder Maildir-"
+#~ "ondersteuning?"
+
+#~ msgid ""
+#~ "Libc-client earlier than version 2002d (and development versions of 2003) "
+#~ "included an unofficial and no longer maintained patch to support "
+#~ "Maildirs. By default Maildirs were not used by uw-imapd or ipopd, but if "
+#~ "you have changed your system configuration or other installed programs "
+#~ "depend on libc-client then upgrading may result in broken mail handling."
+#~ msgstr ""
+#~ "Libc-client versies voor 2002d (en ontwikkelaarsversies van 2003) "
+#~ "bevatten een onofficiële en niet langer ondersteunde wijziging om "
+#~ "Maildirs te ondersteunen. Standaard werden Maildirs niet gebruikt door uw-"
+#~ "imapd of ipopd, maar indien u uw systeeminstellingen hebt gewijzigd of "
+#~ "programma's hebt geïnstalleerd die afhankelijk zijn van libc-client, dan "
+#~ "kan mail-afhandeling door de opwaardering defect raken."
+
+#~ msgid ""
+#~ "Do you want to continue installing a libc-client without Maildir support?"
+#~ msgstr ""
+#~ "Wilt u doorgaan met het installeren van een libc-client zonder Maildir-"
+#~ "ondersteuning?"

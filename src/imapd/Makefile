@@ -1,3 +1,16 @@
+# ========================================================================
+# Copyright 1988-2006 University of Washington
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# 
+# ========================================================================
+
+
 # Program:	IMAPD Makefile
 #
 # Author:	Mark Crispin
@@ -9,19 +22,14 @@
 #		Internet: MRC@CAC.Washington.EDU
 #
 # Date:		5 November 1990
-# Last Edited:	18 November 2002
-#
-# The IMAP toolkit provided in this Distribution is
-# Copyright 2002 University of Washington.
-#
-# The full text of our legal notices is contained in the file called
-# CPYRIGHT, included with this Distribution.
+# Last Edited:	30 August 2006
 
 
 ALERT=/etc/imapd.alert
 USERALERT=.imapalert
 SHUTDOWN=/etc/nologin
 ANO=/etc/anonymous.newsgroups
+NNTP=/etc/imapd.nntp
 SHELL= /bin/sh
 
 
@@ -32,22 +40,13 @@ SHELL= /bin/sh
 #NSBD= -DNETSCAPE_BRAIN_DAMAGE=\"http://www.washington.edu/pine\"
 
 
-
-# Un-comment this to get possibly better interoperability with Microsoft
-# Entourage.  It disables an untagged NO which happens when that extremely
-# broken program does a STATUS on the selected mailbox.  This shouldn't be
-# necessary, and it's been reported that Entourage works without having to
-# un-comment this.
-#ENBD= -DENTOURAGE_BRAIN_DAMAGE
-
-
 # Get local definitions from c-client directory
 
 C = ../c-client
 CCLIENTLIB = $C/c-client.a
 CC = `cat $C/CCTYPE`
-CFLAGS = -I$C `cat $C/CFLAGS` $(NSBD) $(ENBD) \
-	-DANOFILE=\"$(ANO)\" -DALERTFILE=\"$(ALERT)\" \
+CFLAGS = -I$C `cat $C/CFLAGS` $(NSBD) $(ENBD) -DANOFILE=\"$(ANO)\" \
+	-DALERTFILE=\"$(ALERT)\" -DNNTPFILE=\"$(NNTP)\" \
 	-DUSERALERTFILE=\"$(USERALERT)\" -DSHUTDOWNFILE=\"$(SHUTDOWN)\"
 LDFLAGS = $(CCLIENTLIB) `cat $C/LDFLAGS`
 

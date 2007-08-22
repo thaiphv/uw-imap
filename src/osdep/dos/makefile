@@ -1,3 +1,16 @@
+# ========================================================================
+# Copyright 1988-2007 University of Washington
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# 
+# ========================================================================
+
+
 # Program:	Portable C client makefile -- MS-DOS version
 #
 # Author:	Mark Crispin
@@ -9,22 +22,16 @@
 #		Internet: MRC@CAC.Washington.EDU
 #
 # Date:		11 May 1989
-# Last Edited:	7 February 2001
-#
-# The IMAP toolkit provided in this Distribution is
-# Copyright 2000 University of Washington.
-#
-# The full text of our legal notices is contained in the file called
-# CPYRIGHT, included with this Distribution.
+# Last Edited:	23 May 2007
 
 
 OS = wsk
 EXTRAAUTHENTICATORS=
-DEFAULTAUTHENTICATORS=md5 pla log
+DEFAULTAUTHENTICATORS= ext md5 pla log
 EXTRADRIVERS = 
 DRIVERS = imap nntp pop3 mtx bezerk
 DEFAULTDRIVER = mtx
-CFLAGS= -AL -nologo $(EXTRACFLAGS)
+CFLAGS= -AL /DCHUNKSIZE=4096 -nologo $(EXTRACFLAGS)
 CC = cl
 
 all:	mtest.exe
@@ -39,6 +46,7 @@ osdep.h: os_$(OS).h
 	ECHO #define DEFAULTPROTO $(DEFAULTDRIVER)proto >> LINKAGE.H
 	ECHO   if (!mail_parameters (NIL,GET_GETS)) >> LINKAGE.C
 	ECHO     mail_parameters (NIL,SET_GETS,(void *) dos_default_gets); >> LINKAGE.C
+	ECHO mail_versioncheck (CCLIENTVERSION); >> LINKAGE.C
 
 mtest.obj: mail.h smtp.h misc.h osdep.h mtest.c
 
@@ -60,29 +68,31 @@ smanager.obj: mail.h misc.h smanager.c
 
 utf8.obj: mail.h misc.h osdep.h utf8.h
 
+utf8aux.obj: mail.h misc.h osdep.h utf8.h
+
 imap4r1.obj: mail.h imap4r1.h misc.h osdep.h imap4r1.c
 
 nntp.obj: mail.h nntp.h smtp.h rfc822.h misc.h osdep.h nntp.c
 
-pop3.obj: mail.h pop3.h rfc822.h misc.h osdep.h pop3.c
+pop3.obj: mail.h rfc822.h misc.h osdep.h pop3.c
 
 smtp.obj: mail.h smtp.h rfc822.h misc.h osdep.h smtp.c
 
 os_$(OS).obj: mail.h osdep.h env_dos.h fs.h ftl.h nl.h tcp.h \
 	os_$(OS).c fs_dos.c ftl_dos.c nl_dos.c env_dos.c pmatch.c write.c
 
-mtxdos.obj: mail.h mtxdos.h misc.h osdep.h mtxdos.c
+mtxdos.obj: mail.h misc.h osdep.h mtxdos.c
 
-bezrkdos.obj: mail.h bezrkdos.h misc.h osdep.h bezrkdos.c
+bezrkdos.obj: mail.h misc.h osdep.h bezrkdos.c
 
 dummydos.obj: mail.h dummy.h misc.h osdep.h dummydos.c
 
 cclient.lib: mail.obj misc.obj fdstring.obj flstring.obj netmsg.obj \
-	newsrc.obj rfc822.obj smanager.obj utf8.obj \
+	newsrc.obj rfc822.obj smanager.obj utf8.obj utf8aux.obj \
 	imap4r1.obj nntp.obj pop3.obj smtp.obj os_$(OS).obj \
 	mtxdos.obj bezrkdos.obj dummydos.obj
 	erase cclient.lib
-	lib cclient +mail+misc+fdstring+flstring+netmsg+newsrc+rfc822+smanager+imap4r1+nntp+pop3+smtp+os_$(OS)+mtxdos+bezrkdos+dummydos;
+	lib cclient +mail+misc+fdstring+flstring+netmsg+newsrc+rfc822+smanager+utf8+utf8aux+imap4r1+nntp+pop3+smtp+os_$(OS)+mtxdos+bezrkdos+dummydos;
 
 mtest.exe: cclient.lib mtest.obj
 	mtest$(OS)

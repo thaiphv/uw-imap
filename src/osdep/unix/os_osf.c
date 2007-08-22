@@ -1,5 +1,18 @@
+/* ========================================================================
+ * Copyright 1988-2006 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
- * Program:	Operating-system dependent routines -- OSF/1 version
+ * Program:	Operating-system dependent routines -- OSF/Digital UNIX/Tru64
  *
  * Author:	Mark Crispin
  *		Networks and Distributed Computing
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	1 August 1988
- * Last Edited:	24 October 2000
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2000 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	30 August 2006
  */
  
 #include "tcp_unix.h"		/* must be before osdep includes tcp.h */
@@ -33,6 +41,7 @@
 extern int errno;		/* just in case */
 #include <pwd.h>
 #include "misc.h"
+#include <ustat.h>
 
 
 #include "fs_unix.c"
@@ -43,4 +52,4 @@ extern int errno;		/* just in case */
 #include "tcp_unix.c"
 #include "tz_bsd.c"
 #undef flock
-#include "flcksafe.c"
+#include "flocksim.c"
