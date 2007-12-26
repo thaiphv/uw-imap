@@ -1,3 +1,59 @@
+uw-imap (7:2007~dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * Adjust patches 1001 and 2004 to no longer change hardcoded location
+    of LOCKPGM (mlock): Upstream now by default look for the helper app
+    at the following locations:
+    1) /etc/mlock (the old default, violating Linux FHS)
+    2) /usr/libexec/mlock
+    3) /usr/bin/mlock (our earlier hardcoded path)
+  * Update patch 1003 (or more correctly: Replace with similar patch
+    written for alpine instead of pine). Drop now unneeded patch 1011.
+  * Unfuzz patches 1001, 1003 and 2002.
+  * Update cdbs tweaks:
+    + update-tarball improved repackaging
+    + Drop local tweak bts.mk (all bugreports are welcome at Debian BTS)
+    + Drop local tweak buildcore.mk (superfluous)
+  * Debconf templates and debian/control reviewed by the debian-l10n-
+    english team as part of the Smith review project. Closes: #446204
+  * Debconf translation updates
+    + Japanese. Closes: #446574
+    + Swedish. Closes: #446761
+    + Galician. Closes: #446789
+    + French. Closes: #446849
+    + Turkish. Closes: #446880
+    + Vietnamese. Closes: #446903
+    + Portuguese. Closes: #444469, #446942
+    + Finnish. Closes: #447070
+    + Basque. Closes: #447230
+    + Czech. Closes: #447435
+    + Spanish; Castilian. Closes: #447711
+    + Italian. Closes: #448236
+    + Russian. Closes: #448322
+    + German. Closes: #448383
+  * Semi-auto-update debian/control to fix version-specific package
+    names:
+    DEB_AUTO_UPDATE_DEBIAN_CONTROL=yes fakeroot debian/rules clean
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 26 Dec 2007 20:44:42 +0100
+
+uw-imap (7:2006k~dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+    + Unfuzz patches.
+  * Add Vcs-Svn and Vcs-Browser fields to debian/control.
+  * Update cdbs tweaks:
+    + update-tarball needs cdbs 0.4.39 or newer (only relevant for
+      backports).
+  * Update build-dependency cosmetics in debian/rules, and semi-auto-
+    update debian/control:
+      DEB_BUILD_OPTIONS=cdbs-autoupdate fakeroot debian/rules pre-build
+  * Move Homepage to own field (from pseudo-field in long description).
+  * Switch from .dfsg to ~dfsg to make room for point releases.
+  * Bump to standards-version 3.7.3 (no changes needed).
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 10 Dec 2007 16:41:46 +0100
+
 uw-imap (7:2006j2.dfsg-3) unstable; urgency=low
 
   * Release for unstable.

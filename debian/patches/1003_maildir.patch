@@ -1,12 +1,12 @@
-diff -ruN uw-imap-2006d.dfsg.orig/README.maildir uw-imap-2006d.dfsg/README.maildir
---- uw-imap-2006d.dfsg.orig/README.maildir	1970-01-01 01:00:00.000000000 +0100
-+++ uw-imap-2006d.dfsg/README.maildir	2006-12-19 22:32:50.000000000 +0100
+diff -ruN uw-imap-2007~dfsg.orig/README.maildir uw-imap-2007~dfsg/README.maildir
+--- uw-imap-2007~dfsg.orig/README.maildir	1970-01-01 01:00:00.000000000 +0100
++++ uw-imap-2007~dfsg/README.maildir	2007-12-26 20:13:06.000000000 +0100
 @@ -0,0 +1,244 @@
 +-------------------------------------------------------------------------------
 +
-+Maildir Driver for Pine4.64
-+By Eduardo Chappa <chappa@math.washington.edu>
-+http://www.math.washington.edu/~chappa/pine/
++Maildir Driver for Alpine 0.9999
++By Eduardo Chappa <chappa@washington.edu>
++http://staff.washington.edu/chappa/alpine/
 +
 +-------------------------------------------------------------------------------
 +1. General Information About This Patch
@@ -179,7 +179,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/README.maildir uw-imap-2006d.dfsg/README.maild
 +updates for this patch, which includes bug fixes, improvements and 
 +addition of new features can be found at
 +
-+ http://www.math.washington.edu/~chappa/pine/updates/maildir.html
++ http://staff.washington.edu/chappa/alpine/updates/maildir.html
 +
 +----------
 +5. On UIDs
@@ -246,62 +246,74 @@ diff -ruN uw-imap-2006d.dfsg.orig/README.maildir uw-imap-2006d.dfsg/README.maild
 +point to the same place.
 +
 +Last Updated November 21, 2005
-diff -ruN uw-imap-2006d.dfsg.orig/src/c-client/mail.c uw-imap-2006d.dfsg/src/c-client/mail.c
---- uw-imap-2006d.dfsg.orig/src/c-client/mail.c	2006-12-07 02:57:27.000000000 +0100
-+++ uw-imap-2006d.dfsg/src/c-client/mail.c	2006-12-19 22:19:11.000000000 +0100
-@@ -1065,6 +1065,7 @@
+diff -ruN uw-imap-2007~dfsg.orig/src/c-client/mail.c uw-imap-2007~dfsg/src/c-client/mail.c
+--- uw-imap-2007~dfsg.orig/src/c-client/mail.c	2007-12-26 19:33:39.000000000 +0100
++++ uw-imap-2007~dfsg/src/c-client/mail.c	2007-12-26 20:12:59.000000000 +0100
+@@ -993,7 +993,7 @@
+   MAILSTREAM *ts;
+   char *s,*t,tmp[MAILTMPLEN];
+   size_t i;
+-  DRIVER *d;
++  DRIVER *d, *md;
+ 				/* never allow names with newlines */
+   if (s = strpbrk (mailbox,"\015\012")) {
+     MM_LOG ("Can't create mailbox with such a name",ERROR);
+@@ -1017,6 +1017,8 @@
+     return NIL;
+   }
+ 
++  /* Hack, we should do this better, but it works */
++    for (md = maildrivers; md && strcmp (md->name, "md"); md = md->next);
+ 				/* see if special driver hack */
+   if ((mailbox[0] == '#') && ((mailbox[1] == 'd') || (mailbox[1] == 'D')) &&
+       ((mailbox[2] == 'r') || (mailbox[2] == 'R')) &&
+@@ -1047,6 +1049,13 @@
  	   (((*mailbox == '{') || (*mailbox == '#')) &&
  	    (stream = mail_open (NIL,mailbox,OP_PROTOTYPE | OP_SILENT))))
      d = stream->dtb;
-+  else if (maildir_valid_name(mailbox)) return maildir_create(stream, mailbox);
++  else if(mailbox[0] == '#'
++	&& (mailbox[1] == 'm' || mailbox[1] == 'M')
++	&& (mailbox[2] == 'd' || mailbox[2] == 'D'
++	    || mailbox[2] == 'c' || mailbox[2] == 'C')
++	&& mailbox[3] == '/'
++	&& mailbox[4] != '\0')
++     return (*md->create)(stream, mailbox);
    else if ((*mailbox != '{') && (ts = default_proto (NIL))) d = ts->dtb;
    else {			/* failed utterly */
      sprintf (tmp,"Can't create mailbox %.80s: indeterminate format",mailbox);
-diff -ruN uw-imap-2006d.dfsg.orig/src/c-client/mail.h uw-imap-2006d.dfsg/src/c-client/mail.h
---- uw-imap-2006d.dfsg.orig/src/c-client/mail.h	2006-08-31 01:39:38.000000000 +0200
-+++ uw-imap-2006d.dfsg/src/c-client/mail.h	2006-12-19 22:23:16.000000000 +0100
-@@ -351,6 +351,8 @@
+diff -ruN uw-imap-2007~dfsg.orig/src/c-client/mail.h uw-imap-2007~dfsg/src/c-client/mail.h
+--- uw-imap-2007~dfsg.orig/src/c-client/mail.h	2007-12-26 19:33:39.000000000 +0100
++++ uw-imap-2007~dfsg/src/c-client/mail.h	2007-12-26 20:12:59.000000000 +0100
+@@ -353,6 +353,10 @@
  #define SET_SCANCONTENTS (long) 573
  #define GET_MHALLOWINBOX (long) 574
  #define SET_MHALLOWINBOX (long) 575
 +#define GET_COURIERSTYLE (long) 576
 +#define SET_COURIERSTYLE (long) 577
++#define SET_MDINBOXPATH  (long) 578
++#define GET_MDINBOXPATH  (long) 579
  
  /* Driver flags */
  
-@@ -855,6 +857,7 @@
-   unsigned int spare7 : 1;	/* seventh spare bit */
-   unsigned int spare8 : 1;	/* eighth spare bit */
-   void *sparep;			/* spare pointer */
-+  void *maildirp;		/* for the Maildir driver, can't use sparep */
-   unsigned long user_flags;	/* user-assignable flags */
- } MESSAGECACHE;
- 
-diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/dummy.c uw-imap-2006d.dfsg/src/osdep/unix/dummy.c
---- uw-imap-2006d.dfsg.orig/src/osdep/unix/dummy.c	2006-11-06 05:59:41.000000000 +0100
-+++ uw-imap-2006d.dfsg/src/osdep/unix/dummy.c	2006-12-19 22:19:11.000000000 +0100
-@@ -111,6 +111,8 @@
+diff -ruN uw-imap-2007~dfsg.orig/src/osdep/unix/dummy.c uw-imap-2007~dfsg/src/osdep/unix/dummy.c
+--- uw-imap-2007~dfsg.orig/src/osdep/unix/dummy.c	2007-12-26 19:33:39.000000000 +0100
++++ uw-imap-2007~dfsg/src/osdep/unix/dummy.c	2007-12-26 20:12:59.000000000 +0100
+@@ -106,11 +106,13 @@
+  * Accepts: mailbox name
+  * Returns: our driver if name is valid, NIL otherwise
+  */
+-
++char * maildir_remove_root(char *);
+ DRIVER *dummy_valid (char *name)
  {
    char *s,tmp[MAILTMPLEN];
    struct stat sbuf;
 +  strcpy(tmp, name);
-+  name = (char*) maildir_remove_root(tmp);
++  name = maildir_remove_root(tmp);
  				/* must be valid local mailbox */
    if (name && *name && (*name != '{') && (s = mailboxfile (tmp,name))) {
  				/* indeterminate clearbox INBOX */
-@@ -433,7 +435,10 @@
-   }
-   d = NIL;			/* don't \NoSelect dir if it has a driver */
-   if ((attributes & LATT_NOSELECT) && (d = mail_valid (NIL,name,NIL)) &&
--      (d != &dummydriver)) attributes &= ~LATT_NOSELECT;
-+      (d != &dummydriver)){
-+	 attributes &= ~LATT_NOSELECT;
-+	 attributes |= LATT_NOINFERIORS;
-+  }
-   if (!contents ||		/* notify main program */
-       (!(attributes & LATT_NOSELECT) && (csiz = strlen (contents)) &&
-        (s = mailboxfile (tmp,name)) &&
-@@ -454,6 +459,8 @@
+@@ -454,6 +456,8 @@
  {
    char *s,tmp[MAILTMPLEN];
    long ret = NIL;
@@ -310,7 +322,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/dummy.c uw-imap-2006d.dfsg/src/
  				/* validate name */
    if (!(compare_cstring (mailbox,"INBOX") && (s = dummy_file (tmp,mailbox)))) {
      sprintf (tmp,"Can't create %.80s: invalid name",mailbox);
-@@ -519,6 +526,14 @@
+@@ -519,6 +523,14 @@
  {
    struct stat sbuf;
    char *s,tmp[MAILTMPLEN];
@@ -325,27 +337,27 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/dummy.c uw-imap-2006d.dfsg/src/
    if (!(s = dummy_file (tmp,mailbox))) {
      sprintf (tmp,"Can't delete - invalid name: %.80s",s);
      MM_LOG (tmp,ERROR);
-@@ -545,6 +560,11 @@
+@@ -545,6 +557,11 @@
  {
    struct stat sbuf;
    char c,*s,tmp[MAILTMPLEN],mbx[MAILTMPLEN],oldname[MAILTMPLEN];
 +
 +  strcpy(tmp, old);
-+  old = (char *) maildir_remove_root(tmp);
++  old = maildir_remove_root(tmp);
 +  strcpy(tmp, newname);
-+  newname = (char *) maildir_remove_root(tmp);
++  newname = maildir_remove_root(tmp);
  				/* no trailing / allowed */
    if (!dummy_file (oldname,old) || !(s = dummy_file (mbx,newname)) ||
        stat (oldname,&sbuf) || ((s = strrchr (s,'/')) && !s[1] &&
-diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/src/osdep/unix/maildir.c
---- uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c	1970-01-01 01:00:00.000000000 +0100
-+++ uw-imap-2006d.dfsg/src/osdep/unix/maildir.c	2006-12-19 22:19:11.000000000 +0100
-@@ -0,0 +1,2329 @@
+diff -ruN uw-imap-2007~dfsg.orig/src/osdep/unix/maildir.c uw-imap-2007~dfsg/src/osdep/unix/maildir.c
+--- uw-imap-2007~dfsg.orig/src/osdep/unix/maildir.c	1970-01-01 01:00:00.000000000 +0100
++++ uw-imap-2007~dfsg/src/osdep/unix/maildir.c	2007-12-26 20:12:59.000000000 +0100
+@@ -0,0 +1,2325 @@
 +/*
-+ * Maildir driver for Pine4.64
++ * Maildir driver for Alpine 0.99999
 + * 
-+ * Written by Eduardo Chappa <chappa@math.washington.edu>
-+ * Last Update: October 10, 2006
++ * Written by Eduardo Chappa <chappa@washington.edu>
++ * Last Update: November 22, 2007
 + *
 + * The IMAP toolkit provided in this Distribution is
 + * Copyright 2004 University of Washington.
@@ -370,89 +382,96 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +
 +/* Driver dispatch used by MAIL */
 +DRIVER maildirdriver = {
-+  "md",				/* driver name, yes it's md, not maildir */
++  "md",			/* driver name, yes it's md, not maildir */
 +				/* driver flags */
-+  DR_MAIL|DR_LOCAL|DR_NAMESPACE|DR_NOSTICKY,
++  DR_MAIL|DR_LOCAL|DR_NAMESPACE|DR_NOSTICKY|DR_DIRFMT,
 +  (DRIVER *) NIL,		/* next driver 				*/
 +  maildir_valid,		/* mailbox is valid for us 		*/
 +  maildir_parameters,		/* manipulate parameters		*/
-+  NIL,				/* scan mailboxes 			*/
-+  maildir_list,			/* find mailboxes 			*/
-+  maildir_lsub,			/* find subscribed mailboxes 		*/
-+  maildir_sub,			/* subscribe to mailbox 		*/
++  NIL,			/* scan mailboxes 			*/
++  maildir_list,		/* find mailboxes 			*/
++  maildir_lsub,		/* find subscribed mailboxes 		*/
++  maildir_sub,		/* subscribe to mailbox 		*/
 +  maildir_unsub,		/* unsubscribe from mailbox 		*/
 +  maildir_create,		/* create mailbox 			*/
 +  maildir_delete,		/* delete mailbox 			*/
 +  maildir_rename,		/* rename mailbox 			*/
-+  mail_status_default,		/* status of mailbox 			*/
-+  maildir_open,			/* open mailbox				*/
++  mail_status_default,	/* status of mailbox 			*/
++  maildir_open,		/* open mailbox				*/
 +  maildir_close,		/* close mailbox 			*/
-+  maildir_fast,			/* fetch message "fast" attributes	*/
-+  NIL,				/* fetch message flags 			*/
-+  NIL,				/* fetch overview 			*/
-+  NIL,				/* fetch message structure 		*/
++  maildir_fast,		/* fetch message "fast" attributes	*/
++  NIL,			/* fetch message flags 			*/
++  NIL,			/* fetch overview 			*/
++  NIL,			/* fetch message structure 		*/
 +  maildir_header,		/* fetch message header 		*/
-+  maildir_text,			/* fetch message body 			*/
-+  NIL,				/* fetch partial message text 		*/
-+  NIL,				/* unique identifier 			*/
-+  NIL,				/* message number 			*/
-+  NIL,				/* modify flags 			*/
++  maildir_text,		/* fetch message body 			*/
++  NIL,			/* fetch partial message text 		*/
++  NIL,			/* unique identifier 			*/
++  NIL,			/* message number 			*/
++  NIL,			/* modify flags 			*/
 +  maildir_flagmsg,		/* per-message modify flags 		*/
-+  NIL,				/* search for message based on criteria */
-+  NIL,				/* sort messages 			*/
-+  NIL,				/* thread messages 			*/
-+  maildir_ping,			/* ping mailbox to see if still alive 	*/
++  NIL,			/* search for message based on criteria */
++  NIL,			/* sort messages 			*/
++  NIL,			/* thread messages 			*/
++  maildir_ping,		/* ping mailbox to see if still alive 	*/
 +  maildir_check,		/* check for new messages		*/
 +  maildir_expunge,		/* expunge deleted messages 		*/
-+  maildir_copy,			/* copy messages to another mailbox 	*/
++  maildir_copy,		/* copy messages to another mailbox 	*/
 +  maildir_append,		/* append string message to mailbox 	*/
 +  NIL				/* garbage collect stream 		*/
 +};
 +
 +
 +DRIVER courierdriver = {
-+  "mc",				/* Why a separate driver? So that
++  "mc",			/* Why a separate driver? So that
 +				   createproto will work		*/
 +				/* driver flags */
-+  DR_MAIL|DR_LOCAL|DR_NAMESPACE|DR_NOSTICKY,
++  DR_MAIL|DR_LOCAL|DR_NAMESPACE|DR_NOSTICKY|DR_DIRFMT,
 +  (DRIVER *) NIL,		/* next driver 				*/
 +  maildir_valid,		/* mailbox is valid for us 		*/
 +  maildir_parameters,		/* manipulate parameters		*/
-+  NIL,				/* scan mailboxes 			*/
-+  courier_list,			/* find mailboxes 			*/
-+  maildir_lsub,			/* find subscribed mailboxes 		*/
-+  maildir_sub,			/* subscribe to mailbox 		*/
++  NIL,			/* scan mailboxes 			*/
++  courier_list,		/* find mailboxes 			*/
++  maildir_lsub,		/* find subscribed mailboxes 		*/
++  maildir_sub,		/* subscribe to mailbox 		*/
 +  maildir_unsub,		/* unsubscribe from mailbox 		*/
 +  maildir_create,		/* create mailbox 			*/
 +  maildir_delete,		/* delete mailbox 			*/
 +  maildir_rename,		/* rename mailbox 			*/
-+  mail_status_default,		/* status of mailbox 			*/
-+  maildir_open,			/* open mailbox				*/
++  mail_status_default,	/* status of mailbox 			*/
++  maildir_open,		/* open mailbox				*/
 +  maildir_close,		/* close mailbox 			*/
-+  maildir_fast,			/* fetch message "fast" attributes	*/
-+  NIL,				/* fetch message flags 			*/
-+  NIL,				/* fetch overview 			*/
-+  NIL,				/* fetch message structure 		*/
++  maildir_fast,		/* fetch message "fast" attributes	*/
++  NIL,			/* fetch message flags 			*/
++  NIL,			/* fetch overview 			*/
++  NIL,			/* fetch message structure 		*/
 +  maildir_header,		/* fetch message header 		*/
-+  maildir_text,			/* fetch message body 			*/
-+  NIL,				/* fetch partial message text 		*/
-+  NIL,				/* unique identifier 			*/
-+  NIL,				/* message number 			*/
-+  NIL,				/* modify flags 			*/
++  maildir_text,		/* fetch message body 			*/
++  NIL,			/* fetch partial message text 		*/
++  NIL,			/* unique identifier 			*/
++  NIL,			/* message number 			*/
++  NIL,			/* modify flags 			*/
 +  maildir_flagmsg,		/* per-message modify flags 		*/
-+  NIL,				/* search for message based on criteria */
-+  NIL,				/* sort messages 			*/
-+  NIL,				/* thread messages 			*/
-+  maildir_ping,			/* ping mailbox to see if still alive 	*/
++  NIL,			/* search for message based on criteria */
++  NIL,			/* sort messages 			*/
++  NIL,			/* thread messages 			*/
++  maildir_ping,		/* ping mailbox to see if still alive 	*/
 +  maildir_check,		/* check for new messages		*/
 +  maildir_expunge,		/* expunge deleted messages 		*/
-+  maildir_copy,			/* copy messages to another mailbox 	*/
++  maildir_copy,		/* copy messages to another mailbox 	*/
 +  maildir_append,		/* append string message to mailbox 	*/
 +  NIL				/* garbage collect stream 		*/
 +};
 +
 +MAILSTREAM maildirproto = {&maildirdriver};	/* prototype stream */
 +MAILSTREAM courierproto = {&courierdriver};	/* prototype stream */
++
++long maildir_dirfmttest (char *name)
++{
++  int i;
++  for (i = 0; mdstruct[i] && strcmp(name, mdstruct[i]); i++);
++  return (i < EndDir) || !strcmp(name, MDDIR) ? LONGT : NIL;
++}
 +
 +void 
 +md_domain_name(void)
@@ -476,7 +495,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +char *
 +mdirpath(void)
 +{
-+  char *path = maildir_parameters(GET_INBOXPATH,NIL);
++  char *path = maildir_parameters(GET_MDINBOXPATH,NIL);
 +  return path ? (*path ? path : ".") : "Maildir";
 +}
 +
@@ -484,14 +503,10 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +char *
 +maildir_remove_root (char *name)
 +{
-+  int courier = IS_COURIER(name), offset = 0;
-+  char realname[MAILTMPLEN], *p;
++  int courier = IS_COURIER(name), offset;
++  char realname[MAILTMPLEN];
 +
-+  if (maildir_valid_name(name)){
-+     offset = 3;
-+     if (name[offset] == '/')
-+        offset++;
-+  }
++  offset = maildir_valid_name(name) ? (name[3] == '/' ? 4 : 3) : 0;
 +  if(courier)
 +     courier_realname(name+offset, realname);
 +  else
@@ -568,7 +583,6 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +int maildir_file_path (char *name, char *tmp)
 +{
 +   char *maildirpath = mdirpath();
-+   char realname[MAILTMPLEN];
 +   int courier = IS_COURIER(name);
 +
 +   /* There are several ways in which the path can come, so we will handle 
@@ -636,7 +650,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +   return maildir_valid_dir(tmpname) 
 +		? (IS_COURIER(name) ? &courierdriver : &maildirdriver) : NIL;
 +}
-+/*maildir fast */
++
 +void maildir_fast (MAILSTREAM *stream,char *sequence,long flags)
 +{
 +  unsigned long i;
@@ -645,7 +659,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  if (stream && LOCAL && ((flags & FT_UID) ?
 +                          mail_uid_sequence (stream,sequence) :
 +                          mail_sequence (stream,sequence)))
-+    for (i = 1; i <= stream->nmsgs; i++) {
++    for (i = 1L; i <= stream->nmsgs; i++) {
 +      if ((elt = mail_elt (stream,i))->sequence && (elt->valid = T) &&
 +          !(elt->day && elt->rfc822_size)) {
 +        ENVELOPE **env = NIL;
@@ -709,7 +723,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +		   error++;
 +	      }
 +	  }
-+	  if(str = strchr(names[i]->d_name,FLAGSEP)) *str = '\0';
++	  if((str = strchr(names[i]->d_name,FLAGSEP)) != NULL) *str = '\0';
 +	  sprintf (old,"%s/%s%s%s%s%s%s", name, names[i]->d_name, MDSEP(2),
 +		MDFLAG(Draft, d), MDFLAG(Flagged, f), MDFLAG(Replied, r), 
 +		MDFLAG(Seen, s));
@@ -758,7 +772,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +
 +  if(scand) *scand = *nfiles;
 +
-+  return sbuf.st_ctime;
++  return (unsigned long) sbuf.st_ctime;
 +}
 +
 +/* Does a message with given name exists (or was it removed)?
@@ -807,7 +821,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  if (!stream) return &maildirproto;
 +  if (stream->local) fatal ("maildir recycle stream");
 +  md_domain_name();    /* get domain name for maildir files in mdlocaldomain */
-+  stream->uid_last  = stream->uid_validity = 0;
++  stream->uid_last  = stream->uid_validity = 0L;
 +  if (!stream->rdonly){
 +     stream->perm_seen = stream->perm_deleted = stream->perm_flagged = 
 +	stream->perm_answered = stream->perm_draft = T;
@@ -838,9 +852,9 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +    stream->mailbox = cpystr(tmp);
 +  }
 +
-+  LOCAL->buf = (char *) fs_get ((LOCAL->buflen = MAXMESSAGESIZE) + 1);
++  LOCAL->buf = (char *) fs_get ((LOCAL->buflen = SENDBUFLEN) + 1);
 +  stream->sequence++;
-+  stream->nmsgs = stream->recent = 0;
++  stream->nmsgs = stream->recent = 0L;
 +
 +  maildir_parse_folder(stream, 1);
 +
@@ -853,7 +867,6 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +{
 +   char tmp[MAILTMPLEN], tmp2[MAILTMPLEN];
 +   struct direct **namescur = NIL, **namesnew = NIL;
-+   struct stat sbuf;
 +   unsigned long i, nfilescur = 0L, nfilesnew = 0L, oldpos, newpos, total;
 +   int scan_err, rescan, loop = 0;
 +
@@ -868,7 +881,9 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +      maildir_abort(stream);
 +
 +   /* Scan old messages first, escoba! */
-+   if(LOCAL && ((maildir_initial_check(stream, Cur) == 0)) || (nfilesnew > 0L)){
++   if(stream->rdonly ||
++      (LOCAL && ((maildir_initial_check(stream, Cur) == 0)
++							|| nfilesnew > 0L))){
 +      MDFLD(tmp, LOCAL->dir, Cur);
 +      LOCAL->scantime =  maildir_scandir (tmp, &namescur, &nfilescur, 
 +					&scan_err, CCLIENT);
@@ -927,8 +942,11 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +   if(loop == 10)
 +     maildir_abort(stream);
 +   if(LOCAL){
-+     total = namescur ? maildir_parse_dir(stream, 0L, Cur, namescur, 
-+					  nfilescur, full) : stream->nmsgs;
++     if(stream->rdonly)
++	stream->recent = 0L;
++     total = namescur || stream->rdonly 
++		? maildir_parse_dir(stream, 0L, Cur, namescur, 
++					      nfilescur, full) : stream->nmsgs;
 +     stream->nmsgs = maildir_parse_dir(stream, total, New, namesnew, 
 +						nfilesnew, full);
 +   }
@@ -980,15 +998,15 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +   unsigned long i, new = 0L, l;
 +   unsigned long recent = stream ? stream->recent : 0L;
 +   int d = 0, f = 0, r = 0, s = 0, t = 0;
-+   int k, we_compute, in_list;
++   int we_compute, in_list;
 +   int silent = stream ? stream->silent : NIL;
 +   MESSAGECACHE *elt;
 +
 +   MDFLD(tmp, LOCAL->dir, dirtype);
-+   if (dirtype == Cur)
++   if (dirtype == Cur && !stream->rdonly)
 +      for (i = 1L; i <= stream->nmsgs;){
 +	elt = mail_elt(stream,  i);
-+	in_list = elt && elt->maildirp && nfiles > 0L
++	in_list = elt && elt->private.spare.ptr && nfiles > 0L
 +		  ? (MDPOS(elt) < nfiles 
 +		    ? same_maildir_file(MDFILE(elt), names[MDPOS(elt)]->d_name)
 +		    : NIL)
@@ -996,8 +1014,8 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +						nfiles - 1L, &MDPOS(elt))
 +		  : NIL;
 +	if (!in_list){
-+	   if (elt->maildirp)
-+	      maildir_free_file ((void **) &elt->maildirp);
++	   if (elt->private.spare.ptr)
++	      maildir_free_file ((void **) &elt->private.spare.ptr);
 +
 +	   if (elt->recent) --recent;
 +	   mail_expunged(stream,i);
@@ -1009,7 +1027,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +   for (we_compute = 0, i = l = 1L; l <= nfiles; l++){
 +      unsigned long pos;
 +      if (dirtype == New && !stream->rdonly){ /* move new messages to cur */
-+	pos = l - 1;
++	pos = l - 1L;
 +	sprintf (file,"%s/%s", tmp, names[pos]->d_name);
 +	if(lstat(file,&sbuf) == 0)
 +	   switch(sbuf.st_mode & S_IFMT){
@@ -1048,7 +1066,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +      }
 +      mail_exists(stream, i + nmsgs);
 +      elt = mail_elt(stream, i + nmsgs);
-+      pos = (elt && elt->maildirp) ? MDPOS(elt) : l - 1;
++      pos = (elt && elt->private.spare.ptr) ? MDPOS(elt) : l - 1L;
 +      if (dirtype == New) elt->recent = T;
 +      if (!elt->private.uid){
 +	 elt->private.uid = stream->uid_last + 1;
@@ -1058,17 +1076,17 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +	  stream->uid_last = elt->private.uid;
 +
 +      maildir_getflag(names[pos]->d_name, &d, &f, &r ,&s, &t);
-+      if (elt->maildirp)
-+	 maildir_free_file_only ((void **)&elt->maildirp);
++      if (elt->private.spare.ptr)
++	 maildir_free_file_only ((void **)&elt->private.spare.ptr);
 +      else{
-+	 maildir_get_file((MAILDIRFILE **)&elt->maildirp);
++	 maildir_get_file((MAILDIRFILE **)&elt->private.spare.ptr);
 +	 we_compute++;
 +      }
 +      MDFILE(elt) = cpystr(names[pos]->d_name);
 +      MDPOS(elt)  = pos;
 +      MDLOC(elt)  = dirtype;
 +      if(dirtype == New && !stream->rdonly){
-+	maildir_free_file_only((void **)&elt->maildirp);
++	maildir_free_file_only((void **)&elt->private.spare.ptr);
 +	MDFILE(elt)  = cpystr(tmp2);
 +	MDSIZE(elt)  = sbuf.st_size;
 +	MDMTIME(elt) = sbuf.st_mtime;
@@ -1089,18 +1107,18 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +   if (dirtype == New && stream->rdonly)
 +      new = nfiles;
 +   mail_exists(stream, nmsgs  + ((dirtype == New) ? new : nfiles));
-+   mail_recent(stream, recent + ((dirtype == New) ? new : 0));
++   mail_recent(stream, recent + ((dirtype == New) ? new : 0L));
 +
-+   return (nmsgs  + (dirtype == New ? new: nfiles));
++   return (nmsgs  + (dirtype == New ? new : nfiles));
 +}
 +
 +long maildir_ping (MAILSTREAM *stream)
 +{
 +  maildir_parse_folder(stream, 0);
-+  return stream && LOCAL ? T : NIL;
++  return stream && LOCAL ? LONGT : NIL;
 +}
 +
-+int maildir_select (struct direct *name)
++int maildir_select (const struct direct *name)
 +{
 + return (name->d_name[0] != '.');
 +}
@@ -1111,7 +1129,6 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 + * will always make this driver slower than any driver that has a natural
 + * way of sorting by arrival (like a flat file format, "mbox", "mbx", etc).
 + */
-+
 +int maildir_namesort (const void *d1,const  void *d2)
 +{
 +  const struct direct **e1, **e2;
@@ -1133,11 +1150,11 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +
 +  if (!stream) return;
 +
-+  for (i = 1; i <= stream->nmsgs; i++)
-+    if ((elt = (MESSAGECACHE *) (*mc) (stream,i,CH_ELT)) && elt->maildirp)
-+      maildir_free_file ((void **) &(elt->maildirp));
++  for (i = 1L; i <= stream->nmsgs; i++)
++    if((elt = (MESSAGECACHE *) (*mc)(stream,i,CH_ELT)) && elt->private.spare.ptr)
++      maildir_free_file ((void **) &elt->private.spare.ptr);
 +  stream->silent = T;
-+  if (options & CL_EXPUNGE) maildir_expunge (stream);
++  if (options & CL_EXPUNGE) maildir_expunge (stream, NIL, NIL);
 +  maildir_abort(stream);
 +  if (mdfpath) fs_give((void **)&mdfpath);
 +  stream->silent = silent;
@@ -1176,7 +1193,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +
 +  s = maildir_text_work(stream, elt, &i, flags);
 +  INIT (bs, mail_string, s, i);
-+  return T;
++  return LONGT;
 +}
 +
 +char *maildir_text_work (MAILSTREAM *stream,MESSAGECACHE *elt,
@@ -1184,7 +1201,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +{
 +  FDDATA d;
 +  STRING bs;
-+  char *s,*t,*tl,tmp[CHUNK];
++  char *s,tmp[CHUNK];
 +  unsigned long msgno = elt->msgno;
 +  static int try = 0;
 +
@@ -1249,11 +1266,11 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +unsigned long maildir_parse_message(MAILSTREAM *stream, unsigned long msgno,
 +				    DirNamesType dirtype)
 +{
-+  char *b, *s, c;
++  char *b, *s, *t, c;
 +  char tmp[MAILTMPLEN];
 +  struct stat sbuf;
 +  unsigned long i, len;
-+  int offset = 0, d, f, r, se, dt;
++  int d, f, r, se, dt;
 +  MESSAGECACHE *elt;
 +
 +  elt = mail_elt (stream,msgno);
@@ -1272,15 +1289,16 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +	s = (char *) fs_get (MDSIZE(elt) + 1);
 +	read (LOCAL->fd,s,MDSIZE(elt));
 +	s[MDSIZE(elt)] = '\0';
-+	for (i = 0, b = s; *b && !(i && (*b == '\n')); i = (*b++ == '\n'));
++	t = s + strlen(s);	/* make t point to the end of s */
++	for (i = 0L, b = s; b < t && !(i && (*b == '\n')); i = (*b++ == '\n'));
 +	len = (*b ? ++b : b) - s;
 +	elt->private.msg.header.text.size = 
 +		elt->private.msg.text.offset = len;
 +	elt->private.msg.text.text.size = MDSIZE(elt) - len;
-+	for (i = 0, b = s, c = *b; b && c &&
-+	    ((c < '\016') && (((c == '\012') && ++i) ||
-+		((c == '\015') && (*++b == '\012') && (i +=2)))
-+	    || c); i++, c= *++b);
++	for (i = 0L, b = s, c = *b; b &&
++	    ((c < '\016' && ((c == '\012' && ++i) 
++			 ||(c == '\015' && *(b+1) == '\012' && ++b && (i +=2))))
++	    || b < t); i++, c= *++b);
 +	elt->rfc822_size = i;
 +	fs_give ((void **) &s);
 +	close(LOCAL->fd); LOCAL->fd = -1;
@@ -1304,9 +1322,8 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +     elt = mail_elt (stream,msgno);
 +
 +     in_list = nfiles > 0L
-+		? maildir_message_in_list(MDFILE(elt), names, 0L, 
-+					nfiles - 1L, &pos)
-+		: NIL;
++	    ? maildir_message_in_list(MDFILE(elt), names, 0L, nfiles - 1L, &pos)
++	    : NIL;
 +
 +     if (in_list && pos >= 0L && pos < nfiles
 +	 && !strcmp(MDFILE(elt), names[pos]->d_name)){
@@ -1315,7 +1332,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +     }
 +
 +     if (in_list && pos >= 0L && pos < nfiles){
-+	maildir_free_file_only((void **)&elt->maildirp);
++	maildir_free_file_only((void **)&elt->private.spare.ptr);
 +	MDFILE(elt) = cpystr(names[pos]->d_name);
 +	maildir_getflag(MDFILE(elt), &d, &f, &r ,&s, &t);
 +	if (elt->draft != d || elt->flagged != f || 
@@ -1341,8 +1358,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  MESSAGECACHE *elt;
 +  static int try = 0;
 +
-+  if (length)
-+     *length = 0;
++  if (length) *length = 0;
 +  if (flags & FT_UID || !LOCAL) return "";	/* UID call "impossible" */
 +  elt = mail_elt (stream,msgno);
 +  if(elt->private.msg.header.text.size == 0)
@@ -1390,8 +1406,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  }
 +  elt->private.msg.text.offset = elt->private.msg.header.text.size;
 +  elt->private.msg.text.text.size = MDSIZE(elt) - elt->private.msg.text.offset;
-+  if(s)
-+    fs_give((void **)&s);
++  if(s) fs_give((void **)&s);
 +  close(LOCAL->fd); LOCAL->fd = -1;
 +  return LOCAL->buf;
 +}
@@ -1404,26 +1419,26 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +void maildir_list (MAILSTREAM *stream,char *ref, char *pat)
 +{
 +  char *s,test[MAILTMPLEN],file[MAILTMPLEN];
-+  long i = 0;
++  long i = 0L;
 +
 +  if((!pat || !*pat) && maildir_canonicalize (test,ref,"*")
 +	&& maildir_valid_name(test)){	/* there is a #md/ leading here */
-+    for (i = 3; test[i] && test[i] != '/'; i++);
-+    if (s = strchr (test+i+1,'/')) *++s = '\0';
++    for (i = 3L; test[i] && test[i] != '/'; i++);
++    if ((s = strchr (test+i+1,'/')) != NULL) *++s = '\0';
 +    else test[0] = '\0';
 +    mm_list (stream,'/',test, LATT_NOSELECT);
 +  }
 +  else if (maildir_canonicalize (test,ref,pat)) {
 +    if (test[3] == '/') {       /* looking down levels? */
 +                                /* yes, found any wildcards? */
-+      if (s = strpbrk (test,"%*")) {
++      if ((s = strpbrk (test,"%*")) != NULL){
 +                                /* yes, copy name up to that point */
 +        strncpy (file,test+4,i = s - (test+4));
 +        file[i] = '\0';         /* tie off */
 +      }
 +      else strcpy (file,test+4);/* use just that name then */
 +                                /* find directory name */
-+      if (s = strrchr (file, '/')){
++      if ((s = strrchr (file, '/')) != NULL){
 +        *s = '\0';              /* found, tie off at that point */
 +        s = file;
 +      }
@@ -1454,10 +1469,10 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +{
 +  void *ret = NIL;
 +  switch ((int) function) {
-+  case SET_INBOXPATH:
++  case SET_MDINBOXPATH:
 +    if (myMdInboxDir) fs_give ((void **) &myMdInboxDir);
 +    myMdInboxDir = cpystr ((char *) value);
-+  case GET_INBOXPATH:
++  case GET_MDINBOXPATH:
 +    if (!myMdInboxDir) myMdInboxDir = cpystr("Maildir");
 +    ret = (void *) myMdInboxDir;
 +    break;
@@ -1465,6 +1480,9 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +    CourierStyle = (long) value;
 +  case GET_COURIERSTYLE:
 +    ret = (void *) CourierStyle;
++    break;
++  case GET_DIRFMTTEST:
++    ret = (void *) maildir_dirfmttest;
 +    break;
 +  default:
 +    break;
@@ -1491,7 +1509,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +int maildir_create_work(char *mailbox, int loop)
 +{
 +  char *s, c, err[MAILTMPLEN], tmp[MAILTMPLEN], tmp2[MAILTMPLEN], mbx[MAILTMPLEN];
-+  int fnlen, i, create_dir = 0, courier, mv;
++  int fnlen, create_dir = 0, courier, mv;
 +  struct stat sbuf;
 +  long style = (long) maildir_parameters(GET_COURIERSTYLE, NIL);
 +
@@ -1528,7 +1546,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  }
 +
 +  fnlen = strlen(tmp);
-+  if (s = strrchr(mailbox,MDSEPARATOR(courier))){
++  if ((s = strrchr(mailbox,MDSEPARATOR(courier))) != NULL){
 +     c = *++s;
 +    *s = '\0';
 +    if ((stat(tmp,&sbuf) || ((sbuf.st_mode & S_IFMT) != S_IFDIR)) &&
@@ -1566,8 +1584,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +long maildir_create (MAILSTREAM *stream,char *mailbox)
 +{
 +  char tmp[MAILTMPLEN], err[MAILTMPLEN];
-+  long rv;
-+  int create_dir;
++  int rv, create_dir;
 +
 +  create_dir = mailbox ? 
 +		(mailbox[strlen(mailbox) - 1] == 
@@ -1581,14 +1598,13 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +		   (create_dir ? "directory" : "mailbox"), mailbox);
 +     mm_log (err,ERROR);
 +  }
-+  return rv ? 1L : 0L;
++  return rv ? LONGT : NIL;
 +}
 +
 +#define MAXTRY 10000
 +void maildir_flagmsg (MAILSTREAM *stream,MESSAGECACHE *elt)
 +{
 +  char oldfile[MAILTMPLEN],newfile[MAILTMPLEN],fn[MAILTMPLEN];
-+  char tmp[MAILTMPLEN];
 +  char *s;
 +  int ren, try = 0;
 +
@@ -1622,51 +1638,57 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +#ifdef __CYGWIN__
 +     utime(LOCAL->curdir, NIL);	/* make sure next scan will catch the change */
 +#endif
-+     maildir_free_file_only ((void **) &elt->maildirp);
++     maildir_free_file_only ((void **) &elt->private.spare.ptr);
 +     MDFILE(elt) = cpystr (fn);
 +  }
 +}
 +
-+void maildir_expunge (MAILSTREAM *stream)
++long maildir_expunge (MAILSTREAM *stream, char *sequence, long options)
 +{
++  long ret;
 +  MESSAGECACHE *elt;
-+  unsigned long i;
-+  unsigned long n = 0L;
-+  unsigned long nmsgs = stream->nmsgs;
++  unsigned long i, n = 0L;
 +  unsigned long recent = stream->recent;
 +  char tmp[MAILTMPLEN];
-+  
-+  mm_critical (stream);		/* go critical */
-+  for (i = 1; i <= stream->nmsgs;)
-+    if ((elt = mail_elt (stream,i))->deleted){
++
++  mm_critical (stream);               /* go critical */
++  ret = sequence ? ((options & EX_UID) ?
++                         mail_uid_sequence (stream,sequence) :
++                         mail_sequence (stream,sequence)) : LONGT;
++  if(ret == 0L)
++     return 0L;
++  for (i = 1L; i <= stream->nmsgs;){
++    elt = mail_elt (stream,i);
++    if (elt->deleted && (sequence ? elt->sequence : T)){
 +      sprintf (tmp,"%s/%s",LOCAL->curdir, MDFILE(elt));
 +      if (unlink (tmp) < 0) {/* try to delete the message */
-+	sprintf (tmp,"Expunge of message %ld failed, aborted: %s",i,
-+		 strerror (errno));
-+	if (!stream->silent)
-+	   mm_log (tmp,WARN);
-+	break;
++      sprintf (tmp,"Expunge of message %ld failed, aborted: %s",i,
++              strerror (errno));
++      if (!stream->silent)
++         mm_log (tmp,WARN);
++      break;
 +      }
-+      if (elt->maildirp)
-+	 maildir_free_file ((void **) &elt->maildirp);
-+
++      if (elt->private.spare.ptr)
++       maildir_free_file ((void **) &elt->private.spare.ptr);
 +      if (elt->recent) --recent;/* if recent, note one less recent message */
-+      mail_expunged (stream,i);	/* notify upper levels */
-+      n++;			/* count up one more expunged message */
++      mail_expunged (stream,i);       /* notify upper levels */
++       n++;                    /* count up one more expunged message */
 +    }
 +    else i++;
-+  if(n){			/* output the news if any expunged */
++  }
++  if(n){                      /* output the news if any expunged */
 +    sprintf (tmp,"Expunged %ld messages",n);
 +    if (!stream->silent)
 +       mm_log (tmp,(long) NIL);
 +  }
-+  else 
++  else
 +    if (!stream->silent)
-+	mm_log ("No messages deleted, so no update needed",(long) NIL);
-+  mm_nocritical (stream);	/* release critical */
-+				/* notify upper level of new mailbox size */
++      mm_log ("No messages deleted, so no update needed",(long) NIL);
++  mm_nocritical (stream);     /* release critical */
++                            /* notify upper level of new mailbox size */
 +  mail_exists (stream,stream->nmsgs);
 +  mail_recent (stream,recent);
++  return ret;
 +}
 +
 +long maildir_copy (MAILSTREAM *stream,char *sequence,char *mailbox,long options)
@@ -1675,13 +1697,13 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  MESSAGECACHE *elt;
 +  unsigned long len;
 +  int fd;
-+  long i, length;
++  unsigned long i;
 +  struct stat sbuf;
-+  char tmp[MAILTMPLEN], flags[MAILTMPLEN], path[MAILTMPLEN], *s, *b;
++  char tmp[MAILTMPLEN], flags[MAILTMPLEN], path[MAILTMPLEN], *s;
 +				/* copy the messages */
 +  if ((options & CP_UID) ? mail_uid_sequence (stream, sequence) : 
 +  	mail_sequence (stream,sequence)) 
-+  for (i = 1; i <= stream->nmsgs; i++)
++  for (i = 1L; i <= stream->nmsgs; i++)
 +    if ((elt = mail_elt (stream,i))->sequence){
 +      MSGPATH(path, LOCAL->dir, MDFILE(elt), MDLOC(elt));
 +      if (((fd = open (path,O_RDONLY,NIL)) < 0)	 
@@ -1712,7 +1734,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +        return NIL;
 +      if (options & CP_MOVE) elt->deleted = T;
 +    }
-+  return T;			/* return success */
++  return LONGT;			/* return success */
 +}
 +
 +long maildir_append (MAILSTREAM *stream,char *mailbox,append_t af,void *data)
@@ -1722,11 +1744,8 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  char c,*s, *flags, *date;
 +  char tmp[MAILTMPLEN],file[MAILTMPLEN],path1[MAILTMPLEN],path2[MAILTMPLEN];
 +  MESSAGECACHE elt;
-+  long i;
-+  long size = 0;
-+  long ret = LONGT;
++  long i, size = 0L, ret = LONGT, f;
 +  unsigned long uf;
-+  long f;
 +  static unsigned int transact = 0;
 +
 +  if (!maildir_valid(mailbox)) {
@@ -1755,7 +1774,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +    }
 +    f = mail_parse_flags (stream,flags,&uf);
 +				/* build file name we will use */
-+    sprintf (file,"%u.%d_%09u.%s%s%s%s%s%s",
++    sprintf (file,"%lu.%d_%09u.%s%s%s%s%s%s",
 +	   time (0),getpid (),transact++,mdlocaldomain, (f ? MDSEP(2) : ""),
 +		MDFLAG(Draft, f&fDRAFT), MDFLAG(Flagged, f&fFLAGGED),
 +		MDFLAG(Replied, f&fANSWERED), MDFLAG(Seen, f&fSEEN));
@@ -1804,7 +1823,6 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  int i, remove_dir = 0, mddir = 0, rv, error = 0;
 +  char tmp[MAILTMPLEN],tmp2[MAILTMPLEN], realname[MAILTMPLEN];
 +  struct stat sbuf;
-+  char *mdpath = mdirpath();
 +  int courier = IS_COURIER(mailbox);
 +
 +  if (mailbox[strlen(mailbox) - 1] == MDSEPARATOR(courier)){
@@ -1850,7 +1868,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +	mm_log (tmp,ERROR);
 +	return NIL;
 +     }
-+     return T;
++     return LONGT;
 +  }
 +  /* else remove just the folder. Remove all hidden files, except MDDIR */
 +  for (i = Cur; i != EndDir; i++){
@@ -1862,7 +1880,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +	  return NIL;
 +      }
 +
-+      while (d = readdir(dirp)){
++      while ((d = readdir(dirp)) != NULL){
 +	 if (strcmp(d->d_name, ".") && strcmp(d->d_name,"..")){
 +	    sprintf(tmp2,"%s/%s", tmp, d->d_name);
 +	    if (unlink(tmp2) != 0){
@@ -1890,7 +1908,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +    return NIL;
 +  }
 +
-+  while (d = readdir(dirp)){
++  while ((d = readdir(dirp)) != NULL){
 +	if (strcmp(d->d_name, ".") && strcmp(d->d_name,"..")
 +		&& !strcmp(d->d_name, MDDIR)){
 +	   sprintf(tmp,"%s/%s", realname, d->d_name);
@@ -1906,21 +1924,16 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +        mm_log (tmp,ERROR);
 +        return NIL;
 +  }
-+  return T;
++  return LONGT;
 +}
 +
 +long maildir_rename (MAILSTREAM *stream, char *old, char *new)
 +{
-+  struct direct **names = NIL;
-+  struct stat sbuf;
-+  char pathname[MAILTMPLEN], dir[MAILTMPLEN], curdir[MAILTMPLEN];
 +  char tmp[MAILTMPLEN],tmpnew[MAILTMPLEN], realold[MAILTMPLEN];
-+  char realnew[MAILTMPLEN],realpat[MAILTMPLEN], realname[MAILTMPLEN];
-+  char *pat, *endold, c;
-+  char *maildirpath = mdirpath();
++  char realnew[MAILTMPLEN];
 +  int courier = IS_COURIER(old) && IS_COURIER(new);
-+  int scand, i, j, rv = T;
-+  unsigned long ndir;
++  int i;
++  long rv = LONGT;
 +  COURIER_S *cdir;
 +
 +  if((IS_COURIER(old) || IS_COURIER(new)) && !courier){
@@ -1954,7 +1967,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +       mm_log (tmp,ERROR);
 +       return NIL;
 +    }
-+    return T;	/* return success */
++    return LONGT;	/* return success */
 +  }
 +
 +  cdir = courier_list_dir(old);
@@ -1992,7 +2005,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +                                /* get canonical form of name */
 +  if (maildir_canonicalize (test,ref,pat) && (s = sm_read (&sdb))) {
 +    do if (pmatch_full (s,test,'/')) mm_lsub (stream,'/',s,NIL);
-+    while (s = sm_read (&sdb)); /* until no more subscriptions */
++    while ((s = sm_read (&sdb)) != NULL); /* until no more subscriptions */
 +  }
 +}
 +
@@ -2009,7 +2022,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +    else strcat (pattern,pat);  /* anything else is just appended */
 +  }
 +  else strcpy (pattern,pat);    /* just have basic name */
-+  return (maildir_valid_name(pattern));
++  return maildir_valid_name(pattern) ? LONGT : NIL;
 +}
 +
 +void maildir_list_work (MAILSTREAM *stream,char *dir,char *pat,long level)
@@ -2017,13 +2030,13 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  DIR *dp;
 +  struct direct *d;
 +  struct stat sbuf;
-+  char *cp,*np, curdir[MAILTMPLEN],name[MAILTMPLEN], tmp[MAILTMPLEN];
++  char curdir[MAILTMPLEN],name[MAILTMPLEN], tmp[MAILTMPLEN];
 +  char realpat[MAILTMPLEN];
-+  int i;
++  long i;
 +  char *maildirpath = mdirpath();
 +
 +  sprintf(curdir,"%s/%s/", myrootdir(pat), dir ? dir : maildirpath);
-+  if (dp = opendir (curdir)){ 
++  if ((dp = opendir (curdir)) != NULL){ 
 +     if (dir) sprintf (name,"%s%s/",MDPREFIX(CCLIENT),dir);
 +     else strcpy (name, pat);
 +
@@ -2043,7 +2056,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +	     mm_list (stream,'/', pat, LATT_NOSELECT);
 +     }
 +
-+     while (d = readdir (dp))
++     while ((d = readdir (dp)) != NULL)
 +	if(strcmp(d->d_name, ".") && strcmp(d->d_name,"..")
 +		&& strcmp(d->d_name, MDNAME(Cur)) 
 +		&& strcmp(d->d_name, MDNAME(Tmp)) 
@@ -2077,20 +2090,16 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +	     }
 +	  }
 +       }
++     closedir (dp);
 +  }
-+  closedir (dp);
 +}
 +
 +void courier_list_work (MAILSTREAM *stream, char *dir, char *pat, long level)
 +{
-+  unsigned long ndir;
-+  struct direct **names = NIL;
-+  struct stat sbuf;
-+  char c, d, curdir[MAILTMPLEN],name[MAILTMPLEN], tmp[MAILTMPLEN];
-+  char realname[MAILTMPLEN], realpat[MAILTMPLEN] = {'\0'}, pathname[MAILTMPLEN];
-+  char fakepat[MAILTMPLEN];
-+  int i, j, scand, found;
-+  long style = (long) maildir_parameters(GET_COURIERSTYLE, NIL);
++  char c, curdir[MAILTMPLEN], tmp[MAILTMPLEN];
++  char realname[MAILTMPLEN], realpat[MAILTMPLEN] = {'\0'};
++  int i, found;
++  long style = (long) maildir_parameters(GET_COURIERSTYLE, NIL), j;
 +  char *maildirpath = mdirpath();
 +  COURIER_S *cdir;
 +
@@ -2101,8 +2110,9 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +       curdir[i] = '\0';
 +     cdir = courier_list_dir(curdir);
 +     if(cdir){
++	found = 0; j = 0L;
 +	if(maildir_valid_name(pat)){
-+	  for(i = 0, found = 0; !found && i < cdir->total; i++)
++	  for(i = 0; !found && i < cdir->total; i++)
 +	     if(strstr(curdir, cdir->data[i]->name)){
 +		if(strlen(curdir) < strlen(cdir->data[i]->name))
 +		  found += 2;
@@ -2115,7 +2125,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +	    j = (style == COURIER) ? LATT_HASNOCHILDREN : LATT_NOINFERIORS;
 +	}
 +	else
-+	    j = LATT_NOSELECT;
++	   j = LATT_NOSELECT;
 +        j += maildir_any_new_msgs(curdir) ? LATT_MARKED : LATT_UNMARKED;
 +	if (found)
 +	   mm_list (stream, '.', pat, j);
@@ -2157,11 +2167,11 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +
 + strcpy(tmp1, name1 ? name1 : "");
 + strcpy(tmp2, name2 ? name2 : "");
-+ if (s = strchr(tmp1, FLAGSEP))
++ if ((s = strchr(tmp1, FLAGSEP)) != NULL)
 +   *s = '\0';
 + if (((s = strrchr(tmp1, SIZESEP)) != NULL) && (strchr(s,'.') == NULL))
 +   *s = '\0';
-+ if (s = strchr(tmp2, FLAGSEP))
++ if ((s = strchr(tmp2, FLAGSEP)) != NULL)
 +   *s = '\0';
 + if (((s = strrchr(tmp2, SIZESEP)) != NULL) && (strchr(s,'.') == NULL))
 +   *s = '\0';
@@ -2172,7 +2182,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +unsigned long antoul(char *seed)
 +{
 +  int i, error = 0;
-+  unsigned long val = 0L, rv1 = 0L, rv2 = 0L, t;
++  unsigned long val = 0L, rv1 = 0L, t;
 +  char c, *p;
 + if(!seed)
 +   return 0L;
@@ -2182,8 +2192,8 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 + /* else */
 + if((p = strchr(seed,'.')) != NULL)
 +   *p = '\0';
-+ i = strlen(seed);
-+ for(i= strlen(seed)-1; i >= 0; i--){
++ error = (strlen(seed) > 6); /* too long */
++ for(i= strlen(seed)-1; error == 0 && i >= 0; i--){
 +    c = seed[i];
 +    if (c >= 'A' && c <= 'Z') val = c - 'A';
 +    else if (c >= 'a' && c <= 'z') val = c - 'a' + 26;
@@ -2269,10 +2279,11 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  if(s) *s = 0;
 +  if(t) *t = 0;
 +
++  tmpd = tmpf = tmpr = tmps = tmpt = NIL; /* no flags set by default */
 +  strcpy(tmp,name);
-+  while (b = strchr(tmp+offset, FLAGSEP)){
++  while ((b = strchr(tmp+offset, FLAGSEP)) != NULL){
 +    char flag,last;
-+    int  i,k;
++    int  k;
 +    if (!++b) break;
 +    switch (*b){
 +	case '1':
@@ -2364,8 +2375,6 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  int rv = 0;
 +  DIR *dir;
 +  struct direct *d;
-+  struct stat sbuf;
-+  char *maildirpath = mdirpath();
 +
 +  maildir_file_path(dirname, tmp2);
 +  if(name){
@@ -2376,7 +2385,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  if (!(dir = opendir (tmp2)))
 +     return NIL;
 +
-+  while (d = readdir(dir)){
++  while ((d = readdir(dir)) != NULL){
 +    if (strcmp(d->d_name, ".") && strcmp(d->d_name,"..")
 +	&& strcmp(d->d_name, MDNAME(Cur)) 
 +	&& strcmp(d->d_name, MDNAME(Tmp)) 
@@ -2398,7 +2407,6 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +{
 +  char tmp[MAILTMPLEN];
 +  struct stat sbuf;
-+  char *maildirpath = mdirpath();
 +
 +  maildir_file_path(dirname, tmp);
 +  if(name){
@@ -2425,7 +2433,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  if (!(dir = opendir (tmp2)))
 +     return rv;
 +
-+  while (d = readdir(dir)){
++  while ((d = readdir(dir)) != NULL){
 +    sprintf(tmp,"%s/%s", tmp2, d->d_name);
 +    if (strcmp(d->d_name, ".") 
 +	&& strcmp(d->d_name,"..")
@@ -2482,14 +2490,13 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  int rv = NIL;
 +  DIR *dir;
 +  struct direct *d;
-+  struct stat sbuf;
 +
 +  MDFLD(tmp, mailbox, New);
 +
 +  if (!(dir = opendir (tmp)))
 +     return rv;
 +
-+  while (d = readdir(dir)){
++  while ((d = readdir(dir)) != NULL){
 +    if (d->d_name[0] == '.')
 +	continue;
 +    rv = T;
@@ -2509,13 +2516,15 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  int i,k;
 +
 +  elt = mail_elt (stream,msgno);
-+  if ((ti = mdfntoul(MDFILE(elt))) > 0L){ /* from phile.c */
-+     t = gmtime (&ti);
++  if(elt && elt->year != 0)
++    return;
++  if ((ti = mdfntoul(MDFILE(elt))) > 0L && (t = gmtime(&ti))){
 +     i = t->tm_hour * 60 + t->tm_min;
 +     k = t->tm_yday;
 +     t = localtime(&ti);
 +     i = t->tm_hour * 60 + t->tm_min - i;
-+     if (k = t->tm_yday - k) i += ((k < 0) == (abs (k) == 1)) ? -24*60 : 24*60;
++     if((k = t->tm_yday - k) != 0) 
++	i += ((k < 0) == (abs (k) == 1)) ? -24*60 : 24*60;
 +     k = abs (i);
 +     elt->hours = t->tm_hour; 
 +     elt->minutes = t->tm_min; 
@@ -2543,7 +2552,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +   modified and search for subfolders, and list the entries it found.
 + */
 +
-+int courier_dir_select (struct direct *name)
++int courier_dir_select (const struct direct *name)
 +{
 + return name->d_name[0] == '.' && (strlen(name->d_name) > 2
 +	|| (strlen(name->d_name) == 2 &&  name->d_name[1] != '.'));
@@ -2610,7 +2619,6 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +  COURIER_S *cdir = NULL;
 +  char tmp[MAILTMPLEN], tmp2[MAILTMPLEN], pathname[MAILTMPLEN], 
 +	realname[MAILTMPLEN];
-+  char *maildirpath = mdirpath();
 +  int i, j, scand, td;
 +
 +  /* There are two cases, either curdir is 
@@ -2670,10 +2678,10 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.c uw-imap-2006d.dfsg/sr
 +      cdir->data[i]->attribute += maildir_any_new_msgs(cdir->data[i]->name) 
 +					? LATT_MARKED : LATT_UNMARKED;
 +}
-diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.h uw-imap-2006d.dfsg/src/osdep/unix/maildir.h
---- uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.h	1970-01-01 01:00:00.000000000 +0100
-+++ uw-imap-2006d.dfsg/src/osdep/unix/maildir.h	2006-12-19 22:19:11.000000000 +0100
-@@ -0,0 +1,198 @@
+diff -ruN uw-imap-2007~dfsg.orig/src/osdep/unix/maildir.h uw-imap-2007~dfsg/src/osdep/unix/maildir.h
+--- uw-imap-2007~dfsg.orig/src/osdep/unix/maildir.h	1970-01-01 01:00:00.000000000 +0100
++++ uw-imap-2007~dfsg/src/osdep/unix/maildir.h	2007-12-26 20:12:59.000000000 +0100
+@@ -0,0 +1,199 @@
 +/* 
 + * A few definitions that try to make this module portable to other
 + * platforms (e.g. Cygwin). This module is based on the information from
@@ -2782,13 +2790,13 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.h uw-imap-2006d.dfsg/sr
 +   time_t ctime;	/* last changed time */
 +} MAILDIRFILE;
 +
-+#define MDFILE(F) (((MAILDIRFILE *)((F)->maildirp))->name)
-+#define MDLOC(F)  (((MAILDIRFILE *)((F)->maildirp))->loc)
-+#define MDPOS(F)  (((MAILDIRFILE *)((F)->maildirp))->pos)
-+#define MDSIZE(F)  (((MAILDIRFILE *)((F)->maildirp))->size)
-+#define MDATIME(F)  (((MAILDIRFILE *)((F)->maildirp))->atime)
-+#define MDMTIME(F)  (((MAILDIRFILE *)((F)->maildirp))->mtime)
-+#define MDCTIME(F)  (((MAILDIRFILE *)((F)->maildirp))->ctime)
++#define MDFILE(F) (((MAILDIRFILE *)((F)->private.spare.ptr))->name)
++#define MDLOC(F)  (((MAILDIRFILE *)((F)->private.spare.ptr))->loc)
++#define MDPOS(F)  (((MAILDIRFILE *)((F)->private.spare.ptr))->pos)
++#define MDSIZE(F)  (((MAILDIRFILE *)((F)->private.spare.ptr))->size)
++#define MDATIME(F)  (((MAILDIRFILE *)((F)->private.spare.ptr))->atime)
++#define MDMTIME(F)  (((MAILDIRFILE *)((F)->private.spare.ptr))->mtime)
++#define MDCTIME(F)  (((MAILDIRFILE *)((F)->private.spare.ptr))->ctime)
 +
 +/* Function prototypes */
 +
@@ -2805,7 +2813,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.h uw-imap-2006d.dfsg/sr
 +int maildir_create_folder (char *mailbox);
 +long maildir_create (MAILSTREAM *stream,char *mailbox);
 +void maildir_flagmsg (MAILSTREAM *stream,MESSAGECACHE *elt); /*check */
-+void maildir_expunge (MAILSTREAM *stream);
++long maildir_expunge (MAILSTREAM *stream, char *sequence, long options);
 +long maildir_copy (MAILSTREAM *stream,char *sequence,char *mailbox,long options);
 +long maildir_append (MAILSTREAM *stream,char *mailbox, append_t af, void *data);
 +long maildir_delete (MAILSTREAM *stream,char *mailbox);
@@ -2817,12 +2825,13 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.h uw-imap-2006d.dfsg/sr
 +
 +/* utility functions */
 +void courier_realname (char *name, char *realname);
++long maildir_dirfmttest (char *name);
 +char *maildir_file (char *dst,char *name);
-+int maildir_select (struct direct *name);
++int maildir_select (const struct direct *name);
 +int maildir_namesort (const void *d1, const void *d2);
 +unsigned long antoul (char *seed);
 +unsigned long mdfntoul (char *name);
-+int courier_dir_select (struct direct *name);
++int courier_dir_select (const struct direct *name);
 +int courier_dir_sort (const void *d1, const void *d2);
 +long maildir_canonicalize (char *pattern,char *ref,char *pat);
 +void maildir_list_work (MAILSTREAM *stream,char *subdir,char *pat,long level);
@@ -2872,10 +2881,10 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/maildir.h uw-imap-2006d.dfsg/sr
 +int courier_search_list(COURIERLOCAL **data, char *name, int first, int last);
 +COURIER_S *courier_list_dir(char *curdir);
 +void courier_list_info(COURIER_S **cdirp, char *data, int i);
-diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/Makefile uw-imap-2006d.dfsg/src/osdep/unix/Makefile
---- uw-imap-2006d.dfsg.orig/src/osdep/unix/Makefile	2006-12-19 22:13:10.000000000 +0100
-+++ uw-imap-2006d.dfsg/src/osdep/unix/Makefile	2006-12-19 22:29:11.000000000 +0100
-@@ -139,7 +139,7 @@
+diff -ruN uw-imap-2007~dfsg.orig/src/osdep/unix/Makefile uw-imap-2007~dfsg/src/osdep/unix/Makefile
+--- uw-imap-2007~dfsg.orig/src/osdep/unix/Makefile	2007-12-26 19:33:39.000000000 +0100
++++ uw-imap-2007~dfsg/src/osdep/unix/Makefile	2007-12-26 20:12:59.000000000 +0100
+@@ -144,7 +144,7 @@
  # However, mh needs to be before any sysinbox formats (such as mmdf or unix)
  # since otherwise INBOX won't work correctly when mh_allow_inbox is set.
  #
@@ -2884,7 +2893,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/Makefile uw-imap-2006d.dfsg/src
  CHUNKSIZE=65536
  
  # Normally no need to change any of these
-@@ -148,7 +148,7 @@
+@@ -153,7 +153,7 @@
  BINARIES=osdep.o mail.o misc.o newsrc.o smanager.o utf8.o utf8aux.o siglocal.o \
   dummy.o pseudo.o netmsg.o flstring.o fdstring.o \
   rfc822.o nntp.o smtp.o imap4r1.o pop3.o \
@@ -2893,7 +2902,7 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/Makefile uw-imap-2006d.dfsg/src
  CFLAGS=-g
  
  CAT=cat
-@@ -277,7 +277,7 @@
+@@ -282,7 +282,7 @@
  
  cyg:	# Cygwin - note that most local file drivers don't work!!
  	$(BUILD) `$(CAT) SPECIALS` OS=$@ \
@@ -2902,17 +2911,18 @@ diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/Makefile uw-imap-2006d.dfsg/src
  	SIGTYPE=psx CHECKPW=cyg LOGINPW=cyg CRXTYPE=std \
  	SPOOLDIR=/var \
  	ACTIVEFILE=/usr/local/news/lib/active \
-@@ -899,6 +899,7 @@
+@@ -904,7 +904,7 @@
  unix.o: mail.h misc.h osdep.h unix.h pseudo.h dummy.h
  utf8.o: mail.h misc.h osdep.h utf8.h tmap.c widths.c
  utf8aux.o: mail.h misc.h osdep.h utf8.h
+-
 +maildir.o: mail.h misc.h osdep.h maildir.h dummy.h
  
- 
  # OS-dependent
-diff -ruN uw-imap-2006d.dfsg.orig/src/osdep/unix/os_cyg.h uw-imap-2006d.dfsg/src/osdep/unix/os_cyg.h
---- uw-imap-2006d.dfsg.orig/src/osdep/unix/os_cyg.h	2006-08-31 03:49:35.000000000 +0200
-+++ uw-imap-2006d.dfsg/src/osdep/unix/os_cyg.h	2006-12-19 22:19:11.000000000 +0100
+ 
+diff -ruN uw-imap-2007~dfsg.orig/src/osdep/unix/os_cyg.h uw-imap-2007~dfsg/src/osdep/unix/os_cyg.h
+--- uw-imap-2007~dfsg.orig/src/osdep/unix/os_cyg.h	2007-12-26 19:33:39.000000000 +0100
++++ uw-imap-2007~dfsg/src/osdep/unix/os_cyg.h	2007-12-26 20:12:59.000000000 +0100
 @@ -47,6 +47,7 @@
  #define setpgrp setpgid
  

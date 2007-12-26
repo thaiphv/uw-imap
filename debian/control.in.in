@@ -2,8 +2,11 @@ Source: uw-imap
 Priority: optional
 Section: mail
 Maintainer: Jonas Smedegaard <dr@jones.dk>
-Standards-Version: 3.7.2
+Standards-Version: 3.7.3
 Build-Depends: @cdbs@
+Vcs-Svn: svn://svn.debian.org/collab-maint/deb-maint/uw-imap/trunk
+Vcs-Browser: http://svn.debian.org/wsvn/collab-maint/deb-maint/uw-imap/trunk
+Homepage: http://www.washington.edu/imap/
 
 Package: uw-imapd
 Section: mail
@@ -13,23 +16,17 @@ Recommends: exim4 | mail-transport-agent
 Suggests: mutt | imap-client, logcheck
 Provides: imap-server
 Conflicts: imap-server
-Description: UW IMAP4rev1 remote mail folder access server
+Description: remote mail folder access server using IMAP4rev1
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.
  .
- The UW IMAP toolkit provides the c-client mail-handling library
- supporting various network transport methods, filesystem storage
- formats, and authentication and autorization methods.
- .
- NB! The Maildir storage format is currently not supported.
- .
- NB! Non-encrypted network transport is discouraged and requires special
- configuration of the c-client library to work.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
  .
  This package contains imapd, an IMAP4rev1 server daemon which uses the
  c-client library.
- .
-  Homepage: http://www.washington.edu/imap/
 
 Package: ipopd
 Section: mail
@@ -39,23 +36,17 @@ Recommends: exim4 | mail-transport-agent
 Conflicts: pop3-server
 Provides: pop3-server
 Suggests: logcheck
-Description: UW POP2 and POP3 mail server
+Description: POP2 and POP3 mail server
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.
  .
- The UW IMAP toolkit provides the c-client mail-handling library
- supporting various network transport methods, filesystem storage
- formats, and authentication and autorization methods.
- .
- NB! The Maildir storage format is currently not supported.
- .
- NB! Non-encrypted network transport is discouraged and requires special
- configuration of the c-client library to work.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
  .
  This package contains ipopd, a POP2 and POP3 server daemon which uses
  the c-client library.
- .
-  Homepage: http://www.washington.edu/imap/
 
 Package: libc-client__VER__-dev
 Section: libdevel
@@ -64,90 +55,65 @@ Depends: libc-client__VER__ (= ${binary:Version}), ${devlibs:Depends}
 Conflicts: libc-client-dev
 Replaces: libc-client-dev
 Provides: libc-client-dev
-Description: UW c-client library for mail protocols (development)
+Description: c-client library for mail protocols - development files
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.
  .
- The UW IMAP toolkit provides the c-client mail-handling library
- supporting various network transport methods, filesystem storage
- formats, and authentication and autorization methods.
- .
- NB! The Maildir storage format is currently not supported.
- .
- NB! Non-encrypted network transport is discouraged and requires special
- configuration of the c-client library to work.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
  .
  This package contains the static c-client library and development
  headers.
- .
-  Homepage: http://www.washington.edu/imap/
 
 Package: libc-client__VER__
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-modules, mlock
 Suggests: uw-mailutils
-Description: UW c-client library for mail protocols
+Description: c-client library for mail protocols - library files
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.
  .
- The UW IMAP toolkit provides the c-client mail-handling library
- supporting various network transport methods, filesystem storage
- formats, and authentication and autorization methods.
- .
- NB! The Maildir storage format is currently not supported.
- .
- NB! Non-encrypted network transport is discouraged and requires special
- configuration of the c-client library to work.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
  .
  This package contains the shared c-client library.
- .
-  Homepage: http://www.washington.edu/imap/
 
 Package: mlock
 Section: mail
 Architecture: any
 Depends: ${shlibs:Depends}
-Description: Mailbox locking program from UW
+Description: mailbox locking program
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.
  .
- The UW IMAP toolkit provides the c-client mail-handling library
- supporting various network transport methods, filesystem storage
- formats, and authentication and autorization methods.
- .
- NB! The Maildir storage format is currently not supported.
- .
- NB! Non-encrypted network transport is discouraged and requires special
- configuration of the c-client library to work.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
  .
  This package contains a program to lock mailbox files to avoid
  corruption.
- .
-  Homepage: http://www.washington.edu/imap/
 
 Package: uw-mailutils
 Section: mail
 Architecture: any
 Depends: ${shlibs:Depends}
-Description: C-client support programs from UW
+Description: c-client support programs
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.
  .
- The UW IMAP toolkit provides the c-client mail-handling library
- supporting various network transport methods, filesystem storage
- formats, and authentication and autorization methods.
- .
- NB! The Maildir storage format is currently not supported.
- .
- NB! Non-encrypted network transport is discouraged and requires special
- configuration of the c-client library to work.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
  .
  This package contains helper tools for the libc-client library:
-  * mailutil: a utility program which helps manage email mailboxes (both
-    local and IMAP/POP3/NNTP)
-  * dmail: an MDA (Mail Delivery Agent) for use with procmail
-  * tmail: an MDA for use with the system mailer (e.g. sendmail, postfix,
-    etc.)
- .
-  Homepage: http://www.washington.edu/imap/
+  - mailutil: utility program which helps manage email mailboxes (both
+              local and IMAP/POP3/NNTP);
+  - dmail:    MDA (Mail Delivery Agent) for use with procmail;
+  - tmail:    MDA for use with the system mailer (such as Sendmail or Postfix).

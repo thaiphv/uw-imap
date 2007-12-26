@@ -2,8 +2,11 @@ Source: uw-imap
 Priority: optional
 Section: mail
 Maintainer: Jonas Smedegaard <dr@jones.dk>
-Standards-Version: 3.7.2
-Build-Depends: cdbs (>= 0.4.27-1), debhelper (>= 4.2.0), quilt, patchutils (>= 0.2.25), dh-buildinfo, libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, d-shlibs, perl, po-debconf
+Standards-Version: 3.7.3
+Build-Depends: debhelper (>= 4.2.0), quilt, patchutils (>= 0.2.25), dh-buildinfo, cdbs (>= 0.4.39), libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, d-shlibs, perl, po-debconf
+Vcs-Svn: svn://svn.debian.org/collab-maint/deb-maint/uw-imap/trunk
+Vcs-Browser: http://svn.debian.org/wsvn/collab-maint/deb-maint/uw-imap/trunk
+Homepage: http://www.washington.edu/imap/
 
 Package: uw-imapd
 Section: mail
@@ -28,8 +31,6 @@ Description: UW IMAP4rev1 remote mail folder access server
  .
  This package contains imapd, an IMAP4rev1 server daemon which uses the
  c-client library.
- .
-  Homepage: http://www.washington.edu/imap/
 
 Package: ipopd
 Section: mail
@@ -54,13 +55,11 @@ Description: UW POP2 and POP3 mail server
  .
  This package contains ipopd, a POP2 and POP3 server daemon which uses
  the c-client library.
- .
-  Homepage: http://www.washington.edu/imap/
 
-Package: libc-client2006j2-dev
+Package: libc-client2007-dev
 Section: libdevel
 Architecture: any
-Depends: libc-client2006j2 (= ${binary:Version}), ${devlibs:Depends}
+Depends: libc-client2007 (= ${binary:Version}), ${devlibs:Depends}
 Conflicts: libc-client-dev
 Replaces: libc-client-dev
 Provides: libc-client-dev
@@ -79,10 +78,8 @@ Description: UW c-client library for mail protocols (development)
  .
  This package contains the static c-client library and development
  headers.
- .
-  Homepage: http://www.washington.edu/imap/
 
-Package: libc-client2006j2
+Package: libc-client2007
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-modules, mlock
@@ -101,8 +98,6 @@ Description: UW c-client library for mail protocols
  configuration of the c-client library to work.
  .
  This package contains the shared c-client library.
- .
-  Homepage: http://www.washington.edu/imap/
 
 Package: mlock
 Section: mail
@@ -123,8 +118,6 @@ Description: Mailbox locking program from UW
  .
  This package contains a program to lock mailbox files to avoid
  corruption.
- .
-  Homepage: http://www.washington.edu/imap/
 
 Package: uw-mailutils
 Section: mail
@@ -149,5 +142,3 @@ Description: C-client support programs from UW
   * dmail: an MDA (Mail Delivery Agent) for use with procmail
   * tmail: an MDA for use with the system mailer (e.g. sendmail, postfix,
     etc.)
- .
-  Homepage: http://www.washington.edu/imap/

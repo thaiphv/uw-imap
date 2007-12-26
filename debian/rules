@@ -9,7 +9,6 @@ debian/control.in::
 	sed $(SEDRULE_CONTENT) <debian/control.in.in >debian/control.in
 
 # More info on local cdbs snippets: See debian/README.cdbs-tweaks
-include debian/cdbs/1/rules/buildcore.mk
 include /usr/share/cdbs/1/class/langcore.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/rules/patchsys-quilt.mk
@@ -17,14 +16,13 @@ include debian/cdbs/1/rules/buildinfo.mk
 include debian/cdbs/1/rules/copyright-check.mk
 include debian/cdbs/1/rules/upstream-tarball.mk
 
-DEB_UPSTREAM_URL = ftp://ftp.cac.washington.edu/mail/
+DEB_UPSTREAM_URL = ftp://ftp.cac.washington.edu/mail
 DEB_UPSTREAM_PACKAGE = imap
 DEB_UPSTREAM_TARBALL_EXTENSION = tar.Z
+DEB_UPSTREAM_TARBALL_MD5 = 8162c341dd3a08d18b369a745cf83838
 
-DEB_UPSTREAM_TARBALL_MD5 = d7900691c415bcc725c1bf2b15e4fb99
-
-DEB_UPSTREAM_TARBALL_SRCDIR = $(shell echo '$(DEB_UPSTREAM_PACKAGE)-$(DEB_UPSTREAM_TARBALL_VERSION)' | sed 's/[0-9]*$$//' )
 DEB_UPSTREAM_REPACKAGE_TAG = dfsg
+DEB_UPSTREAM_REPACKAGE_DELIMITER = ~
 DEB_UPSTREAM_REPACKAGE_EXCLUDE = docs/rfc docs/draft
 
 major = $(DEB_UPSTREAM_TARBALL_VERSION)
@@ -185,11 +183,11 @@ clean::
 		echo "Guidelines, and thus better be stripped from the source tarball!"; \
 		exit 1)
 
-# Needed for by upstream build process
+# Needed by upstream build process
 CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), libpam-dev, libkrb5-dev, comerr-dev, libssl-dev
 
 # Needed for our packaging routines
 CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), d-shlibs, perl, po-debconf
 
 # Fix double cdbs build-dependencies
-CDBS_BUILD_DEPENDS := $(shell echo '$(CDBS_BUILD_DEPENDS)' | sed 's/cdbs (>= 0.4.23-1.1) *, *\(.*\), *cdbs (>= 0.4.27-1)/cdbs (>= 0.4.27-1), \1/')
+CDBS_BUILD_DEPENDS := $(shell echo '$(CDBS_BUILD_DEPENDS)' | sed -e '/\bcdbs (>= 0.4.39)/ s/ *,* *\bcdbs (>= \(0.4.23-1.1\|0.4.27-1\)) *,* */, /g' -e 's/^ *, *//' -e 's/ *, *$$//')

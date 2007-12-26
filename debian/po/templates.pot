@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: dr@jones.dk\n"
-"POT-Creation-Date: 2007-03-20 14:42+0100\n"
+"POT-Creation-Date: 2007-10-19 20:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,142 +18,82 @@ msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates:1001 ../uw-imapd.templates:1001
-msgid "Wanted server ports:"
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
+msgid "Server ports and protocols to support:"
 msgstr ""
 
 #. Type: multiselect
-#. Description
-#: ../ipopd.templates:1001
-msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#: ../ipopd.templates:1001
-msgid "pop3  = POP 3 on TCP port 110 with TLS support."
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#: ../ipopd.templates:1001
-msgid "pop3s = POP 3 on TCP port 995 with SSL support."
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#: ../ipopd.templates:1001 ../uw-imapd.templates:1001
-msgid ""
-"Confusingly, the choice of ports made with this package may have been "
-"overridden by locally configured services (or by a broken package)."
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#. Type: boolean
-#. Description
-#: ../ipopd.templates:1001 ../ipopd.templates:2001 ../uw-imapd.templates:1001
-#: ../uw-imapd.templates:2001
-msgid ""
-"If you want to enforce your choice of ports made with this package, "
-"disregarding any local changes, then you need to *both* select ports *and* "
-"enforce the selection."
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#. Type: boolean
-#. Description
-#: ../ipopd.templates:1001 ../ipopd.templates:2001 ../uw-imapd.templates:1001
-#: ../uw-imapd.templates:2001
-msgid ""
-"To make sure you've done both, you can run the following command after "
-"finishing your current installation/reconfiguration:"
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#. Type: boolean
-#. Description
-#: ../ipopd.templates:1001 ../ipopd.templates:2001
-msgid "dpkg-reconfigure -plow ipopd"
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#: ../ipopd.templates:1001
-msgid "If in doubt, choose pop3 and pop3s."
-msgstr ""
-
-#. Type: boolean
 #. Description
 #: ../ipopd.templates:2001 ../uw-imapd.templates:2001
+msgid "Please choose the server ports and protocols to activate."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates:2001
+msgid ""
+" pop3:  POP 3 on TCP port 110 with TLS support;\n"
+" pop3s: POP 3 on TCP port 995 with SSL support;\n"
+" pop2:  (obsolete) POP 2 on TCP port 109 with TLS support."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates:2001
+msgid "It is recommended to activate both pop3 and pop3s."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:2001 ../ipopd.templates:3001
+msgid ""
+"As the ports and protocols choice may have been overridden by local changes, "
+"you may need to enforce the choice and run the package configuration again "
+"with 'dpkg-reconfigure ipopd'."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:3001 ../uw-imapd.templates:3001
 msgid "Enforce port selection?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates:2001
-msgid ""
-"The ipopd daemon supports listening on several ports simultaneously. A "
-"default choice of ports is provided, which you can adjust."
-msgstr ""
-
-#. Type: boolean
-#. Description
-#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
-msgid ""
-"Confusingly, the choice of ports made with this package may have been "
-"overridden by locally configured services (and by broken packages messing "
-"with the configuration in a bad way)."
-msgstr ""
-
-#. Type: boolean
-#. Description
-#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
-msgid ""
-"By default the port selection is respected only on initial installs, and is "
-"ignored on later updates and reconfiguration."
+#: ../ipopd.templates:3001
+msgid "The ipopd daemon supports listening simultaneously on several ports."
 msgstr ""
 
 #. Type: multiselect
-#. Description
-#: ../uw-imapd.templates:1001
-msgid ""
-"imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
-"support."
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#: ../uw-imapd.templates:1001
-msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#: ../uw-imapd.templates:1001
-msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#. Type: boolean
-#. Description
-#: ../uw-imapd.templates:1001 ../uw-imapd.templates:2001
-msgid "dpkg-reconfigure -plow uw-imapd"
-msgstr ""
-
-#. Type: multiselect
-#. Description
-#: ../uw-imapd.templates:1001
-msgid "If in doubt, choose imap2 and imaps."
-msgstr ""
-
-#. Type: boolean
 #. Description
 #: ../uw-imapd.templates:2001
 msgid ""
-"The uw-imap daemon supports listening on several ports simultaneously. A "
-"default choice of ports is provided, which you can adjust."
+" imap2: IMAP 4rev1 on TCP port 143 with TLS support;\n"
+" imaps: IMAP 4rev1 on TCP port 993 with SSL support;\n"
+" imap3: (obsolete) IMAP 3 on TCP port 220 with TLS support."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates:2001
+msgid "It is recommended to activate both imap2 and imaps."
+msgstr ""
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:2001 ../uw-imapd.templates:3001
+msgid ""
+"As the ports and protocols choice may have been overridden by local changes, "
+"you may need to enforce the choice and run the package configuration again "
+"with 'dpkg-reconfigure uw-imapd'."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:3001
+msgid "The uw-imap daemon supports listening simultaneously on several ports."
 msgstr ""

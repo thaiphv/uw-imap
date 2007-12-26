@@ -34,18 +34,6 @@ diff -ruN uw-imap-2006b.dfsg.orig/src/ipopd/ipopd.8 uw-imap-2006b.dfsg/src/ipopd
  .SH DESCRIPTION
  .I ipop2d
  and
-diff -ruN uw-imap-2006b.dfsg.orig/src/osdep/unix/Makefile uw-imap-2006b.dfsg/src/osdep/unix/Makefile
---- uw-imap-2006b.dfsg.orig/src/osdep/unix/Makefile	2006-10-09 19:22:12.000000000 +0200
-+++ uw-imap-2006b.dfsg/src/osdep/unix/Makefile	2006-10-09 19:22:42.000000000 +0200
-@@ -101,7 +101,7 @@
- MAILSPOOL=$(SPOOLDIR)/mail
- NEWSSPOOL=$(SPOOLDIR)/news
- RSHPATH=/usr/ucb/rsh
--LOCKPGM=/etc/mlock
-+LOCKPGM=/usr/bin/mlock
- MD5PWD="/etc/cram-md5.pwd"
- 
- 
 diff -ruN uw-imap-2006b.dfsg.orig/src/osdep/unix/tcp_unix.c uw-imap-2006b.dfsg/src/osdep/unix/tcp_unix.c
 --- uw-imap-2006b.dfsg.orig/src/osdep/unix/tcp_unix.c	2006-10-09 18:48:56.000000000 +0200
 +++ uw-imap-2006b.dfsg/src/osdep/unix/tcp_unix.c	2006-10-09 19:22:42.000000000 +0200

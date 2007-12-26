@@ -9,7 +9,7 @@ Gzip to meet Debian packaging requirements.
 Included is a patch to support Maildir-style storage, originally written
 by Eduardo Chappa <chappa@math.washington.edu> and published at
 http://staff.washington.edu/chappa/pine/ (read
-/usr/share/doc/libc-client2006j2/README.Maildir.gz for more info).
+/usr/share/doc/libc-client2006k/README.Maildir.gz for more info).
 
 
 Upstream Author: Mark Crispin
