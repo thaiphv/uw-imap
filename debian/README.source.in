@@ -1,0 +1,14 @@
+NB! This file is a draft - it does not yet comply to Debian Policy 3.8!
+
+Upstream *.tar.Z archive has been uncompressed and compressed using GNU
+Gzip to meet Debian packaging requirements.
+
+Upstream source has been repackaged to not include the following files:
+	docs/rfc (not DFSG-free)
+	docs/draft (not DFSG-free)
+	src/osdep/mac/mtest.sit.hqx (binary code)
+
+Included is a patch to support Maildir-style storage, originally written
+by Eduardo Chappa <chappa@math.washington.edu> and published at
+http://staff.washington.edu/chappa/pine/ (read
+/usr/share/doc/libc-client__VER__/README.Maildir.gz for more info).

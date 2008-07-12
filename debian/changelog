@@ -1,3 +1,64 @@
+uw-imap (7:2007b~dfsg-2) unstable; urgency=medium
+
+  * Packaging moved to collab-maint Git at Alioth. Update VCS-* hints.
+  * Update Danish (da) locale.
+  * Update Brazilian Portuguese (pt_BR). Closes: #469320, thanks to Eder
+    L. Marques.
+  * Let debhelper install logcheck rules.
+  * Fix logcheck rules to ignore connections from resolved domains (not
+    only IP numbers).  Closes: bug#298706, #427498, thanks to Donovan
+    Baarda and Justin Pryzby.
+  * Thanks to Christian Perrier for help pushing this release!
+  * Set urgency=medium to hopefully reach Lenny before frozen.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sat, 12 Jul 2008 17:51:37 +0200
+
+uw-imap (7:2007b~dfsg-1) experimental; urgency=medium
+
+  * New upstream release.
+  * Unfuzz patches.
+  * Update semi-auto-update warning in debian/rules to advertise
+    DEB_AUTO_UPDATE_DEBIAN_CONTROL.
+  * Update cdbs dependency cleanup to strip cdbs 0.4.27 (not 0.4.27-1).
+  * Release for experimental as instructed by Release team at the end of
+    http://lists.debian.org/debian-devel-announce/2008/06/msg00000.html
+  * Add new file README.source (only draft for now - need more work to
+    comply with Debian Policy 3.8).
+  * Rewrite debian/copyright:
+    + Use recent draft of machine-readable format proposed at
+      http://wiki.debian.org/Proposals/CopyrightFormat
+    + Refer to Apache 2.0 license at common location, thanks to lintian
+    + License debian packaging as GPL-2+
+    + Move details on repackaging and Maildir patch to README.source.
+  * Strip Macintosh binary from source (in addition to RFC documents).
+    Document stripped files in README.source.
+  * Rely on debhelper to install lintian overrides (without tightening
+    build-dependency: overrides are just gracefully ignored if too old
+    debhelper is used), thanks to lintian.
+  * Drop deprecated linda overrides, thanks to lintian.
+  * Fix referring to /usr/share/doc (not /usr/doc) in a README, thanks
+    to lintian.
+  * Update local cdbs snippets:
+    + Major improvements to copyright-check, most importantly avoiding a
+      FTBFS by only warning about changes to copyright-hints by default.
+      Update debian/copyright_hints.
+    + Various improvements to upstream-tarball.mk, including renaming
+      top srcdir in repackaged tarball to $pkg-$ver.orig to comply with
+      Developers Reference 6.7.8.2.  Simplify use in debian/rules.
+    + Update debian/README.cdbs-tweaks.
+  * Bump debhelper compatibility to level 6 (was 4).
+  * Semi-auto-update debian/control to apply above cdbs-related changes:
+    DEB_AUTO_UPDATE_DEBIAN_CONTROL=yes fakeroot debian/rules clean
+    This also bumps names of binary library packages (historic artifact
+    to cope with restrictive license that has since been improved, but
+    too much in the packaging routines is tied to that naming scheme to
+    change this close to release of Lenny), and updates README.Debian
+    (and more) which closes: bug#461386, thanks to Tomas Pospisek.
+  * Set urgency=medium as this should hopefully reach Lenny, due to new
+    release containing only bugfixes, and the cdbs fixes to avoid FTBFS.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Thu, 03 Jul 2008 10:43:57 +0200
+
 uw-imap (7:2007~dfsg-1) unstable; urgency=low
 
   * New upstream release.

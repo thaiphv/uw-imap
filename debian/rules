@@ -19,11 +19,9 @@ include debian/cdbs/1/rules/upstream-tarball.mk
 DEB_UPSTREAM_URL = ftp://ftp.cac.washington.edu/mail
 DEB_UPSTREAM_PACKAGE = imap
 DEB_UPSTREAM_TARBALL_EXTENSION = tar.Z
-DEB_UPSTREAM_TARBALL_MD5 = 8162c341dd3a08d18b369a745cf83838
+DEB_UPSTREAM_TARBALL_MD5 = 4d59ce6303cf8ef93ff51341b1ce2df7
 
-DEB_UPSTREAM_REPACKAGE_TAG = dfsg
-DEB_UPSTREAM_REPACKAGE_DELIMITER = ~
-DEB_UPSTREAM_REPACKAGE_EXCLUDE = docs/rfc docs/draft
+DEB_UPSTREAM_REPACKAGE_EXCLUDE = docs/rfc docs/draft src/osdep/mac/mtest.sit.hqx
 
 major = $(DEB_UPSTREAM_TARBALL_VERSION)
 minor = 0
@@ -64,7 +62,8 @@ pre-build::
 	@sed $(SEDRULE_CONTENT) <debian/control.in.in | diff -u debian/control.in - || ( \
 		echo; \
 		echo "Upstream version has changed (or debian/control.in.in is out of sync)"; \
-		echo "Do a 'DEB_BUILD_OPTIONS=cdbs-autoupdate fakeroot debian/rules clean' or edit manually."; \
+		echo "Edit debian/control manually, or use the following command:"; \
+		echo "  DEB_AUTO_UPDATE_DEBIAN_CONTROL=yes fakeroot debian/rules clean"; \
 		exit 1)
 
 build: debian/build-stamp
@@ -100,7 +99,7 @@ pre-build::
 	done
 
 clean:: 
-	for file in `find debian -maxdepth 2 -type f -name '*.in' -not -name control.in -not -name control.in.in -not -name copyright.in -not -name POTFILES.in -not -name 'watch.in'`; do \
+	for file in `find debian -maxdepth 2 -type f -name '*.in' -not -name control.in -not -name control.in.in -not -name README.source.in -not -name POTFILES.in -not -name 'watch.in'`; do \
 		targetfile=`echo $$file | sed $(SEDRULE_FILENAME) -e 's/\\.in$$//'`; \
 		rm -f $$targetfile; \
 	done
@@ -190,4 +189,4 @@ CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), libpam-dev, libkrb5-dev, comerr-dev
 CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), d-shlibs, perl, po-debconf
 
 # Fix double cdbs build-dependencies
-CDBS_BUILD_DEPENDS := $(shell echo '$(CDBS_BUILD_DEPENDS)' | sed -e '/\bcdbs (>= 0.4.39)/ s/ *,* *\bcdbs (>= \(0.4.23-1.1\|0.4.27-1\)) *,* */, /g' -e 's/^ *, *//' -e 's/ *, *$$//')
+CDBS_BUILD_DEPENDS := $(shell echo '$(CDBS_BUILD_DEPENDS)' | sed -e '/\bcdbs (>= 0.4.39)/ s/ *,* *\bcdbs (>= \(0.4.23-1.1\|0.4.27\)) *,* */, /g' -e 's/^ *, *//' -e 's/ *, *$$//')

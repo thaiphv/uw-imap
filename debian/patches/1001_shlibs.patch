@@ -1,7 +1,7 @@
 diff -ruN uw-imap-2006k~dfsg.orig/Makefile uw-imap-2006k~dfsg/Makefile
 --- uw-imap-2006k~dfsg.orig/Makefile	2007-11-08 00:16:50.000000000 +0100
 +++ uw-imap-2006k~dfsg/Makefile	2007-12-10 15:58:39.000000000 +0100
-@@ -81,11 +81,13 @@
+@@ -78,11 +78,13 @@
  # hxd	HP-UX 10.x with DCE security (see shp)
  # isc	Interactive Systems
  # ldb	Debian Linux
@@ -15,7 +15,7 @@ diff -ruN uw-imap-2006k~dfsg.orig/Makefile uw-imap-2006k~dfsg/Makefile
  # lmd	Mandrake Linux
  # lr5	RedHat Enterprise 5 and later (same as lfd)
  # lrh	RedHat Linux 7.2 and later
-@@ -308,7 +310,7 @@
+@@ -306,7 +308,7 @@
  
  # Note on SCO you may have to set LN to "ln".
  
@@ -24,7 +24,7 @@ diff -ruN uw-imap-2006k~dfsg.orig/Makefile uw-imap-2006k~dfsg/Makefile
  	$(BUILD) BUILDTYPE=$@
  
  # If you use sv4, you may find that it works to move it to use the an process.
-@@ -373,6 +375,10 @@
+@@ -371,6 +373,10 @@
  	$(BUILD) BUILDTYPE=lnp IP=$(IP6) \
  	SPECIALS="SSLINCLUDE=/usr/include/openssl SSLLIB=/usr/lib SSLCERTS=/etc/pki/tls/certs SSLKEYS=/etc/pki/tls/private GSSDIR=/usr/kerberos"
  

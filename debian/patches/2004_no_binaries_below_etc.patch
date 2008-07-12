@@ -37,7 +37,7 @@ diff -ruN uw-imap-2006b.dfsg.orig/src/ipopd/ipopd.8 uw-imap-2006b.dfsg/src/ipopd
 diff -ruN uw-imap-2006b.dfsg.orig/src/osdep/unix/tcp_unix.c uw-imap-2006b.dfsg/src/osdep/unix/tcp_unix.c
 --- uw-imap-2006b.dfsg.orig/src/osdep/unix/tcp_unix.c	2006-10-09 18:48:56.000000000 +0200
 +++ uw-imap-2006b.dfsg/src/osdep/unix/tcp_unix.c	2006-10-09 19:22:42.000000000 +0200
-@@ -344,12 +344,12 @@
+@@ -346,12 +346,12 @@
  				/* return immediately if ssh disabled */
      if (!(sshpath && (ti = sshtimeout))) return NIL;
  				/* ssh command prototype defined yet? */

@@ -1,3 +1,1 @@
-debian/linda/mlock	usr/share/linda/overrides/
-debian/lintian/mlock	usr/share/lintian/overrides/
 mlock/mlock		usr/bin/

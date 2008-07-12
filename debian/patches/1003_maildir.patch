@@ -249,7 +249,7 @@ diff -ruN uw-imap-2007~dfsg.orig/README.maildir uw-imap-2007~dfsg/README.maildir
 diff -ruN uw-imap-2007~dfsg.orig/src/c-client/mail.c uw-imap-2007~dfsg/src/c-client/mail.c
 --- uw-imap-2007~dfsg.orig/src/c-client/mail.c	2007-12-26 19:33:39.000000000 +0100
 +++ uw-imap-2007~dfsg/src/c-client/mail.c	2007-12-26 20:12:59.000000000 +0100
-@@ -993,7 +993,7 @@
+@@ -991,7 +991,7 @@
    MAILSTREAM *ts;
    char *s,*t,tmp[MAILTMPLEN];
    size_t i;
@@ -258,7 +258,7 @@ diff -ruN uw-imap-2007~dfsg.orig/src/c-client/mail.c uw-imap-2007~dfsg/src/c-cli
  				/* never allow names with newlines */
    if (s = strpbrk (mailbox,"\015\012")) {
      MM_LOG ("Can't create mailbox with such a name",ERROR);
-@@ -1017,6 +1017,8 @@
+@@ -1015,6 +1015,8 @@
      return NIL;
    }
  
@@ -267,7 +267,7 @@ diff -ruN uw-imap-2007~dfsg.orig/src/c-client/mail.c uw-imap-2007~dfsg/src/c-cli
  				/* see if special driver hack */
    if ((mailbox[0] == '#') && ((mailbox[1] == 'd') || (mailbox[1] == 'D')) &&
        ((mailbox[2] == 'r') || (mailbox[2] == 'R')) &&
-@@ -1047,6 +1049,13 @@
+@@ -1045,6 +1047,13 @@
  	   (((*mailbox == '{') || (*mailbox == '#')) &&
  	    (stream = mail_open (NIL,mailbox,OP_PROTOTYPE | OP_SILENT))))
      d = stream->dtb;

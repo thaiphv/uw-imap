@@ -29,7 +29,7 @@ An ancient version of this package installed an empty /etc/cram-md5.pwd.
 Although this ill-advised move was fixed quickly, because it was marked as
 a conffile, you may still have it around.  As a result, your users may
 not be able to login.  The fix is to either delete this file or populate it
-with passwords as explained in /usr/doc/libc-client__VER__/md5.txt .
+with passwords as explained in /usr/share/doc/libc-client__VER__/md5.txt .
 
 Beware that even though CRAM-MD5 stores passwords encrypted, it is treated
 as plaintext, so the above restrictrictions about "Plaintext logins" apply.

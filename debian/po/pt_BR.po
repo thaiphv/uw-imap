@@ -1,16 +1,17 @@
-# uw-imapd's Brazilian Portuguese (pt_BR) debconf template translation.
+# uw-imap Brazilian Portuguese translation
 # Copyright (c) 2007 André Luís Lopes
 # This file is distributed under the same license as the uw-imapd package.
 # André Luís Lopes <andrelop@debian.org>, 2007.
+# Eder L. Marques (frolic) <frolic@debian-ce.org>, 2008.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: uw-imapd\n"
+"Project-Id-Version: uw-imap\n"
 "Report-Msgid-Bugs-To: dr@jones.dk\n"
 "POT-Creation-Date: 2007-10-19 20:29+0200\n"
-"PO-Revision-Date: 2007-04-21 17:23-0300\n"
-"Last-Translator: André Luís Lopes <andrelop@ig.com.br>\n"
-"Language-Team: Debian-BR Project <debian-l10n-portuguese@lists.debian.org>\n"
+"PO-Revision-Date: 2008-03-04 14:23-0300\n"
+"Last-Translator: Eder L. Marques (frolic) <frolic@debian-ce.org>\n"
+"Language-Team: l10n Portuguese <debian-l10n-portuguese@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,13 +21,13 @@ msgstr ""
 #. Description
 #: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid "Server ports and protocols to support:"
-msgstr ""
+msgstr "Portas do servidor e protocolos a serem suportados:"
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates:2001 ../uw-imapd.templates:2001
 msgid "Please choose the server ports and protocols to activate."
-msgstr ""
+msgstr "Por favor, escolha as portas do servidor e protocolos para ativação."
 
 #. Type: multiselect
 #. Description
@@ -36,12 +37,15 @@ msgid ""
 " pop3s: POP 3 on TCP port 995 with SSL support;\n"
 " pop2:  (obsolete) POP 2 on TCP port 109 with TLS support."
 msgstr ""
+" pop3:  POP 3 na porta TCP 110 com suporte a TLS;\n"
+" pop3s: POP 3 na porta TCP 995 com suporte a SSL;\n"
+" pop2:  (obsoleto) POP 2 na porta TCP 109 com suporte a TLS."
 
 #. Type: multiselect
 #. Description
 #: ../ipopd.templates:2001
 msgid "It is recommended to activate both pop3 and pop3s."
-msgstr ""
+msgstr "É recomendado ativar ambos pop3 e pop3s."
 
 #. Type: multiselect
 #. Description
@@ -53,6 +57,9 @@ msgid ""
 "you may need to enforce the choice and run the package configuration again "
 "with 'dpkg-reconfigure ipopd'."
 msgstr ""
+"Como a escolha de portas e protocolos pode ser sobrescrita por modificações "
+"locais, você pode ter que reforçar a escolha e executar novamente a "
+"configuração do pacote com 'dpkg-reconfigure ipopd'."
 
 #. Type: boolean
 #. Description
@@ -64,7 +71,7 @@ msgstr "Forçar seleção de porta?"
 #. Description
 #: ../ipopd.templates:3001
 msgid "The ipopd daemon supports listening simultaneously on several ports."
-msgstr ""
+msgstr "O daemon ipopd suporta escutar simultaneamente em diversas portas."
 
 #. Type: multiselect
 #. Description
@@ -74,12 +81,15 @@ msgid ""
 " imaps: IMAP 4rev1 on TCP port 993 with SSL support;\n"
 " imap3: (obsolete) IMAP 3 on TCP port 220 with TLS support."
 msgstr ""
+" imap2: IMAP 4rev1 na porta TCP 143 com suporte a TLS;\n"
+" imaps: IMAP 4rev1 na porta TCP 993 com suporte a SSL;\n"
+" imap3: (obsoleto) IMAP 3 na porta TCP 220 com suporte a TLS."
 
 #. Type: multiselect
 #. Description
 #: ../uw-imapd.templates:2001
 msgid "It is recommended to activate both imap2 and imaps."
-msgstr ""
+msgstr "É recomendado ativar ambos imap2 e imaps."
 
 #. Type: multiselect
 #. Description
@@ -91,12 +101,15 @@ msgid ""
 "you may need to enforce the choice and run the package configuration again "
 "with 'dpkg-reconfigure uw-imapd'."
 msgstr ""
+"Como a escolha de portas e protocolos pode ser sobrescrita por modificações "
+"locais, você pode ter que reforçar a escolha e executar novamente a "
+"configuração do pacote com 'dpkg-reconfigure uw-imapd'."
 
 #. Type: boolean
 #. Description
 #: ../uw-imapd.templates:3001
 msgid "The uw-imap daemon supports listening simultaneously on several ports."
-msgstr ""
+msgstr "O daemon uw-imap suporta escutar simultaneamente em diversas portas."
 
 #~ msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
 #~ msgstr "pop2 = POP 2 na porta TCP 109 com suporte TLS. Isto é obsoleto."
