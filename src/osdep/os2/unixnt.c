@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright 1988-2007 University of Washington
+ * Copyright 1988-2008 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  * Program:	UNIX mail routines
  *
  * Author:	Mark Crispin
- *		Networks and Distributed Computing
- *		Computing & Communications
+ *		UW Technology
  *		University of Washington
- *		Administration Building, AG-44
  *		Seattle, WA  98195
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	20 December 1989
- * Last Edited:	5 September 2007
+ * Last Edited:	27 March 2008
  */
 
 
@@ -459,7 +457,8 @@ MAILSTREAM *unix_open (MAILSTREAM *stream)
       mm_log ("Can't open mailbox lock, access is readonly",WARN);
 				/* can get the lock? */
     else if (flock (fd,LOCK_EX|LOCK_NB)) {
-      mm_log ("Mailbox is open by another process, access is readonly",WARN);
+      if (!stream->silent)
+	mm_log ("Mailbox is open by another process, access is readonly",WARN);
       close (fd);
     }
     else {			/* got the lock, nobody else can alter state */
@@ -1523,7 +1522,7 @@ int unix_parse (MAILSTREAM *stream,char *lock,int op)
 				/* find end of keyword */
 		  if (!(u = strpbrk (s," \n\r"))) u = s + strlen (s);
 				/* got a keyword? */
-		  if ((k = (u - s)) <= MAXUSERFLAG) {
+		  if ((k = (u - s)) && (k <= MAXUSERFLAG)) {
 		    uf.data = (unsigned char *) s;
 		    uf.size = k;
 		    for (j = 0; (j < NUSERFLAGS) && stream->user_flags[j]; ++j)
@@ -1577,7 +1576,8 @@ int unix_parse (MAILSTREAM *stream,char *lock,int op)
 		      while (*s == ' ') s++;
 		      u = strpbrk (s," \n\r");
 				/* got a keyword? */
-		      if ((j < NUSERFLAGS) && ((k = (u - s)) <= MAXUSERFLAG)) {
+		      if ((j < NUSERFLAGS) && (k = (u - s)) &&
+			  (k <= MAXUSERFLAG)) {
 			if (stream->user_flags[j])
 			  fs_give ((void **) &stream->user_flags[j]);
 			stream->user_flags[j] = (char *) fs_get (k + 1);

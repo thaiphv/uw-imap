@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright 1988-2007 University of Washington
+ * Copyright 1988-2008 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  * Program:	Interactive Message Access Protocol 4rev1 (IMAP4R1) routines
  *
  * Author:	Mark Crispin
- *		Networks and Distributed Computing
- *		Computing & Communications
+ *		UW Technology
  *		University of Washington
- *		Administration Building, AG-44
  *		Seattle, WA  98195
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	15 June 1988
- * Last Edited:	19 November 2007
+ * Last Edited:	8 May 2008
  *
  * This original version of this file is
  * Copyright 1988 Stanford University
@@ -2396,28 +2394,28 @@ long imap_expunge (MAILSTREAM *stream,char *sequence,long options)
 				/* otherwise try to make into UID EXPUNGE */
     else if (mail_sequence (stream,sequence)) {
       unsigned long i,j;
-      char *s = LOCAL->tmp;
+      char *t = (char *) fs_get (IMAPTMPLEN);
+      char *s = t;
 				/* search through mailbox */
-      for (s = '\0',i = 1; i <= stream->nmsgs; ++i) 
+      for (*s = '\0', i = 1; i <= stream->nmsgs; ++i)
 	if (mail_elt (stream,i)->sequence) {
-				/* prepend with comma if not first time */
-	if (LOCAL->tmp[0]) *s++ = ',';
-	sprintf (s,"%lu",mail_uid (stream,j = i));
-	s += strlen (s);	/* point at end of string */
-				/* search for possible end of range */
-	while ((i < stream->nmsgs) && mail_elt (stream,i+1)->sequence) i++;
-	if (i != j) {		/* output end of range */
-	  sprintf (s,":%lu",mail_uid (stream,i));
+	  if (t[0]) *s++ = ',';	/* prepend with comma if not first time */
+	  sprintf (s,"%lu",mail_uid (stream,j = i));
 	  s += strlen (s);	/* point at end of string */
+				/* search for possible end of range */
+	  while ((i < stream->nmsgs) && mail_elt (stream,i+1)->sequence) i++;
+	  if (i != j) {		/* output end of range */
+	    sprintf (s,":%lu",mail_uid (stream,i));
+	    s += strlen (s);	/* point at end of string */
+	  }
+	  if ((s - t) > (IMAPTMPLEN - 50)) {
+	    mm_log ("Excessively complex sequence",ERROR);
+	    return NIL;
+	  }
 	}
-	if ((s - LOCAL->tmp) > (IMAPTMPLEN - 50)) {
-	  mm_log ("Excessively complex sequence",ERROR);
-	  return NIL;
-	}
-      }
 				/* now do as UID EXPUNGE */
-      ret = imap_expunge (stream,s = cpystr (s),EX_UID);
-      fs_give ((void **) &s);
+      ret = imap_expunge (stream,t,EX_UID);
+      fs_give ((void **) &t);
     }
   }
 				/* ordinary EXPUNGE */
@@ -2609,7 +2607,7 @@ IMAPPARSEDREPLY *imap_append_single (MAILSTREAM *stream,char *mailbox,
     aflg.type = FLAGS; aflg.text = (void *) flags;
     args[++i] = &aflg;
   }
-  if (date) {		/* ensure date in INTERNALDATE format */
+  if (date) {			/* ensure date in INTERNALDATE format */
     if (!mail_parse_date (&elt,date)) {
 				/* flush previous reply */
       if (LOCAL->reply.line) fs_give ((void **) &LOCAL->reply.line);
@@ -2626,9 +2624,9 @@ IMAPPARSEDREPLY *imap_append_single (MAILSTREAM *stream,char *mailbox,
   amsg.type = LITERAL; amsg.text = (void *) message;
   args[++i] = &amsg;
   args[++i] = NIL;
-  if (!strcmp ((reply = imap_send (stream,"APPEND",args))->key,"BAD") &&
-      (flags || date)) {	/* full form and got a BAD? */
-				/* yes, retry with old IMAP2bis form */
+				/* easy if IMAP4[rev1] */
+  if (LEVELIMAP4 (stream)) reply = imap_send (stream,"APPEND",args);
+  else {			/* try the IMAP2bis way */
     args[1] = &amsg; args[2] = NIL;
     reply = imap_send (stream,"APPEND",args);
   }
