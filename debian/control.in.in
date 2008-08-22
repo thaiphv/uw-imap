@@ -2,113 +2,118 @@ Source: uw-imap
 Priority: optional
 Section: mail
 Maintainer: Jonas Smedegaard <dr@jones.dk>
-Standards-Version: 3.6.2
-Build-Depends: @cdbs@, libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, d-shlibs (>> 0.13), perl
+Standards-Version: 3.7.3
+Build-Depends: @cdbs@
+Vcs-Git: git://git.debian.org/git/collab-maint/uw-imap.git
+Vcs-Browser: http://git.debian.org/?p=collab-maint/uw-imap.git;a=summary
+Homepage: http://www.washington.edu/imap/
 
 Package: uw-imapd
 Section: mail
 Architecture: any
-Depends: ${shlibs:Depends}, ${debconf-depends}, openssl, libpam-runtime (>= 0.76-13.1), netbase
+Depends: ${shlibs:Depends}, ${misc:Depends}, openssl, libpam-runtime (>= 0.76-13.1), openbsd-inetd | inet-superserver
 Recommends: exim4 | mail-transport-agent
 Suggests: mutt | imap-client, logcheck
 Provides: imap-server
-Replaces: imapd, imap-4, imap
-Conflicts: imapd, imap-4, imap, imap-server, logcheck (<< 1.1.1-9)
-Description: remote mail folder access server
- IMAP (the Interactive Mail Access Protocol) is a mechanism for
- accessing mail folders and the messages in them remotely, ie with
- your user mail program running on a different machine to the one
- where all the messages are stored.
+Conflicts: imap-server
+Description: remote mail folder access server using IMAP4rev1
+ IMAP (Internet Message Access Protocol) is a method of accessing
+ electronic messages kept on a (possibly shared) mail server.
  .
- If you do install uw-imapd you will almost certainly want to install a
- Mail Transfer Agent such as Smail or Sendmail, as remote mail
- programs which use IMAP to access incoming and saved mail will
- usually want to send mail using SMTP, often to the same machine.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
  .
- This server has SSL support built in.
+ This package contains imapd, an IMAP4rev1 server daemon which uses the
+ c-client library.
 
 Package: ipopd
 Section: mail
 Architecture: any
-Depends: ${shlibs:Depends}, ${debconf-depends}, openssl, libpam-runtime (>= 0.76-13.1), netbase
+Depends: ${shlibs:Depends}, ${misc:Depends}, openssl, libpam-runtime (>= 0.76-13.1), openbsd-inetd | inet-superserver
 Recommends: exim4 | mail-transport-agent
-Conflicts: imap (<< 4.4-1), pop3-server, pop2-server, logcheck (<< 1.1.1-9)
-Provides: pop3-server, pop2-server
+Conflicts: pop3-server
+Provides: pop3-server
 Suggests: logcheck
-Description: POP2 and POP3 servers from UW
- This package contains the POP2 and POP3 servers which were  
- formerly part of the University of Washington IMAP package.
+Description: POP2 and POP3 mail server
+ IMAP (Internet Message Access Protocol) is a method of accessing
+ electronic messages kept on a (possibly shared) mail server.
  .
- This server has SSL support built in.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
+ .
+ This package contains ipopd, a POP2 and POP3 server daemon which uses
+ the c-client library.
 
-Package: libc-client-dev
-Priority: extra
+Package: libc-client__VER__-dev
 Section: libdevel
 Architecture: any
-Depends: libc-client__VER__ (= ${Source-Version}), ${devlibs:Depends}
-Conflicts: c-client-dev, libc-client4.7-dev, libc-client2000-dev, libc-client2001-dev, libc-client2002-dev, libc-client2002ddebian-dev
-Replaces: c-client-dev, libc-client4.7-dev, libc-client2000-dev, libc-client2001-dev, libc-client2002-dev, libc-client2002ddebian-dev
-Description: UW c-client library for mail protocols
- C-client is a library of functions for accessing mail folders and messages.
- It was written as part of the University of Washington IMAP server, but has
- since found other use as well.
+Depends: libc-client__VER__ (= ${binary:Version}), ${devlibs:Depends}
+Conflicts: libc-client-dev
+Replaces: libc-client-dev
+Provides: libc-client-dev
+Description: c-client library for mail protocols - development files
+ IMAP (Internet Message Access Protocol) is a method of accessing
+ electronic messages kept on a (possibly shared) mail server.
  .
- This package contains the static lib and headers for using the c-client mail
- handling library.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
+ .
+ This package contains the static c-client library and development
+ headers.
 
 Package: libc-client__VER__
 Section: libs
 Architecture: any
-Depends: ${shlibs:Depends}, ${debconf-depends}, libpam-modules, mlock
+Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-modules, mlock
 Suggests: uw-mailutils
-Description: UW c-client library for mail protocols
- C-client is a library of functions for accessing mail folders and messages.
- It was written as part of the University of Washington IMAP server, but has
- since found other use as well.
+Description: c-client library for mail protocols - library files
+ IMAP (Internet Message Access Protocol) is a method of accessing
+ electronic messages kept on a (possibly shared) mail server.
  .
- This package contains the shared c-client mail handling library with SSL
- support.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
+ .
+ This package contains the shared c-client library.
 
 Package: mlock
 Section: mail
 Architecture: any
 Depends: ${shlibs:Depends}
-Conflicts: libc-client4.5, libc-client4.6, libc-client (<< 4.7-4)
-Description: Mailbox locking program from UW
- C-client is a library of functions for accessing mail folders and messages.
- It was written as part of the University of Washington IMAP server, but has
- since found other use as well.
+Description: mailbox locking program
+ IMAP (Internet Message Access Protocol) is a method of accessing
+ electronic messages kept on a (possibly shared) mail server.
  .
- libc-client.so uses this program to lock mailbox files so they don't get
- corrupted.
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
+ .
+ This package contains a program to lock mailbox files to avoid
+ corruption.
 
 Package: uw-mailutils
 Section: mail
 Architecture: any
 Depends: ${shlibs:Depends}
-Conflicts: uw-imapd (<< 4:2002rc7debian-1), uw-imapd-ssl (<< 4:2002rc7debian-1)
-Description: C-client support programs from UW
- C-client is a library of functions for accessing mail folders and messages.
- It was written as part of the University of Washington IMAP server, but has
- since found other use as well.
+Description: c-client support programs
+ IMAP (Internet Message Access Protocol) is a method of accessing
+ electronic messages kept on a (possibly shared) mail server.
  .
- This package contains some programs that can be used with the libc-client
- mail handling library.  They are:
+ The UW (University of Washington) IMAP toolkit provides the c-client
+ mail-handling library supporting various network transport methods,
+ file system storage formats, and authentication and authorization
+ methods.
  .
- mailutil: a program for dealing with mailboxes of various types.
- dmail: a Mail Delivery Agent (MDA) for use with procmail
- tmail: a Mail Delivery Program (MDA) for use with sendmail etc.
-
-Package: uw-imapd-ssl
-Section: mail
-Architecture: all
-Depends: uw-imapd (>= 4:2002.rc7debian )
-Description: Dummy upgrade package for uw-imapd
- This package is obsolete.  Once uw-imapd is installed, you can purge it.
-
-Package: ipopd-ssl
-Section: mail
-Architecture: all
-Depends: ipopd (>= 4:2002.rc7debian )
-Description: Dummy upgrade package for ipopd
- This package is obsolete.  Once uw-imapd is installed, you can purge it.
+ This package contains helper tools for the libc-client library:
+  - mailutil: utility program which helps manage email mailboxes (both
+              local and IMAP/POP3/NNTP);
+  - dmail:    MDA (Mail Delivery Agent) for use with procmail;
+  - tmail:    MDA for use with the system mailer (such as Sendmail or Postfix).

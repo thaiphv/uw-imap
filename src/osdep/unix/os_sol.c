@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2007 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	Operating-system dependent routines -- Solaris version
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	10 April 1992
- * Last Edited:	10 April 2001
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2001 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	16 August 2007
  */
 
 #include "tcp_unix.h"		/* must be before osdep includes tcp.h */
@@ -32,6 +40,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <shadow.h>
+#include <crypt.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include "misc.h"
@@ -49,6 +58,7 @@ extern char *sys_errlist[];
 #include "ftl_unix.c"
 #include "nl_unix.c"
 #include "env_unix.c"
+#include "getspnam.c"
 #define fork vfork
 #include "tcp_unix.c"
 #include "gr_waitp.c"

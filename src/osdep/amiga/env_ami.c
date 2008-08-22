@@ -1,21 +1,26 @@
+/* ========================================================================
+ * Copyright 1988-2008 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	Amiga environment routines
  *
  * Author:	Mark Crispin
- *		Networks and Distributed Computing
- *		Computing & Communications
- *		University of Washington
- *		Administration Building, AG-44
+ *		UW Technology
  *		Seattle, WA  98195
- *		Internet: MRC@CAC.Washington.EDU
+ *		Internet: MRC@Washington.EDU
  *
  * Date:	1 August 1988
- * Last Edited:	16 June 2003
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 1988-2003 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	15 May 2008
  */
 
 #include <grp.h>
@@ -41,6 +46,8 @@ static char *sharedHome = NIL;	/* shared home directory */
 static short anonymous = NIL;	/* is anonymous */
 static short restrictBox = NIL;	/* is a restricted box */
 static short has_no_life = NIL;	/* is a cretin with no life */
+				/* block environment init */
+static short block_env_init = NIL;
 static short hideDotFiles = NIL;/* hide files whose names start with . */
 				/* advertise filesystem root */
 static short advertisetheworld = NIL;
@@ -117,8 +124,6 @@ void *env_parameters (long function,void *value)
 {
   void *ret = NIL;
   switch ((int) function) {
-  case SET_NAMESPACE:
-    fatal ("SET_NAMESPACE not permitted");
   case GET_NAMESPACE:
     ret = (void *) nslist;
     break;
@@ -282,6 +287,11 @@ void *env_parameters (long function,void *value)
   case GET_NETFSSTATBUG:
     ret = (void *) (netfsstatbug ? VOIDT : NIL);
     break;
+  case SET_BLOCKENVINIT:
+    block_env_init = value ? T : NIL;
+  case GET_BLOCKENVINIT:
+    ret = (void *) (block_env_init ? VOIDT : NIL);
+    break;
   case SET_BLOCKNOTIFY:
     mailblocknotify = (blocknotify_t) value;
   case GET_BLOCKNOTIFY:
@@ -368,49 +378,50 @@ void internal_date (char *date)
  */
 
 void server_init (char *server,char *service,char *sslservice,
-		  void *clkint,void *kodint,void *hupint,void *trmint)
+		  void *clkint,void *kodint,void *hupint,void *trmint,
+		  void *staint)
 {
-				/* only do this if for init call */
-  if (server && service && sslservice) {
-    long port;
-    struct servent *sv;
-    struct sockaddr_in sin;
-    int i = sizeof (struct sockaddr_in);
-    /* Don't use tcp_clienthost() since reverse DNS problems may slow down the
-     * greeting message and cause the client to time out.
-     */
-    char *client =
-      getpeername (0,(struct sockaddr *) &sin,(void *) &i) ? "UNKNOWN" :
-	((sin.sin_family == AF_INET) ? inet_ntoa (sin.sin_addr) : "NON-IPv4");
-				/* set server name in syslog */
-    openlog (server,LOG_PID,LOG_MAIL);
+  int onceonly = server && service && sslservice;
+  if (onceonly) {		/* set server name in syslog */
+    int mask;
+    openlog (myServerName = cpystr (server),LOG_PID,syslog_facility);
     fclose (stderr);		/* possibly save a process ID */
-    /* Use SSL if SSL service, or if server starts with "s" and not service */
-    if (((port = tcp_serverport ()) >= 0)) {
-      if ((sv = getservbyname (service,"tcp")) && (port == ntohs (sv->s_port)))
-	syslog (LOG_DEBUG,"%s service init from %s",service,client);
-      else if ((sv = getservbyname (sslservice,"tcp")) &&
-	       (port == ntohs (sv->s_port))) {
-	syslog (LOG_DEBUG,"%s SSL service init from %s",sslservice,client);
-	ssl_server_init (server);
-      }
-      else {			/* not service or SSL service port */
-	syslog (LOG_DEBUG,"port %ld service init from %s",port,client);
-	if (*server == 's') ssl_server_init (server);
-      }
-    }
-    switch (i = umask (022)) {	/* check old umask */
+
+    switch (mask = umask (022)){/* check old umask */
     case 0:			/* definitely unreasonable */
     case 022:			/* don't need to change it */
       break;
     default:			/* already was a reasonable value */
-      umask (i);		/* so change it back */
+      umask (mask);		/* so change it back */
     }
   }
-  signal (SIGALRM,clkint);	/* prepare for clock interrupt */
-  signal (SIGUSR2,kodint);	/* prepare for Kiss Of Death */
-  signal (SIGHUP,hupint);	/* prepare for hangup */
-  signal (SIGTERM,trmint);	/* prepare for termination */
+  arm_signal (SIGALRM,clkint);	/* prepare for clock interrupt */
+  arm_signal (SIGUSR2,kodint);	/* prepare for Kiss Of Death */
+  arm_signal (SIGHUP,hupint);	/* prepare for hangup */
+  arm_signal (SIGPIPE,hupint);	/* alternative hangup */
+  arm_signal (SIGTERM,trmint);	/* prepare for termination */
+				/* status dump */
+  if (staint) arm_signal (SIGUSR1,staint);
+  if (onceonly) {		/* set up network and maybe SSL */
+    long port;
+    struct servent *sv;
+    /* Use SSL if SSL service, or if server starts with "s" and not service */
+    if (((port = tcp_serverport ()) >= 0)) {
+      if ((sv = getservbyname (service,"tcp")) && (port == ntohs (sv->s_port)))
+	syslog (LOG_DEBUG,"%s service init from %s",service,tcp_clientaddr ());
+      else if ((sv = getservbyname (sslservice,"tcp")) &&
+	       (port == ntohs (sv->s_port))) {
+	syslog (LOG_DEBUG,"%s SSL service init from %s",sslservice,
+		tcp_clientaddr ());
+	ssl_server_init (server);
+      }
+      else {			/* not service or SSL service port */
+	syslog (LOG_DEBUG,"port %ld service init from %s",port,
+		tcp_clientaddr ());
+	if (*server == 's') ssl_server_init (server);
+      }
+    }
+  }
 }
 
 /* Wait for stdin input
@@ -437,12 +448,12 @@ long server_input_wait (long seconds)
  * Tries all-lowercase form of user name if given user name fails
  */
 
-static struct passwd *pwuser (char *user)
+static struct passwd *pwuser (unsigned char *user)
 {
-  char *s;
+  unsigned char *s;
   struct passwd *pw = getpwnam (user);
   if (!pw) {			/* failed, see if any uppercase characters */
-    for (s = user; *s && !isupper (*s); s++);
+    for (s = user; *s && ((*s < 'A') || (*s > 'Z')); s++);
     if (*s) {			/* yes, try all lowercase form */
       pw = getpwnam (s = lcase (cpystr (user)));
       fs_give ((void **) &s);
@@ -596,6 +607,8 @@ long env_init (char *user,char *home)
   struct passwd *pw;
   struct stat sbuf;
   char tmp[MAILTMPLEN];
+				/* don't init if blocked */
+  if (block_env_init) return LONGT;
   if (myUserName) fatal ("env_init called twice!");
 				/* set up user name */
   myUserName = cpystr (user ? user : ANONYMOUSUSER);
@@ -642,23 +655,27 @@ long env_init (char *user,char *home)
 
 char *myusername_full (unsigned long *flags)
 {
+  struct passwd *pw;
+  struct stat sbuf;
+  char *s;
+  unsigned long euid;
   char *ret = UNLOGGEDUSER;
-  if (!myUserName) {		/* get user name if don't have it yet */
-    struct passwd *pw;
-    struct stat sbuf;
-    unsigned long euid = geteuid ();
-    char *s = (char *) (euid ? getlogin () : NIL);
-				/* look up getlogin() user name or EUID */
-    if (!((s && *s && (strlen (s) < NETMAXUSER) && (pw = getpwnam (s)) &&
-	   (pw->pw_uid == euid)) || (pw = getpwuid (euid))))
-      fatal ("Unable to look up user name");
-				/* init environment if not root */
-    if (euid) env_init (pw->pw_name,((s = getenv ("HOME")) && *s &&
-				     (strlen (s) < NETMAXMBX) &&
-				     !stat (s,&sbuf) &&
-				     ((sbuf.st_mode & S_IFMT) == S_IFDIR)) ?
-			s : pw->pw_dir);
-    else ret = pw->pw_name;	/* in case UID 0 user is other than root */
+				/* no user name yet and not root? */
+  if (!myUserName && (euid = geteuid ())) {
+				/* yes, look up getlogin() user name or EUID */
+    if (((s = (char *) getlogin ()) && *s && (strlen (s) < NETMAXUSER) &&
+	 (pw = getpwnam (s)) && (pw->pw_uid == euid)) ||
+	(pw = getpwuid (euid))) {
+      if (block_env_init) {	/* don't env_init if blocked */
+	if (flags) *flags = MU_LOGGEDIN;
+	return pw->pw_name;
+      }
+      env_init (pw->pw_name,
+		((s = getenv ("HOME")) && *s && (strlen (s) < NETMAXMBX) &&
+		 !stat (s,&sbuf) && ((sbuf.st_mode & S_IFMT) == S_IFDIR)) ?
+		s : pw->pw_dir);
+    }
+    else fatal ("Unable to look up user name");
   }
   if (myUserName) {		/* logged in? */
     if (flags) *flags = anonymous ? MU_ANONYMOUS : MU_LOGGEDIN;
@@ -667,8 +684,6 @@ char *myusername_full (unsigned long *flags)
   else if (flags) *flags = MU_NOTLOGGEDIN;
   return ret;
 }
-
-
 /* Return my local host name
  * Returns: my local host name
  */
@@ -677,11 +692,8 @@ char *mylocalhost ()
 {
   char tmp[MAILTMPLEN];
   struct hostent *host_name;
-  if (!myLocalHost) {
-    gethostname(tmp,MAILTMPLEN);/* get local host name */
-    myLocalHost = cpystr ((host_name = gethostbyname (tmp)) ?
-			  host_name->h_name : tmp);
-  }
+  if (!myLocalHost) myLocalHost = cpystr (gethostname (tmp,MAILTMPLEN-1) ?
+					  "random-pc" : tcp_canonical (tmp));
   return myLocalHost;
 }
 
@@ -909,30 +921,41 @@ long dotlock_lock (char *file,DOTLOCK *base,int fd)
   case EACCES:			/* protection failure? */
 				/* make command pipes */
     if (!stat (LOCKPGM,&sb) && (pipe (pi) >= 0)) {
-      if (pipe (po) >= 0) {
-	if (!(j = fork ())) {	/* make inferior process */
+				/* if input pipes usable create output pipes */
+      if ((pi[0] < FD_SETSIZE) && (pi[1] < FD_SETSIZE) && (pipe (po) >= 0)) {
+				/* make sure output pipes are usable */
+	if ((po[0] >= FD_SETSIZE) || (po[1] >= FD_SETSIZE));
+				/* all is good, make inferior process */
+	else if (!(j = fork ())) {
 	  if (!fork ()) {	/* make grandchild so it's inherited by init */
-	    char *argv[4];
+	    long cf;		/* don't change caller vars in case vfork() */
+	    char *argv[4],arg[20];
 				/* prepare argument vector */
-	    sprintf (tmp,"%d",fd);
-	    argv[0] = LOCKPGM; argv[1] = tmp;
+	    sprintf (arg,"%d",fd);
+	    argv[0] = LOCKPGM; argv[1] = arg;
 	    argv[2] = file; argv[3] = NIL;
 				/* set parent's I/O to my O/I */
 	    dup2 (pi[1],1); dup2 (pi[1],2); dup2 (po[0],0);
 				/* close all unnecessary descriptors */
-	    for (j = max (20,max (max (pi[0],pi[1]),max(po[0],po[1])));
-		 j >= 3; --j) if (j != fd) close (j);
+	    for (cf = max (20,max (max (pi[0],pi[1]),max(po[0],po[1])));
+		 cf >= 3; --cf) if (cf != fd) close (cf);
 				/* be our own process group */
 	    setpgrp (0,getpid ());
 				/* now run it */
-	    execv (argv[0],argv);
+	    _exit (execv (argv[0],argv));
 	  }
 	  _exit (1);		/* child is done */
 	}
-	else if (j > 0) {	/* reap child; grandchild now owned by init */
-	  grim_pid_reap (j,NIL);
+	else if (j > 0) {	/* parent process */
+	  fd_set rfd;
+	  struct timeval tmo;
+	  FD_ZERO (&rfd);
+	  FD_SET (pi[0],&rfd);
+	  tmo.tv_sec = locktimeout * 60;
+	  grim_pid_reap (j,NIL);/* reap child; grandchild now owned by init */
 				/* read response from locking program */
-	  if ((read (pi[0],tmp,1) == 1) && (tmp[0] == '+')) {
+	  if (select (pi[0]+1,&rfd,0,0,&tmo) &&
+	      (read (pi[0],tmp,1) == 1) && (tmp[0] == '+')) {
 				/* success, record pipes */
 	    base->pipei = pi[0]; base->pipeo = po[1];
 				/* close child's side of the pipes */

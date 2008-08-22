@@ -1,21 +1,27 @@
+/* ========================================================================
+ * Copyright 1988-2008 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	IMAP4rev1 server
  *
  * Author:	Mark Crispin
- *		Networks and Distributed Computing
- *		Computing & Communications
+ *		UW Technology
  *		University of Washington
- *		Administration Building, AG-44
  *		Seattle, WA  98195
- *		Internet: MRC@CAC.Washington.EDU
+ *		Internet: MRC@Washington.EDU
  *
  * Date:	5 November 1990
- * Last Edited:	7 July 2003
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 1988-2003 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	3 March 2008
  */
 
 /* Parameter files */
@@ -25,8 +31,10 @@
 #include <errno.h>
 extern int errno;		/* just in case */
 #include <signal.h>
+#include <setjmp.h>
 #include <time.h>
 #include "c-client.h"
+#include "newsrc.h"
 #include <sys/stat.h>
 
 
@@ -38,7 +46,8 @@ extern int errno;		/* just in case */
 #define MINUTES *60
 
 #define LOGINTIMEOUT 3 MINUTES	/* not logged in autologout timer */
-#define TIMEOUT 30 MINUTES	/* RFC 2060 minimum autologout timer */
+#define TIMEOUT 30 MINUTES	/* RFC 3501 minimum autologout timer */
+#define INPUTTIMEOUT 5 MINUTES	/* timer for additional command input */
 #define ALERTTIMER 1 MINUTES	/* alert check timer */
 #define SHUTDOWNTIMER 1 MINUTES	/* shutdown dally timer */
 #define IDLETIMER 1 MINUTES	/* IDLE command poll timer */
@@ -46,7 +55,12 @@ extern int errno;		/* just in case */
 
 
 #define LITSTKLEN 20		/* length of literal stack */
-#define MAXCLIENTLIT 10000	/* maximum non-APPEND client literal size */
+#define MAXCLIENTLIT 10000	/* maximum non-APPEND client literal size
+				 * must be smaller than 4294967295
+				 */
+#define MAXAPPENDTXT 0x40000000	/* maximum APPEND literal size
+				 * must be smaller than 4294967295
+				 */
 #define CMDLEN 65536		/* size of command buffer */
 
 
@@ -75,7 +89,7 @@ typedef struct text_args {
 /* Append data */
 
 typedef struct append_data {
-  char *arg;			/* append argument pointer */
+  unsigned char *arg;		/* append argument pointer */
   char *flags;			/* message flags */
   char *date;			/* message date */
   char *msg;			/* message text */
@@ -90,7 +104,7 @@ typedef struct msg_data {
   unsigned long msgno;		/* message number */
   char *flags;			/* current flags */
   char *date;			/* current date */
-  STRING *message;		/* strintstruct of message */
+  STRING *message;		/* stringstruct of message */
 } MSGDATA;
 
 /* Function prototypes */
@@ -102,27 +116,34 @@ void msg_string_init (STRING *s,void *data,unsigned long size);
 char msg_string_next (STRING *s);
 void msg_string_setpos (STRING *s,unsigned long i);
 void new_flags (MAILSTREAM *stream);
+void settimeout (unsigned int i);
 void clkint (void);
 void kodint (void);
 void hupint (void);
 void trmint (void);
-void slurp (char *s,int n);
+void staint (void);
+char *sout (char *s,char *t);
+char *nout (char *s,unsigned long n,unsigned long base);
+void slurp (char *s,int n,unsigned long timeout);
 void inliteral (char *s,unsigned long n);
-char *flush (void);
-void inerror (char *reason);
-char *parse_astring (char **arg,unsigned long *i,char *del);
-char *snarf (char **arg);
-char *snarf_list (char **arg);
-STRINGLIST *parse_stringlist (char **s,int *list);
-long parse_criteria (SEARCHPGM *pgm,char **arg,unsigned long maxmsg,
-		     unsigned long depth);
-long parse_criterion (SEARCHPGM *pgm,char **arg,unsigned long msgmsg,
-		      unsigned long depth);
-long crit_date (unsigned short *date,char **arg);
-long crit_date_work (unsigned short *date,char **arg);
-long crit_set (SEARCHSET **set,char **arg,unsigned long maxima);
-long crit_number (unsigned long *number,char **arg);
-long crit_string (STRINGLIST **string,char **arg);
+unsigned char *flush (void);
+void ioerror (FILE *f,char *reason);
+unsigned char *parse_astring (unsigned char **arg,unsigned long *i,
+			      unsigned char *del);
+unsigned char *snarf (unsigned char **arg);
+unsigned char *snarf_base64 (unsigned char **arg);
+unsigned char *snarf_list (unsigned char **arg);
+STRINGLIST *parse_stringlist (unsigned char **s,int *list);
+unsigned long uidmax (MAILSTREAM *stream);
+long parse_criteria (SEARCHPGM *pgm,unsigned char **arg,unsigned long maxmsg,
+		     unsigned long maxuid,unsigned long depth);
+long parse_criterion (SEARCHPGM *pgm,unsigned char **arg,unsigned long msgmsg,
+		      unsigned long maxuid,unsigned long depth);
+long crit_date (unsigned short *date,unsigned char **arg);
+long crit_date_work (unsigned short *date,unsigned char **arg);
+long crit_set (SEARCHSET **set,unsigned char **arg,unsigned long maxima);
+long crit_number (unsigned long *number,unsigned char **arg);
+long crit_string (STRINGLIST **string,unsigned char **arg);
 
 void fetch (char *t,unsigned long uid);
 typedef void (*fetchfn_t) (unsigned long i,void *args);
@@ -138,8 +159,6 @@ void remember (unsigned long uid,char *id,SIZEDTEXT *st);
 void fetch_envelope (unsigned long i,void *args);
 void fetch_encoding (unsigned long i,void *args);
 void changed_flags (unsigned long i,int f);
-void fetch_rfc822_header_lines (unsigned long i,void *args);
-void fetch_rfc822_header_lines_not (unsigned long i,void *args);
 void fetch_flags (unsigned long i,void *args);
 void put_flag (int *c,char *s);
 void fetch_internaldate (unsigned long i,void *args);
@@ -153,32 +172,44 @@ void pbodystructure (BODY *body);
 void pbody (BODY *body);
 void pparam (PARAMETER *param);
 void paddr (ADDRESS *a);
+void pset (SEARCHSET **set);
 void pnum (unsigned long i);
 void pstring (char *s);
-void pnstring (char *label,SIZEDTEXT *st);
+void pnstring (char *s);
 void pastring (char *s);
-void pbodypartstring (unsigned long msgno,char *id,SIZEDTEXT *st,TEXTARGS *ta);
-void pstringorlist (STRINGLIST *s);
-void pstringlist (STRINGLIST *s);
-void psizedtext (SIZEDTEXT *s);
-void ptext (SIZEDTEXT *s);
+void psizedquoted (SIZEDTEXT *s);
+void psizedliteral (SIZEDTEXT *s,STRING *st);
+void psizedstring (SIZEDTEXT *s,STRING *st);
+void psizedastring (SIZEDTEXT *s);
+void pastringlist (STRINGLIST *s);
+void pnstringorlist (STRINGLIST *s);
+void pbodypartstring (unsigned long msgno,char *id,SIZEDTEXT *st,STRING *bs,
+		      TEXTARGS *ta);
+void ptext (SIZEDTEXT *s,STRING *st);
 void pthread (THREADNODE *thr);
 void pcapability (long flag);
 long nameok (char *ref,char *name);
 char *bboardname (char *cmd,char *name);
+long isnewsproxy (char *name);
+long newsproxypattern (char *ref,char *pat,char *pattern,long flag);
 char *imap_responder (void *challenge,unsigned long clen,unsigned long *rlen);
 long proxycopy (MAILSTREAM *stream,char *sequence,char *mailbox,long options);
 long proxy_append (MAILSTREAM *stream,void *data,char **flags,char **date,
 		   STRING **message);
 long append_msg (MAILSTREAM *stream,void *data,char **flags,char **date,
 		 STRING **message);
+void copyuid (MAILSTREAM *stream,char *mailbox,unsigned long uidvalidity,
+	      SEARCHSET *sourceset,SEARCHSET *destset);
+void appenduid (char *mailbox,unsigned long uidvalidity,SEARCHSET *set);
 char *referral (MAILSTREAM *stream,char *url,long code);
 void mm_list_work (char *what,int delimiter,char *name,long attributes);
 char *lasterror (void);
 
 /* Global storage */
 
-char *version = "2003.339";	/* version number of this server */
+char *version = "404";		/* edit number of this server */
+char *logout = "Logout";	/* syslogreason for logout */
+char *goodbye = NIL;		/* bye reason */
 time_t alerttime = 0;		/* time of last alert */
 time_t sysalerttime = 0;	/* time of last system alert */
 time_t useralerttime = 0;	/* time of last user alert */
@@ -192,44 +223,58 @@ int anonymous = 0;		/* non-zero if anonymous */
 int critical = NIL;		/* non-zero if in critical code */
 int quell_events = NIL;		/* non-zero if in FETCH response */
 int existsquelled = NIL;	/* non-zero if an EXISTS was quelled */
+int proxylist = NIL;		/* doing a proxy LIST */
 MAILSTREAM *stream = NIL;	/* mailbox stream */
 DRIVER *curdriver = NIL;	/* note current driver */
 MAILSTREAM *tstream = NIL;	/* temporary mailbox stream */
+unsigned int nflags = 0;	/* current number of keywords */
 unsigned long nmsgs =0xffffffff;/* last reported # of messages and recent */
 unsigned long recent = 0xffffffff;
-char *user = NIL;		/* user name */
-char *pass = NIL;		/* password */
-char cmdbuf[CMDLEN];		/* command buffer */
+char *nntpproxy = NIL;		/* NNTP proxy name */
+unsigned char *user = NIL;	/* user name */
+unsigned char *pass = NIL;	/* password */
+unsigned char *initial = NIL;	/* initial response */
+unsigned char cmdbuf[CMDLEN];	/* command buffer */
+char *status = "starting up";	/* server status */
 char *tag;			/* tag portion of command */
-char *cmd;			/* command portion of command */
-char *arg;			/* pointer to current argument of command */
+unsigned char *cmd;		/* command portion of command */
+unsigned char *arg;		/* pointer to current argument of command */
 char *lstwrn = NIL;		/* last warning message from c-client */
 char *lsterr = NIL;		/* last error message from c-client */
 char *lstref = NIL;		/* last referral from c-client */
 char *response = NIL;		/* command response */
+struct {
+  unsigned long size;		/* size of current LITERAL+ */
+  unsigned int ok : 1;		/* LITERAL+ in effect */
+} litplus;
 int litsp = 0;			/* literal stack pointer */
 char *litstk[LITSTKLEN];	/* stack to hold literals */
+unsigned long uidvalidity = 0;	/* last reported UID validity */
 unsigned long lastuid = 0;	/* last fetched uid */
 char *lastid = NIL;		/* last fetched body id for this message */
 char *lastsel = NIL;		/* last selected mailbox name */
 SIZEDTEXT lastst = {NIL,0};	/* last sizedtext */
+unsigned long cauidvalidity = 0;/* UIDVALIDITY for COPYUID/APPENDUID */
+SEARCHSET *csset = NIL;		/* COPYUID source set */
+SEARCHSET *caset = NIL;		/* COPYUID/APPENDUID destination set */
+jmp_buf jmpenv;			/* stack context for setjmp */
 
 
 /* Response texts which appear in multiple places */
 
-char *win = "%.80s OK %.80s completed\015\012";
-char *altwin = "%.80s OK %.900s\015\012";
-char *logwin = "%.80s OK Logged in\015\012";
-char *logwinalt = "%.80s OK %.900s, Logged in\015\012";
-char *lose = "%.80s NO %.80s failed: %.900s\015\012";
-char *altlose = "%.80s NO %.900s\015\012";
+char *win = "%.80s OK ";
+char *rowin = "%.80s OK [READ-ONLY] %.80s completed\015\012";
+char *rwwin = "%.80s OK [READ-WRITE] %.80s completed\015\012";
+char *lose = "%.80s NO ";
+char *logwin = "%.80s OK [";
 char *losetry = "%.80s NO [TRYCREATE] %.80s failed: %.900s\015\012";
 char *loseunknowncte = "%.80s NO [UNKNOWN-CTE] %.80s failed: %.900s\015\012";
+char *badcmd = "%.80s BAD Command unrecognized: %.80s\015\012";
 char *misarg = "%.80s BAD Missing or invalid argument to %.80s\015\012";
 char *badarg = "%.80s BAD Argument given to %.80s when none expected\015\012";
-char *badseq = "%.80s BAD Bogus sequence in %.80s\015\012";
+char *badseq = "%.80s BAD Bogus sequence in %.80s: %.80s\015\012";
 char *badatt = "%.80s BAD Bogus attribute list in %.80s\015\012";
-
+char *badbin = "%.80s BAD Syntax error in binary specifier\015\012";
 
 /* Message string driver for message stringstructs */
 
@@ -245,25 +290,47 @@ int main (int argc,char *argv[])
 {
   unsigned long i,uid;
   long f;
-  char *s,*t,*u,*v,tmp[MAILTMPLEN];
+  unsigned char *s,*t,*u,*v,tmp[MAILTMPLEN];
   struct stat sbuf;
+  logouthook_t lgoh;
+  int ret = 0;
   time_t autologouttime = 0;
-  char *pgmname = (argc && argv[0]) ?
+  char *pgmname;
+				/* if case we get borked immediately */
+  if (setjmp (jmpenv)) _exit (1);
+  pgmname = (argc && argv[0]) ?
     (((s = strrchr (argv[0],'/')) || (s = strrchr (argv[0],'\\'))) ?
-     s+1 : argv[0]) : "imapd";
+     (char *) s+1 : argv[0]) : "imapd";
 				/* set service name before linkage */
   mail_parameters (NIL,SET_SERVICENAME,(void *) "imap");
 #include "linkage.c"
   rfc822_date (tmp);		/* get date/time at startup */
 				/* initialize server */
-  server_init(pgmname,"imap","imaps",clkint,kodint,hupint,trmint);
+  server_init (pgmname,"imap","imaps",clkint,kodint,hupint,trmint,staint);
 				/* forbid automatic untagged expunge */
   mail_parameters (NIL,SET_EXPUNGEATPING,NIL);
 				/* arm proxy copy callback */
   mail_parameters (NIL,SET_MAILPROXYCOPY,(void *) proxycopy);
 				/* arm referral callback */
   mail_parameters (NIL,SET_IMAPREFERRAL,(void *) referral);
+				/* arm COPYUID callback */
+  mail_parameters (NIL,SET_COPYUID,(void *) copyuid);
+				/* arm APPENDUID callback */
+  mail_parameters (NIL,SET_APPENDUID,(void *) appenduid);
+
   if (stat (SHUTDOWNFILE,&sbuf)) {
+    char proxy[MAILTMPLEN];
+    FILE *nntp = fopen (NNTPFILE,"r");
+    if (nntp) {			/* desire NNTP proxy? */
+      if (fgets (proxy,MAILTMPLEN,nntp)) {
+				/* remove newline and set NNTP proxy */
+	if (s = strchr (proxy,'\n')) *s = '\0';
+	nntpproxy = cpystr (proxy);
+				/* disable the news driver */
+	mail_parameters (NIL,DISABLE_DRIVER,"news");
+      }
+      fclose (nntp);		/* done reading proxy name */
+    }
     s = myusername_full (&i);	/* get user name and flags */
     switch (i) {
     case MU_NOTLOGGEDIN:
@@ -296,6 +363,8 @@ int main (int argc,char *argv[])
   }
   PSOUT (tcp_serverhost ());
   PSOUT (" IMAP4rev1 ");
+  PSOUT (CCLIENTVERSION);
+  PBOUT ('.');
   PSOUT (version);
   PSOUT (" at ");
   PSOUT (tmp);
@@ -311,8 +380,16 @@ int main (int argc,char *argv[])
     break;
   }
 
-  while (state != LOGOUT) {	/* command processing loop */
-    slurp (cmdbuf,CMDLEN);	/* slurp command */
+  if (setjmp (jmpenv)) {	/* die if a signal handler say so */
+				/* in case we get borked now */
+    if (setjmp (jmpenv)) _exit (1);
+				/* need to close stream gracefully? */
+    if (stream && !stream->lock && (stream->dtb->flags & DR_XPOINT))
+      stream = mail_close (stream);
+    ret = 1;			/* set exit status */
+  }
+  else while (state != LOGOUT) {/* command processing loop */
+    slurp (cmdbuf,CMDLEN,TIMEOUT);
 				/* no more last error or literal */
     if (lstwrn) fs_give ((void **) &lstwrn);
     if (lsterr) fs_give ((void **) &lsterr);
@@ -326,7 +403,7 @@ int main (int argc,char *argv[])
       if (state == LOGIN)	/* error if NLI */
 	syslog (LOG_INFO,"Line too long before authentication host=%.80s",
 		tcp_clienthost ());
-      sprintf (tmp,response,t ? cmdbuf : "*");
+      sprintf (tmp,response,t ? (char *) cmdbuf : "*");
       PSOUT (tmp);
     }
     else if (!(tag = strtok (cmdbuf," \015\012"))) {
@@ -336,7 +413,7 @@ int main (int argc,char *argv[])
       PSOUT ("* BAD Null command\015\012");
     }
     else if (strlen (tag) > 50) PSOUT ("* BAD Excessively long tag\015\012");
-    else if (!(cmd = strtok (NIL," \015\012"))) {
+    else if (!(s = strtok (NIL," \015\012"))) {
       if (state == LOGIN)	/* error if NLI */
 	syslog (LOG_INFO,"Missing command before authentication host=%.80s",
 		tcp_clienthost ());
@@ -346,16 +423,27 @@ int main (int argc,char *argv[])
     else {			/* parse command */
       response = win;		/* set default response */
       finding = NIL;		/* no longer FINDing */
-      ucase (cmd);		/* canonicalize command case */
+      ucase (s);		/* canonicalize command case */
 				/* UID command? */
-      if (!strcmp (cmd,"UID") && strtok (NIL," \015\012")) {
+      if (!strcmp (s,"UID") && strtok (NIL," \015\012")) {
 	uid = T;		/* a UID command */
-	cmd[3] = ' ';		/* restore the space delimiter */
-	ucase (cmd);		/* make sure command all uppercase */
+	s[3] = ' ';		/* restore the space delimiter */
+	ucase (s);		/* make sure command all uppercase */
       }
       else uid = NIL;		/* not a UID command */
-				/* snarf argument */
-      arg = strtok (NIL,"\015\012");
+				/* flush previous saved command */
+      if (cmd) fs_give ((void **) &cmd);
+      cmd = cpystr (s);		/* save current command */
+				/* snarf argument, see if possible litplus */
+      if ((arg = strtok (NIL,"\015\012")) && ((i = strlen (arg)) > 3) &&
+	  (arg[i - 1] == '}') && (arg[i - 2] == '+') && isdigit (arg[i - 3])) {
+				/* back over possible count */
+	for (i -= 4; i && isdigit (arg[i]); i--);
+	if (arg[i] == '{') {	/* found a literal? */
+	  litplus.ok = T;	/* yes, note LITERAL+ in effect, set size */
+	  litplus.size = strtoul (arg + i + 1,NIL,10);
+	}
+      }
 
 				/* these commands always valid */
       if (!strcmp (cmd,"NOOP")) {
@@ -366,7 +454,7 @@ int main (int argc,char *argv[])
       else if (!strcmp (cmd,"LOGOUT")) {
 	if (arg) response = badarg;
 	else {			/* time to say farewell */
-	  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
+	  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
 	  if (lastsel) fs_give ((void **) &lastsel);
 	  if (state == OPEN) stream = mail_close (stream);
 	  state = LOGOUT;
@@ -400,9 +488,12 @@ int main (int argc,char *argv[])
 	if (!strcmp (cmd,"AUTHENTICATE")) {
 	  if (user) fs_give ((void **) &user);
 	  if (pass) fs_give ((void **) &pass);
-	  cancelled = NIL;
-				/* single argument */
+	  initial = NIL;	/* no initial argument */
+	  cancelled = NIL;	/* not cancelled */
+				/* mandatory first argument */
 	  if (!(s = snarf (&arg))) response = misarg;
+	  else if (arg && !(initial = snarf_base64 (&arg)))
+	    response = misarg;	/* optional second argument */
 	  else if (arg) response = badarg;
 	  else if (!strcmp (ucase (s),"ANONYMOUS") && !stat (ANOFILE,&sbuf)) {
 	    if (!(s = imap_responder ("",0,NIL)))
@@ -413,8 +504,7 @@ int main (int argc,char *argv[])
 	      pass = cpystr ("*");
 	      state = SELECT;	/* make select */
 	      alerttime = 0;	/* force alert */
-				/* return logged-in capabilities */
-	      response = (response == altwin) ? logwinalt : logwin;
+	      response = logwin;/* return logged-in capabilities */
 	      syslog (LOG_INFO,"Authenticated anonymous=%.80s host=%.80s",s,
 		      tcp_clienthost ());
 	      fs_give ((void **) &s);
@@ -425,17 +515,39 @@ int main (int argc,char *argv[])
 	    pass = cpystr ("*");
 	    state = SELECT;	/* make select */
 	    alerttime = 0;	/* force alert */
-				/* return logged-in capabilities */
-	    response = (response == altwin) ? logwinalt : logwin;
-	    syslog (LOG_INFO,"Authenticated user=%.80s host=%.80s",
-		    user,tcp_clienthost ());
+	    response = logwin;	/* return logged-in capabilities */
+	    syslog (LOG_INFO,"Authenticated user=%.80s host=%.80s mech=%.80s",
+		    user,tcp_clienthost (),s);
 	  }
+
 	  else {
-	    lsterr = cpystr (s);
-	    response = cancelled ? "%.80s BAD %.80s %.80s cancelled\015\012" :
-	      "%.80s NO %.80s %.80s failed\015\012";
-	    syslog (LOG_INFO,"AUTHENTICATE %.80s failure host=%.80s",s,
-		    tcp_clienthost ());
+	    AUTHENTICATOR *auth = mail_lookup_auth (1);
+	    char *msg = (char *) fs_get (strlen (cmd) + strlen (s) + 2);
+	    sprintf (msg,"%s %s",cmd,s);
+	    fs_give ((void **) &cmd);
+	    cmd = msg;
+	    for (i = !mail_parameters (NIL,GET_DISABLEPLAINTEXT,NIL);
+		 auth && compare_cstring (s,auth->name); auth = auth->next);
+	    /* Failed authentication when hidden looks like invalid command.
+	     * This is intentional but confused me when I was debugging.
+	     */
+	    if (auth && auth->server && !(auth->flags & AU_DISABLE) &&
+		!(auth->flags & AU_HIDE) && (i || (auth->flags & AU_SECURE))) {
+	      response = lose;
+	      if (cancelled) {
+		if (lsterr) fs_give ((void **) &lsterr);
+		lsterr = cpystr ("cancelled by user");
+	      }
+	      if (!lsterr)	/* catch-all */
+		lsterr = cpystr ("Invalid authentication credentials");
+	      syslog (LOG_INFO,"AUTHENTICATE %.80s failure host=%.80s",s,
+		      tcp_clienthost ());
+	    }
+	    else {
+	      response = badcmd;
+	      syslog (LOG_INFO,"AUTHENTICATE %.80s invalid host=%.80s",s,
+		      tcp_clienthost ());
+	    }
 	  }
 	}
 
@@ -448,22 +560,13 @@ int main (int argc,char *argv[])
 		(pass = cpystr (snarf (&arg))))) response = misarg;
 	  else if (arg) response = badarg;
 				/* see if we allow anonymous */
-	  else if (((user[0] == 'a') || (user[0] == 'A')) &&
-		   ((user[1] == 'n') || (user[1] == 'N')) &&
-		   ((user[2] == 'o') || (user[2] == 'O')) &&
-		   ((user[3] == 'n') || (user[3] == 'N')) &&
-		   ((user[4] == 'y') || (user[4] == 'Y')) &&
-		   ((user[5] == 'm') || (user[5] == 'M')) &&
-		   ((user[6] == 'o') || (user[6] == 'O')) &&
-		   ((user[7] == 'u') || (user[7] == 'U')) &&
-		   ((user[8] == 's') || (user[8] == 'S')) && !user[9] &&
+	  else if (!compare_cstring (user,"ANONYMOUS") &&
 		   !stat (ANOFILE,&sbuf) && anonymous_login (argc,argv)) {
 	    anonymous = T;	/* note we are anonymous */
 	    ucase (user);	/* make all uppercase for consistency */
 	    state = SELECT;	/* make select */
 	    alerttime = 0;	/* force alert */
-				/* return logged-in capabilities */
-	    response = (response == altwin) ? logwinalt : logwin;
+	    response = logwin;	/* return logged-in capabilities */
 	    syslog (LOG_INFO,"Login anonymous=%.80s host=%.80s",pass,
 		    tcp_clienthost ());
 	  }
@@ -473,12 +576,14 @@ int main (int argc,char *argv[])
 	    if (server_login (user,pass,s,argc,argv)) {
 	      state = SELECT;	/* make select */
 	      alerttime = 0;	/* force alert */
-				/* return logged-in capabilities */
-	      response = (response == altwin) ? logwinalt : logwin;
+	      response = logwin;/* return logged-in capabilities */
 	      syslog (LOG_INFO,"Login user=%.80s host=%.80s",user,
 		      tcp_clienthost ());
 	    }
-	    else response = "%.80s NO %.80s failed\015\012";
+	    else {
+	      response = lose;
+	      if (!lsterr) lsterr = cpystr ("Invalid login credentials");
+	    }
 	  }
 	}
 				/* start TLS security */
@@ -486,8 +591,7 @@ int main (int argc,char *argv[])
 	  if (arg) response = badarg;
 	  else if (lsterr = ssl_start_tls (pgmname)) response = lose;
 	}
-	else response =
-	  "%.80s BAD Command unrecognized/login please: %.80s\015\012";
+	else response = badcmd;
 	break;
 
       case OPEN:		/* valid only when mailbox open */
@@ -502,8 +606,11 @@ int main (int argc,char *argv[])
 				/* store mailbox attributes */
 	else if (!strcmp (cmd,"STORE") || !strcmp (cmd,"UID STORE")) {
 				/* must have three arguments */
-	  if (arg && (s = strtok (arg," ")) && (v = strtok (NIL," ")) &&
-	      (t = strtok (NIL,"\015\012"))) {
+	  if (!(arg && (s = strtok (arg," ")) && (v = strtok (NIL," ")) &&
+		(t = strtok (NIL,"\015\012")))) response = misarg;
+	  else if (!(uid ? mail_uid_sequence (stream,s) :
+		     mail_sequence (stream,s))) response = badseq;
+	  else {
 	    f = ST_SET | (uid ? ST_UID : NIL)|((v[5]&&v[6]) ? ST_SILENT : NIL);
 	    if (!strcmp (ucase (v),"FLAGS") || !strcmp (v,"FLAGS.SILENT")) {
 	      strcpy (tmp,"\\Answered \\Flagged \\Deleted \\Draft \\Seen");
@@ -532,7 +639,6 @@ int main (int argc,char *argv[])
 	      for (i = 1; i <= nmsgs; i++) if (mail_elt(stream,i)->sequence)
 		mail_elt (stream,i)->spare2 = (f & ST_SILENT) ? NIL : T;
 	  }
-	  else response = misarg;
 	}
 
 				/* check for new mail */
@@ -546,11 +652,12 @@ int main (int argc,char *argv[])
 	  }
 	}
 				/* expunge deleted messages */
-	else if (!(anonymous || strcmp (cmd,"EXPUNGE"))) {
-				/* no arguments */
-	  if (arg) response = badarg;
-	  else {
-	    mail_expunge (stream);
+	else if (!(anonymous || (strcmp (cmd,"EXPUNGE") &&
+				 strcmp (cmd,"UID EXPUNGE")))) {
+	  if (uid && !arg) response = misarg;
+	  else if (!uid && arg) response = badarg;
+	  else {		/* expunge deleted or specified UIDs */
+	    mail_expunge_full (stream,arg,arg ? EX_UID : NIL);
 				/* remember last checkpoint */
 	    lastcheck = time (0);
 	  }
@@ -560,7 +667,8 @@ int main (int argc,char *argv[])
 				/* no arguments */
 	  if (arg) response = badarg;
 	  else {
-	    lastuid = 0;	/* no last uid */
+				/* no last uid */
+	    uidvalidity = lastuid = 0;
 	    if (lastsel) fs_give ((void **) &lastsel);
 	    if (lastid) fs_give ((void **) &lastid);
 	    if (lastst.data) fs_give ((void **) &lastst.data);
@@ -576,7 +684,12 @@ int main (int argc,char *argv[])
 	  if (!(arg && (s = strtok (arg," ")) && (arg = strtok(NIL,"\015\012"))
 		&& (t = snarf (&arg)))) response = misarg;
 	  else if (arg) response = badarg;
-	  else if (!nmsgs) response = "%.80s NO Mailbox is empty\015\012";
+	  else if (!nmsgs) {
+	    response = lose;
+	    if (!lsterr) lsterr = cpystr ("Mailbox is empty");
+	  }
+	  else if (!(uid ? mail_uid_sequence (stream,s) :
+		     mail_sequence (stream,s))) response = badseq;
 				/* try copy */
 	  else if (!mail_copy_full (stream,s,t,uid ? CP_UID : NIL)) {
 	    response = trycreate ? losetry : lose;
@@ -622,8 +735,8 @@ int main (int argc,char *argv[])
 	      else if (!((t = snarf (&arg)) && (cs = cpystr (t)) && arg &&
 			 *arg)) response = misarg;
 				/* parse search criteria  */
-	      else if (!parse_criteria(spg = mail_newsearchpgm(),&arg,nmsgs,0))
-		response = badatt;
+	      else if (!parse_criteria (spg = mail_newsearchpgm (),&arg,nmsgs,
+					uidmax (stream),0)) response = badatt;
 	      else if (arg && *arg) response = badarg;
 	      else if (slst = mail_sort (stream,cs,spg,pgm,uid ? SE_UID:NIL)) {
 		PSOUT ("* SORT");
@@ -650,8 +763,8 @@ int main (int argc,char *argv[])
 	  if (!(arg && (s = strtok (arg," ")) && (cs = strtok (NIL," ")) &&
 		(cs = cpystr (cs)) && (arg = strtok (NIL,"\015\012"))))
 	    response = misarg;
-	  else if (!parse_criteria (spg = mail_newsearchpgm (),&arg,nmsgs,0))
-	    response = badatt;	/* bad thread attribute */
+	  else if (!parse_criteria (spg = mail_newsearchpgm (),&arg,nmsgs,
+				    uidmax (stream),0)) response = badatt;
 	  else if (arg && *arg) response = badarg;
 	  else {
 	    if (thr = mail_thread (stream,s,cs,spg,uid ? SE_UID : NIL)) {
@@ -668,45 +781,154 @@ int main (int argc,char *argv[])
 
 				/* search mailbox */
         else if (!strcmp (cmd,"SEARCH") || !strcmp (cmd,"UID SEARCH")) {
+	  int retval = NIL;
 	  char *charset = NIL;
 	  SEARCHPGM *pgm;
-				/* one or more arguments required */
-	  if (!arg) response = misarg;
+	  response = misarg;	/* assume failure */
+	  if (!arg) break;	/* one or more arguments required */
+	  if (((arg[0] == 'R') || (arg[0] == 'r')) &&
+	      ((arg[1] == 'E') || (arg[1] == 'e')) &&
+	      ((arg[2] == 'T') || (arg[2] == 't')) &&
+	      ((arg[3] == 'U') || (arg[3] == 'u')) &&
+	      ((arg[4] == 'R') || (arg[4] == 'r')) &&
+	      ((arg[5] == 'N') || (arg[5] == 'n')) &&
+	      (arg[6] == ' ') && (arg[7] == '(')) {
+	    retval = 0x4000;	/* return is specified */
+	    for (arg += 8; *arg && (*arg != ')'); ) {
+	      if (((arg[0] == 'M') || (arg[0] == 'm')) &&
+		  ((arg[1] == 'I') || (arg[1] == 'i')) &&
+		  ((arg[2] == 'N') || (arg[2] == 'n')) &&
+		  ((arg[3] == ' ') || (arg[3] == ')'))) {
+		retval |= 0x1;
+		arg += 3;
+	      }
+	      else if (((arg[0] == 'M') || (arg[0] == 'm')) &&
+		       ((arg[1] == 'A') || (arg[1] == 'a')) &&
+		       ((arg[2] == 'X') || (arg[2] == 'x')) &&
+		       ((arg[3] == ' ') || (arg[3] == ')'))) {
+		retval |= 0x2;
+		arg += 3;
+	      }
+	      else if (((arg[0] == 'A') || (arg[0] == 'a')) &&
+		       ((arg[1] == 'L') || (arg[1] == 'l')) &&
+		       ((arg[2] == 'L') || (arg[2] == 'l')) &&
+		       ((arg[3] == ' ') || (arg[3] == ')'))) {
+		retval |= 0x4;
+		arg += 3;
+	      }
+	      else if (((arg[0] == 'C') || (arg[0] == 'c')) &&
+		       ((arg[1] == 'O') || (arg[1] == 'o')) &&
+		       ((arg[2] == 'U') || (arg[2] == 'u')) &&
+		       ((arg[3] == 'N') || (arg[3] == 'n')) &&
+		       ((arg[4] == 'T') || (arg[4] == 't')) &&
+		       ((arg[5] == ' ') || (arg[5] == ')'))) {
+		retval |= 0x10;
+		arg += 5;
+	      }
+	      else break;	/* unknown return value */
+				/* more return values to come */
+	      if ((*arg == ' ') && (arg[1] != ')')) ++arg;
+	    }
+				/* RETURN list must be properly terminated */
+	    if ((*arg++ != ')') || (*arg++ != ' ')) break;
+				/* default return value is ALL */
+	    if (!(retval &= 0x3fff)) retval = 0x4;
+	  }
+
 				/* character set specified? */
-	  else if ((arg[0] == 'C' || arg[0] == 'c') &&
-		   (arg[1] == 'H' || arg[1] == 'h') &&
-		   (arg[2] == 'A' || arg[2] == 'a') &&
-		   (arg[3] == 'R' || arg[3] == 'r') &&
-		   (arg[4] == 'S' || arg[4] == 's') &&
-		   (arg[5] == 'E' || arg[5] == 'e') &&
-		   (arg[6] == 'T' || arg[6] == 't') &&
-		   (arg[7] == ' ' || arg[7] == ' ')) {
+	  if (((arg[0] == 'C') || (arg[0] == 'c')) &&
+	      ((arg[1] == 'H') || (arg[1] == 'h')) &&
+	      ((arg[2] == 'A') || (arg[2] == 'a')) &&
+	      ((arg[3] == 'R') || (arg[3] == 'r')) &&
+	      ((arg[4] == 'S') || (arg[4] == 's')) &&
+	      ((arg[5] == 'E') || (arg[5] == 'e')) &&
+	      ((arg[6] == 'T') || (arg[6] == 't')) &&
+	      (arg[7] == ' ')) {
 	    arg += 8;		/* yes, skip over CHARSET token */
 	    if (s = snarf (&arg)) charset = cpystr (s);
-	    else {		/* missing character set */
-	      response = misarg;
-	      break;
-	    }
+	    else break;		/* missing character set */
 	  }
 				/* must have arguments here */
-	  if (!(arg && *arg)) response = misarg;
-	  else if (parse_criteria (pgm = mail_newsearchpgm (),&arg,nmsgs,0) &&
-		   !*arg) {
+	  if (!(arg && *arg)) break;
+	  if (parse_criteria (pgm = mail_newsearchpgm (),&arg,nmsgs,
+			      uidmax (stream),0) && !*arg) {
+	    response = win;	/* looks good, try the search */
 	    mail_search_full (stream,charset,pgm,SE_FREE);
-	    if (response == win || response == altwin) {
-				/* output search results */
-	      PSOUT ("* SEARCH");
-	      for (i = 1; i <= nmsgs; ++i) if (mail_elt (stream,i)->searched) {
-		PBOUT (' ');
-		pnum (uid ? mail_uid (stream,i) : i);
+				/* output search results if success */
+	    if (response == win) {
+	      if (retval) {	/* ESEARCH desired */
+		PSOUT ("* ESEARCH (TAG ");
+		pstring (tag);
+		PBOUT (')');
+		if (uid) PSOUT (" UID");
+				/* wants MIN */
+		if (retval & 0x1) {
+		  for (i = 1; (i <= nmsgs) && !mail_elt (stream,i)->searched;
+		       ++i);
+		  if (i <= nmsgs) {
+		    PSOUT (" MIN ");
+		    pnum (uid ? mail_uid (stream,i) : i);
+		  }
+		}
+				/* wants MAX */
+		if (retval & 0x2) {
+		  for (i = nmsgs; i && !mail_elt (stream,i)->searched; --i);
+		  if (i) {
+		    PSOUT (" MAX ");
+		    pnum (uid ? mail_uid (stream,i) : i);
+		  }
+		}
+
+				/* wants ALL */
+		if (retval & 0x4) {
+		  unsigned long j;
+				/* find first match */
+		  for (i = 1; (i <= nmsgs) && !mail_elt (stream,i)->searched;
+		       ++i);
+		  if (i <= nmsgs) {
+		    PSOUT (" ALL ");
+		    pnum (uid ? mail_uid (stream,i) : i);
+		    j = i;	/* last message output */
+		  }
+		  while (++i <= nmsgs) {
+		    if (mail_elt (stream,i)->searched) {
+		      while ((++i <= nmsgs) && mail_elt (stream,i)->searched);
+				/* previous message is end of range */
+		      if (j != --i) {
+			PBOUT (':');
+			pnum (uid ? mail_uid (stream,i) : i);
+		      }
+		    }
+				/* search for next match */
+		    while ((++i <= nmsgs) && !mail_elt (stream,i)->searched);
+		    if (i <= nmsgs) {
+		      PBOUT (',');
+		      pnum (uid ? mail_uid (stream,i) : i);
+		      j = i;	/* last message output */
+		    }
+		  }
+		}
+				/* wants COUNT */
+		if (retval & 0x10) {
+		  unsigned long j;
+		  for (i = 1, j = 0; i <= nmsgs; ++i)
+		    if (mail_elt (stream,i)->searched) ++j;
+		  PSOUT (" COUNT ");
+		  pnum (j);
+		}
+	      }
+	      else {		/* standard search */
+		PSOUT ("* SEARCH");
+		for (i = 1; i <= nmsgs; ++i)
+		  if (mail_elt (stream,i)->searched) {
+		    PBOUT (' ');
+		    pnum (uid ? mail_uid (stream,i) : i);
+		  }
 	      }
 	      CRLF;
 	    }
 	  }
-	  else {
-	    response = "%.80s BAD Bogus criteria list in %.80s\015\012";
-	    mail_free_searchpgm (&pgm);
-	  }
+	  else mail_free_searchpgm (&pgm);
 	  if (charset) fs_give ((void **) &charset);
 	}
 
@@ -723,15 +945,15 @@ int main (int argc,char *argv[])
 	    f = (anonymous ? OP_ANONYMOUS + OP_READONLY : NIL) |
 	      ((*cmd == 'S') ? NIL : OP_READONLY);
 	    curdriver = NIL;	/* no drivers known */
-	    lastuid = 0;	/* no last uid */
+				/* no last uid */
+	    uidvalidity = lastuid = 0;
 	    if (lastid) fs_give ((void **) &lastid);
 	    if (lastst.data) fs_give ((void **) &lastst.data);
-				/* force update */
+	    nflags = 0;		/* force update */
 	    nmsgs = recent = 0xffffffff;
-
 	    if (factory && !strcmp (factory->name,"phile") &&
 		(stream = mail_open (stream,s,f | OP_SILENT)) &&
-		((response == win) || (response == altwin))) {
+		(response == win)) {
 	      BODY *b;
 				/* see if proxy open */
 	      if ((mail_elt (stream,1)->rfc822_size < 400) &&
@@ -744,8 +966,7 @@ int main (int argc,char *argv[])
 		if (t = strpbrk (tmp,"\r\n")) *t = '\0';
 				/* try to open proxy */
 		if ((tstream = mail_open (NIL,tmp,f | OP_SILENT)) &&
-		    ((response == win) || (response == altwin)) &&
-		    tstream->nmsgs) {
+		    (response == win) && tstream->nmsgs) {
 		  s = tmp;	/* got it, close the link */
 		  mail_close (stream);
 		  stream = tstream;
@@ -756,20 +977,23 @@ int main (int argc,char *argv[])
 	      stream->silent = NIL;
 	      mm_exists (stream,stream->nmsgs);
 	    }
+	    else if (!factory && isnewsproxy (s)) {
+	      sprintf (tmp,"{%.300s/nntp}%.300s",nntpproxy,(char *) s+6);
+	      stream = mail_open (stream,tmp,f);
+	    }
 				/* open stream normally then */
 	    else stream = mail_open (stream,s,f);
-	    if (stream && ((response == win) || (response == altwin))) {
+
+	    if (stream && (response == win)) {
 	      state = OPEN;	/* note state open */
 	      if (lastsel) fs_give ((void **) &lastsel);
 				/* canonicalize INBOX */
 	      if (!compare_cstring (s,"#MHINBOX"))
 		lastsel = cpystr ("#MHINBOX");
 	      else lastsel = cpystr (compare_cstring (s,"INBOX") ?
-				     s : "INBOX");
+				     (char *) s : "INBOX");
 				/* note readonly/readwrite */
-	      response = stream->rdonly ?
-		"%.80s OK [READ-ONLY] %.80s completed\015\012" :
-		  "%.80s OK [READ-WRITE] %.80s completed\015\012";
+	      response = stream->rdonly ? rowin : rwwin;
 	      if (anonymous)
 		syslog (LOG_INFO,"Anonymous select of %.80s host=%.80s",
 			stream->mailbox,tcp_clienthost ());
@@ -796,8 +1020,7 @@ int main (int argc,char *argv[])
 	    ad.message = &st;	/* pointer to stringstruct to use */
 	    trycreate = NIL;	/* no trycreate status */
 	    if (!mail_append_multiple (NIL,s,append_msg,(void *) &ad)) {
-	      if (response == win || response == altwin)
-		response = trycreate ? losetry : lose;
+	      if (response == win) response = trycreate ? losetry : lose;
 				/* this can happen with #driver. hack */
 	      if (!lsterr) lsterr = cpystr ("No such destination mailbox");
 	    }
@@ -817,7 +1040,14 @@ int main (int argc,char *argv[])
 	    response = misarg;
 	  else if (arg) response = badarg;
 				/* make sure anonymous can't do bad things */
-	  else if (nameok (s,t)) mail_list (NIL,s,t);
+	  else if (nameok (s,t)) {
+	    if (newsproxypattern (s,t,tmp,LONGT)) {
+	      proxylist = T;
+	      mail_list (NIL,"",tmp);
+	      proxylist = NIL;
+	    }
+	    else mail_list (NIL,s,t);
+	  }
 	  if (stream)		/* allow untagged EXPUNGE */
 	    mail_parameters (stream,SET_ONETIMEEXPUNGEATPING,(void *) stream);
 	}
@@ -828,7 +1058,11 @@ int main (int argc,char *argv[])
 		(u = snarf (&arg)))) response = misarg;
 	  else if (arg) response = badarg;
 				/* make sure anonymous can't do bad things */
-	  else if (nameok (s,t)) mail_scan (NIL,s,t,u);
+	  else if (nameok (s,t)) {
+	    if (newsproxypattern (s,t,tmp,NIL))
+	      mm_log ("SCAN not permitted for news",ERROR);
+	    else mail_scan (NIL,s,t,u);
+	  }
 	  if (stream)		/* allow untagged EXPUNGE */
 	    mail_parameters (stream,SET_ONETIMEEXPUNGEATPING,(void *) stream);
 	}
@@ -839,32 +1073,36 @@ int main (int argc,char *argv[])
 	    response = misarg;
 	  else if (arg) response = badarg;
 				/* make sure anonymous can't do bad things */
-	  else if (nameok (s,t)) mail_lsub (NIL,s,t);
+	  else if (nameok (s,t)) {
+	    if (newsproxypattern (s,t,tmp,NIL)) newsrc_lsub (NIL,tmp);
+	    else mail_lsub (NIL,s,t);
+	  }
 	  if (stream)		/* allow untagged EXPUNGE */
 	    mail_parameters (stream,SET_ONETIMEEXPUNGEATPING,(void *) stream);
 	}
 
 				/* find mailboxes */
 	else if (!strcmp (cmd,"FIND")) {
-	  response = "%.80s OK FIND %.80s completed\015\012";
 				/* get subcommand and true argument */
-	  if (!(arg && (s = strtok (arg," \015\012")) && (cmd = ucase (s)) &&
+	  if (!(arg && (s = strtok (arg," \015\012")) && (s == cmd + 5) &&
+		(cmd[4] = ' ') && ucase (s) &&
 		(arg = strtok (NIL,"\015\012")) && (s = snarf_list (&arg))))
 	    response = misarg;	/* missing required argument */
 	  else if (arg) response = badarg;
 				/* punt on single-char wildcards */
 	  else if (strpbrk (s,"%?")) response =
-	    "%.80s NO FIND %.80s ? or %% wildcard not supported\015\012";
+	    "%.80s NO IMAP2 ? and %% wildcards not supported: %.80s\015\012";
 	  else if (nameok (NIL,s)) {
 	    finding = T;	/* note that we are FINDing */
 				/* dispatch based on type */
-	    if (!strcmp (cmd,"MAILBOXES") && !anonymous) mail_lsub (NIL,NIL,s);
-	    else if (!strcmp (cmd,"ALL.MAILBOXES")) {
+	    if (!strcmp (cmd,"FIND MAILBOXES") && !anonymous)
+	      mail_lsub (NIL,NIL,s);
+	    else if (!strcmp (cmd,"FIND ALL.MAILBOXES")) {
 				/* convert * to % for compatible behavior */
 	      for (t = s; *t; t++) if (*t == '*') *t = '%';
 	      mail_list (NIL,NIL,s);
 	    }
-	    else response="%.80s BAD Command unrecognized: FIND %.80s\015\012";
+	    else response = badcmd;
 	  }
 	  if (stream)		/* allow untagged EXPUNGE */
 	    mail_parameters (stream,SET_ONETIMEEXPUNGEATPING,(void *) stream);
@@ -901,12 +1139,10 @@ int main (int argc,char *argv[])
 	    else if (lastsel && (!strcmp (s,lastsel) ||
 				 (stream && !strcmp (s,stream->mailbox)))) {
 	      unsigned long unseen;
-#ifndef ENTOURAGE_BRAIN_DAMAGE
 				/* snarl at cretins which do this */
 	      PSOUT ("* NO CLIENT BUG DETECTED: STATUS on selected mailbox: ");
 	      PSOUT (s);
 	      CRLF;
-#endif
 	      tmp[0] = ' '; tmp[1] = '\0';
 	      if (f & SA_MESSAGES)
 		sprintf (tmp + strlen (tmp)," MESSAGES %lu",stream->nmsgs);
@@ -928,6 +1164,10 @@ int main (int argc,char *argv[])
 	      pastring (s);
 	      PSOUT (tmp);
 	    }
+	    else if (isnewsproxy (s)) {
+	      sprintf (tmp,"{%.300s/nntp}%.300s",nntpproxy,(char *) s+6);
+	      if (!mail_status (NIL,tmp,f)) response = lose;
+	    }
 	    else if (!mail_status (NIL,s,f)) response = lose;
 	  }
 	  if (stream)		/* allow untagged EXPUNGE */
@@ -938,13 +1178,13 @@ int main (int argc,char *argv[])
 	else if (!(anonymous || strcmp (cmd,"SUBSCRIBE"))) {
 				/* get <mailbox> or MAILBOX <mailbox> */
 	  if (!(s = snarf (&arg))) response = misarg;
-	  else if (arg) {
-	    sprintf (tmp,"%.30s",s);
-	    if (strcmp (ucase (tmp),"MAILBOX")) response = badarg;
+	  else if (arg) {	/* IMAP2bis form */
+	    if (compare_cstring (s,"MAILBOX")) response = badarg;
 	    else if (!(s = snarf (&arg))) response = misarg;
 	    else if (arg) response = badarg;
 	    else mail_subscribe (NIL,s);
 	  }
+	  else if (isnewsproxy (s)) newsrc_update (NIL,s+6,':');
 	  else mail_subscribe (NIL,s);
 	  if (stream)		/* allow untagged EXPUNGE */
 	    mail_parameters (stream,SET_ONETIMEEXPUNGEATPING,(void *) stream);
@@ -953,11 +1193,11 @@ int main (int argc,char *argv[])
 	else if (!(anonymous || strcmp (cmd,"UNSUBSCRIBE"))) {
 				/* get <mailbox> or MAILBOX <mailbox> */
 	  if (!(s = snarf (&arg))) response = misarg;
-	  else if (arg) {
-	    sprintf (tmp,"%.30s",s);
-	    if (strcmp (ucase (tmp),"MAILBOX")) response = badarg;
+	  else if (arg) {	/* IMAP2bis form */
+	    if (compare_cstring (s,"MAILBOX")) response = badarg;
 	    else if (!(s = snarf (&arg))) response = misarg;
 	    else if (arg) response = badarg;
+	    else if (isnewsproxy (s)) newsrc_update (NIL,s+6,'!');
 	    else mail_unsubscribe (NIL,s);
 	  }
 	  else mail_unsubscribe (NIL,s);
@@ -1027,7 +1267,12 @@ int main (int argc,char *argv[])
 	else if (!(anonymous || strcmp (cmd,"DELETE"))) {
 	  if (!(s = snarf (&arg))) response = misarg;
 	  else if (arg) response = badarg;
-	  else mail_delete (NIL,s);
+	  else {		/* make sure not selected */
+	    if (lastsel && (!strcmp (s,lastsel) ||
+			    (stream && !strcmp (s,stream->mailbox))))
+	      mm_log ("Can not DELETE the selected mailbox",ERROR);
+	    else mail_delete (NIL,s);
+	  }
 	  if (stream)		/* allow untagged EXPUNGE */
 	    mail_parameters (stream,SET_ONETIMEEXPUNGEATPING,(void *) stream);
 	}
@@ -1035,7 +1280,14 @@ int main (int argc,char *argv[])
 	else if (!(anonymous || strcmp (cmd,"RENAME"))) {
 	  if (!((s = snarf (&arg)) && (t = snarf (&arg)))) response = misarg;
 	  else if (arg) response = badarg;
-	  else mail_rename (NIL,s,t);
+	  else {		/* make sure not selected */
+	    if (!compare_cstring (s,"INBOX")) s = "INBOX";
+	    else if (!compare_cstring (s,"#MHINBOX")) s = "#MHINBOX";
+	    if (lastsel && (!strcmp (s,lastsel) ||
+			    (stream && !strcmp (s,stream->mailbox))))
+	      mm_log ("Can not RENAME the selected mailbox",ERROR);
+	    else mail_rename (NIL,s,t);
+	  }
 	  if (stream)		/* allow untagged EXPUNGE */
 	    mail_parameters (stream,SET_ONETIMEEXPUNGEATPING,(void *) stream);
 	}
@@ -1052,7 +1304,8 @@ int main (int argc,char *argv[])
 	    if (!anonymous && stream && (time (0) > lastcheck + CHECKTIMER)) {
 	      mail_check (stream);
 				/* cancel likely altwin from mail_check() */
-	      if (response == altwin) response = win;
+	      if (lsterr) fs_give ((void **) &lsterr);
+	      if (lstwrn) fs_give ((void **) &lstwrn);
 				/* remember last checkpoint */
 	      lastcheck = time (0);
 	    }
@@ -1083,11 +1336,12 @@ int main (int argc,char *argv[])
 	      }
 	      PFLUSH ();	/* dump output buffer */
 	    } while ((state != LOGOUT) && !INWAIT (IDLETIMER) && --i);
+
 				/* time to exit idle loop */
 	    if (state != LOGOUT) {
 	      if (i) {		/* still have time left? */
 				/* yes, read expected DONE */
-		slurp (tmp,MAILTMPLEN);
+		slurp (tmp,MAILTMPLEN,INPUTTIMEOUT);
 		if (((tmp[0] != 'D') && (tmp[0] != 'd')) ||
 		    ((tmp[1] != 'O') && (tmp[1] != 'o')) ||
 		    ((tmp[2] != 'N') && (tmp[2] != 'n')) ||
@@ -1110,61 +1364,141 @@ int main (int argc,char *argv[])
 	    }
 	  }
 	}
-	else response = "%.80s BAD Command unrecognized: %.80s\015\012";
+	else response = badcmd;
 	break;
-
       default:
-        response = "%.80s BAD Server in unknown state for %.80s command\015\012";
+        response = "%.80s BAD Unknown state for %.80s command\015\012";
 	break;
       }
-      if (lstwrn) {		/* output most recent warning */
+
+      while (litplus.ok) {	/* any unread LITERAL+? */
+	litplus.ok = NIL;	/* yes, cancel it now */
+	clearerr (stdin);	/* clear stdin errors */
+	status = "discarding unread literal";
+				/* read literal and discard it */
+	while (i = (litplus.size > MAILTMPLEN) ? MAILTMPLEN : litplus.size) {
+	  if (state == LOGOUT) litplus.size = 0;
+	  else {
+	    settimeout (INPUTTIMEOUT);
+	    if (PSINR (tmp,i)) litplus.size -= i;
+	    else {
+	      ioerror (stdin,status);
+	      litplus.size = 0;	/* in case it continues */
+	    }
+	  }
+	}
+	settimeout (0);		/* stop timeout */
+				/* get new command tail */
+	slurp (tmp,MAILTMPLEN,INPUTTIMEOUT);
+				/* locate end of line */
+	if (t = strchr (tmp,'\012')) {
+				/* back over CR */
+	  if ((t > tmp) && (t[-1] == '\015')) --t;
+	  *t = NIL;		/* tie off CRLF */
+				/* possible LITERAL+? */
+	  if (((i = strlen (tmp)) > 3) && (tmp[i - 1] == '}') &&
+	      (tmp[i - 2] == '+') && isdigit (tmp[i - 3])) {
+				/* back over possible count */
+	    for (i -= 4; i && isdigit (tmp[i]); i--);
+	    if (tmp[i] == '{') {	/* found a literal? */
+	      litplus.ok = T;	/* yes, note LITERAL+ in effect, set size */
+	      litplus.size = strtoul (tmp + i + 1,NIL,10);
+	    }
+	  }
+	}
+	else flush ();		/* overlong line after LITERAL+, punt */
+      }
+      ping_mailbox (uid);	/* update mailbox status before response */
+      if (lstwrn && lsterr) {	/* output most recent warning */
 	PSOUT ("* NO ");
 	PSOUT (lstwrn);
 	CRLF;
+	fs_give ((void **) &lstwrn);
       }
+
       if (response == logwin) {	/* authentication win message */
-	PSOUT (tag);		/* yes, output tab */
-	PSOUT (" OK [");	/* indicate logged in */
+	sprintf (tmp,response,lstref ? "*" : tag);
+	PSOUT (tmp);		/* start response */
 	pcapability (1);	/* print logged-in capabilities */
 	PSOUT ("] User ");
 	PSOUT (user);
 	PSOUT (" authenticated\015\012");
+	if (lstref) {
+	  sprintf (tmp,response,tag);
+	  PSOUT (tmp);		/* start response */
+	  PSOUT ("[REFERRAL ");
+	  PSOUT (lstref);
+	  PSOUT ("] ");
+	  PSOUT (lasterror ());
+	  CRLF;
+	}
       }
-      else if (response == logwinalt) {
-	PSOUT ("* ");
-	pcapability (1);	/* print logged-in capabilities */
+      else if ((response == win) || (response == lose)) {
+	sprintf (tmp,response,tag);
+	PSOUT (tmp);
+	if (cauidvalidity) {	/* COPYUID/APPENDUID response? */
+	  sprintf (tmp,"[%.80sUID %lu ",(char *)
+		   ((s = strchr (cmd,' ')) ? s+1 : cmd),cauidvalidity);
+	  PSOUT (tmp);
+	  cauidvalidity = 0;	/* cancel response for future */
+	  if (csset) {
+	    pset (&csset);
+	    PBOUT (' ');
+	  }
+	  pset (&caset);
+	  PSOUT ("] ");
+	}
+	else if (lstref) {	/* have a referral? */
+	  PSOUT ("[REFERRAL ");
+	  PSOUT (lstref);
+	  PSOUT ("] ");
+	}
+	if (lsterr || lstwrn) PSOUT (lasterror ());
+	else {
+	  PSOUT (cmd);
+	  PSOUT ((response == win) ? " completed" : "failed");
+	}
 	CRLF;
-	sprintf (tmp,altwin,tag,lstref ? lstref : lsterr);
-	PSOUT (tmp);		/* output response */
       }
-      else {			/* non-authentication win */
-	if (response == altwin)	/* alternative win message? */
-	  sprintf (tmp,altwin,tag,lstref ? lstref : lsterr);
-				/* output referral first */
-	else if (lstref) sprintf (tmp,altlose,tag,lstref);
-				/* normal response */
-	else sprintf (tmp,response,tag,cmd,lasterror ());
-	ping_mailbox (uid);	/* update mailbox status before response */
+      else {			/* normal response */
+	if ((response == rowin) || (response == rwwin)) {
+	  if (lstwrn) {		/* output most recent warning */
+	    PSOUT ("* NO ");
+	    PSOUT (lstwrn);
+	    CRLF;
+	    fs_give ((void **) &lstwrn);
+	  }
+	}
+	sprintf (tmp,response,tag,cmd,lasterror ());
 	PSOUT (tmp);		/* output response */
       }
     }
     PFLUSH ();			/* make sure output blatted */
+
     if (autologouttime) {	/* have an autologout in effect? */
 				/* cancel if no longer waiting for login */
       if (state != LOGIN) autologouttime = 0;
 				/* took too long to login */
       else if (autologouttime < time (0)) {
-	PSOUT ("* BYE Autologout\015\012");
-	syslog (LOG_INFO,"Autologout host=%.80s",tcp_clienthost ());
-	PFLUSH ();		/* make sure output blatted */
+	logout = goodbye = "Autologout";
+	stream = NIL;
 	state = LOGOUT;		/* sayonara */
       }
     }
   }
-  syslog (LOG_INFO,"Logout user=%.80s host=%.80s",user ? user : "???",
-	  tcp_clienthost ());
-  exit (0);			/* all done */
-  return 0;			/* stupid compilers */
+  if (goodbye && !quell_events){/* have a goodbye message? */
+    PSOUT ("* BYE ");		/* utter it */
+    PSOUT (goodbye);
+    CRLF;
+    PFLUSH ();			/* make sure blatted */
+  }
+  syslog (LOG_INFO,"%s user=%.80s host=%.80s",logout,
+	  user ? (char *) user : "???",tcp_clienthost ());
+				/* do logout hook if needed */
+  if (lgoh = (logouthook_t) mail_parameters (NIL,GET_LOGOUTHOOK,NIL))
+    (*lgoh) (mail_parameters (NIL,GET_LOGOUTDATA,NIL));
+  _exit (ret);			/* all done */
+  return ret;			/* stupid compilers */
 }
 
 /* Ping mailbox during each cycle.  Also check alerts
@@ -1182,10 +1516,11 @@ void ping_mailbox (unsigned long uid)
       PSOUT (" Fatal mailbox error: ");
       PSOUT (lasterror ());
       CRLF;
+      stream = NIL;		/* don't try to clean up stream */
       state = LOGOUT;		/* go away */
       syslog (LOG_INFO,
 	      "Fatal mailbox error user=%.80s host=%.80s mbx=%.80s: %.80s",
-	      user ? user : "???",tcp_clienthost (),
+	      user ? (char *) user : "???",tcp_clienthost (),
 	      (stream && stream->mailbox) ? stream->mailbox : "???",
 	      lasterror ());
       return;
@@ -1203,8 +1538,25 @@ void ping_mailbox (unsigned long uid)
       PSOUT (" RECENT\015\012");
     }
     existsquelled = NIL;	/* don't do this until asked again */
+    if (stream->uid_validity && (stream->uid_validity != uidvalidity)) {
+      PSOUT ("* OK [UIDVALIDITY ");
+      pnum (stream->uid_validity);
+      PSOUT ("] UID validity status\015\012* OK [UIDNEXT ");
+      pnum (stream->uid_last + 1);
+      PSOUT ("] Predicted next UID\015\012");
+      if (stream->uid_nosticky) {
+	PSOUT ("* NO [UIDNOTSTICKY] Non-permanent unique identifiers: ");
+	PSOUT (stream->mailbox);
+	CRLF;
+      }
+      uidvalidity = stream->uid_validity;
+    }
+
 				/* don't bother if driver changed */
     if (curdriver == stream->dtb) {
+				/* first report any new flags */
+      if ((nflags < NUSERFLAGS) && stream->user_flags[nflags])
+	new_flags (stream);
       for (i = 1; i <= nmsgs; i++) if (mail_elt (stream,i)->spare2) {
 	PSOUT ("* ");
 	pnum (i);
@@ -1217,18 +1569,7 @@ void ping_mailbox (unsigned long uid)
 	PSOUT (")\015\012");
       }
     }
-
     else {			/* driver changed */
-      PSOUT ("* OK [UIDVALIDITY ");
-      pnum (stream->uid_validity);
-      PSOUT ("] UID validity status\015\012* OK [UIDNEXT ");
-      pnum (stream->uid_last + 1);
-      PSOUT ("] Predicted next UID\015\012");
-      if (stream->uid_nosticky) {
-	PSOUT ("* NO [UIDNOTSTICKY] Non-permanent unique identifiers: ");
-	PSOUT (stream->mailbox);
-	CRLF;
-      }
       new_flags (stream);	/* send mailbox flags */
       if (curdriver) {		/* note readonly/write if possible change */
 	PSOUT ("* OK [READ-");
@@ -1386,6 +1727,7 @@ void new_flags (MAILSTREAM *stream)
   for (i = 0; i < NUSERFLAGS; i++) if (stream->user_flags[i]) {
     PSOUT (stream->user_flags[i]);
     PBOUT (' ');
+    nflags = i + 1;
   }
   PSOUT ("\\Answered \\Flagged \\Deleted \\Draft \\Seen)\015\012* OK [PERMANENTFLAGS (");
   for (i = c = 0; i < NUSERFLAGS; i++)
@@ -1400,142 +1742,282 @@ void new_flags (MAILSTREAM *stream)
   PSOUT (")] Permanent flags\015\012");
 }
 
+/* Set timeout
+ * Accepts: desired interval
+ */
+
+void settimeout (unsigned int i)
+{
+				/* limit if not logged in */
+  if (i) alarm ((state == LOGIN) ? LOGINTIMEOUT : i);
+  else alarm (0);
+}
+
+
 /* Clock interrupt
+ * Returns only if critical code in progress
  */
 
 void clkint (void)
 {
-  alarm (0);			/* disable all interrupts */
-  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
-  if (!quell_events)
-    PSOUT ("* BYE Autologout; idle for too long\015\012");
-  syslog (LOG_INFO,"Autologout user=%.80s host=%.80s",user ? user : "???",
-	  tcp_clienthost ());
-  PFLUSH ();			/* make sure output blatted */
-  if (critical) state = LOGOUT;	/* must defer if in critical code */
-  else {			/* try to close stream gracefully */
-    if ((state == OPEN) && !stream->lock) stream = mail_close (stream);
-    _exit (1);			/* die die die */
+  settimeout (0);		/* disable all interrupts */
+  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
+  logout = "Autologout";
+  goodbye = "Autologout (idle for too long)";
+  if (critical) {		/* must defer if in critical code(?) */
+    close (0);			/* kill stdin */
+    state = LOGOUT;		/* die as soon as we can */
   }
+  else longjmp (jmpenv,1);	/* die now */
 }
 
 
 /* Kiss Of Death interrupt
+ * Returns only if critical code in progress
  */
 
 void kodint (void)
 {
-  alarm (0);			/* disable all interrupts */
-  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
-  if (!quell_events) PSOUT ("* BYE Lost mailbox lock\015\012");
-  PFLUSH ();			/* make sure output blatted */
-  syslog (LOG_INFO,"Killed (lost mailbox lock) user=%.80s host=%.80s",
-	  user ? user : "???",tcp_clienthost ());
-  if (critical) state = LOGOUT;	/* must defer if in critical code */
-  else {			/* try to close stream gracefully */
-    if ((state == OPEN) && !stream->lock) stream = mail_close (stream);
-    _exit (1);			/* die die die */
+  settimeout (0);		/* disable all interrupts */
+  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
+  logout = goodbye = "Killed (lost mailbox lock)";
+  if (critical) {		/* must defer if in critical code */
+    close (0);			/* kill stdin */
+    state = LOGOUT;		/* die as soon as we can */
   }
+  else longjmp (jmpenv,1);	/* die now */
 }
 
 /* Hangup interrupt
+ * Returns only if critical code in progress
  */
 
 void hupint (void)
 {
-  alarm (0);			/* disable all interrupts */
-  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
-  syslog (LOG_INFO,"Hangup user=%.80s host=%.80s",user ? user : "???",
-	  tcp_clienthost ());
-  if (critical) state = LOGOUT;	/* must defer if in critical code */
-  else {			/* try to close stream gracefully */
-    if ((state == OPEN) && !stream->lock) stream = mail_close (stream);
-    _exit (1);			/* die die die */
+  settimeout (0);		/* disable all interrupts */
+  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
+  logout = "Hangup";
+  goodbye = NIL;		/* other end is already gone */
+  if (critical) {		/* must defer if in critical code */
+    close (0);			/* kill stdin */
+    close (1);			/* and stdout */
+    state = LOGOUT;		/* die as soon as we can */
   }
+  else longjmp (jmpenv,1);	/* die now */
 }
 
 
 /* Termination interrupt
+ * Returns only if critical code in progress
  */
 
 void trmint (void)
 {
-  alarm (0);			/* disable all interrupts */
-  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
-  if (!quell_events) PSOUT ("* BYE Killed\015\012");
-  syslog (LOG_INFO,"Killed user=%.80s host=%.80s",user ? user : "???",
-	  tcp_clienthost ());
-  if (critical) state = LOGOUT;	/* must defer if in critical code */
+  settimeout (0);		/* disable all interrupts */
+  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
+  logout = goodbye = "Killed (terminated)";
   /* Make no attempt at graceful closure since a shutdown may be in
-   * in progress, and we won't have any time to do mail_close() actions
+   * progress, and we won't have any time to do mail_close() actions
    */
-  else _exit (1);		/* die die die */
+  stream = NIL;
+  if (critical) {		/* must defer if in critical code */
+    close (0);			/* kill stdin */
+    close (1);			/* and stdout */
+    state = LOGOUT;		/* die as soon as we can */
+  }
+  else longjmp (jmpenv,1);	/* die now */
+}
+
+/* The routines on this and the next page eschew the use of non-syscall libc
+ * routines (especially stdio) for a reason.  Also, these hideous #if
+ * condtionals need to be replaced.
+ */
+
+#ifndef unix
+#define unix 0
+#endif
+
+
+/* Status request interrupt
+ * Always returns
+ */
+
+void staint (void)
+{
+#if unix
+  int fd;
+  char *s,buf[8*MAILTMPLEN];
+  unsigned long pid = getpid ();
+				/* build file name */
+  s = nout (sout (buf,"/tmp/imapd-status."),pid,10);
+  if (user) s = sout (sout (s,"."),user);
+  *s = '\0';			/* tie off file name */
+  if ((fd = open (buf,O_WRONLY | O_CREAT | O_TRUNC,0666)) >= 0) {
+    fchmod (fd,0666);
+    s = nout (sout (buf,"PID="),pid,10);
+    if (user) s = sout (sout (s,", user="),user);
+    switch (state) {
+    case LOGIN:
+      s = sout (s,", not logged in");
+      break;
+    case SELECT:
+      s = sout (s,", logged in");
+      break;
+    case OPEN:
+      s = sout (s,", mailbox open");
+      break;
+    case LOGOUT:
+      s = sout (s,", logging out");
+      break;
+    }
+    if (stream && stream->mailbox)
+      s = sout (sout (s,"\nmailbox="),stream->mailbox);
+    *s++ = '\n';
+    if (status) {
+      s = sout (s,status);
+      if (cmd) s = sout (sout (s,", last command="),cmd);
+    }
+    else s = sout (sout (s,cmd)," in progress");
+    *s++ = '\n';
+    write (fd,buf,s-buf);
+    close (fd);
+  }
+#endif
+}
+
+/* Write string
+ * Accepts: destination string pointer
+ *	    string
+ * Returns: updated string pointer
+ */
+
+char *sout (char *s,char *t)
+{
+  while (*t) *s++ = *t++;
+  return s;
+}
+
+
+/* Write number
+ * Accepts: destination string pointer
+ *	    number
+ *	    base
+ * Returns: updated string pointer
+ */
+
+char *nout (char *s,unsigned long n,unsigned long base)
+{
+  char stack[256];
+  char *t = stack;
+				/* push PID digits on stack */
+  do *t++ = (char) (n % base) + '0';
+  while (n /= base);
+				/* pop digits from stack */
+  while (t > stack) *s++ = *--t;
+  return s;
 }
 
 /* Slurp a command line
  * Accepts: buffer pointer
  *	    buffer size
+ *	    input timeout
  */
 
-void slurp (char *s,int n)
+void slurp (char *s,int n,unsigned long timeout)
 {
-  s[--n] = '\0';		/* last buffer character is guaranteed NUL */
-				/* get a command under timeout */
-  alarm ((state != LOGIN) ? TIMEOUT : LOGINTIMEOUT);
-  clearerr (stdin);		/* clear stdin errors */
-  if (!PSIN (s,n)) inerror ("reading line");
-  alarm (0);			/* make sure timeout disabled */
+  memset (s,'\0',n);		/* zap buffer */
+  if (state != LOGOUT) {	/* get a command under timeout */
+    settimeout (timeout);
+    clearerr (stdin);		/* clear stdin errors */
+    status = "reading line";
+    if (!PSIN (s,n-1)) ioerror (stdin,status);
+    settimeout (0);		/* make sure timeout disabled */
+    status = NIL;
+  }
 }
 
 
 /* Read a literal
  * Accepts: destination buffer (must be size+1 for trailing NUL)
- *	    size of buffer
+ *	    size of buffer (must be less than 4294967295)
  */
 
 void inliteral (char *s,unsigned long n)
 {
-				/* tell client ready for argument */
-  PSOUT ("+ Ready for argument\015\012");
-  PFLUSH ();			/* dump output buffer */
-				/* get data under timeout */
-  alarm ((state != LOGIN) ? TIMEOUT : LOGINTIMEOUT);
+  unsigned long i;
+  if (litplus.ok) {		/* no more LITERAL+ to worry about */
+    litplus.ok = NIL;
+    litplus.size = 0;
+  }
+  else {			/* otherwise tell client ready for argument */
+    PSOUT ("+ Ready for argument\015\012");
+    PFLUSH ();			/* dump output buffer */
+  }
   clearerr (stdin);		/* clear stdin errors */
-  if (!PSINR (s,n)) inerror ("reading literal");
-  s[n] = '\0';			/* write trailing NUL */
-  alarm (0);			/* stop timeout */
+  memset (s,'\0',n+1);		/* zap buffer */
+  status = "reading literal";
+  while (n) {			/* get data under timeout */
+    if (state == LOGOUT) n = 0;
+    else {
+      settimeout (INPUTTIMEOUT);
+      i = min (n,8192);		/* must read at least 8K within timeout */
+      if (PSINR (s,i)) {
+	s += i;
+	n -= i;
+      }
+      else {
+	ioerror (stdin,status);
+	n = 0;			/* in case it continues */
+      }
+      settimeout (0);		/* stop timeout */
+    }
+  }
 }
 
 /* Flush until newline seen
  * Returns: NIL, always
  */
 
-char *flush (void)
+unsigned char *flush (void)
 {
   int c;
-  alarm ((state != LOGIN) ? TIMEOUT : LOGINTIMEOUT);
-  clearerr (stdin);		/* clear stdin errors */
-  while ((c = PBIN ()) != '\012') if (c == EOF) inerror ("flushing line");
+  if (state != LOGOUT) {
+    settimeout (INPUTTIMEOUT);
+    clearerr (stdin);		/* clear stdin errors */
+    status = "flushing line";
+    while ((c = PBIN ()) != '\012') if (c == EOF) ioerror (stdin,status);
+    settimeout (0);		/* make sure timeout disabled */
+  }
   response = "%.80s BAD Command line too long\015\012";
-  alarm (0);			/* make sure timeout disabled */
+  status = NIL;
   return NIL;
 }
 
 
-/* Report input error and die
- * Accepts: reason (what caller was doing)
+/* Report command stream error and die
+ * Accepts: stdin or stdout (whichever got the error)
+ *	    reason (what caller was doing)
  */
 
-void inerror (char *reason)
+void ioerror (FILE *f,char *reason)
 {
-  char *e = ferror (stdin) ? strerror (errno) : "Command stream end of file";
-  alarm (0);			/* disable all interrupts */
-  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
-  syslog (LOG_INFO,"%.80s, while %s user=%.80s host=%.80s",
-	  e,reason,user ? user : "???",tcp_clienthost ());
-				/* try to gracefully close the stream */
-  if (state == OPEN) stream = mail_close (stream);
-  _exit (1);
+  static char msg[MAILTMPLEN];
+  char *s,*t;
+  if (logout) {			/* say nothing if already dying */
+    settimeout (0);		/* disable all interrupts */
+    server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
+				/* write error string */
+    for (s = ferror (f) ? strerror (errno) : "Unexpected client disconnect",
+	   t = logout = msg; *s; *t++ = *s++);
+    for (s = ", while "; *s; *t++ = *s++);
+    for (s = reason; *s; *t++ = *s++);
+    if (critical) {		/* must defer if in critical code */
+      close (0);		/* kill stdin */
+      close (1);		/* and stdout */
+      state = LOGOUT;		/* die as soon as we can */
+    }
+    else longjmp (jmpenv,1);	/* die now */
+  }
 }
 
 /* Parse an IMAP astring
@@ -1545,10 +2027,11 @@ void inerror (char *reason)
  * Returns: argument
  */
 
-char *parse_astring (char **arg,unsigned long *size,char *del)
+unsigned char *parse_astring (unsigned char **arg,unsigned long *size,
+			      unsigned char *del)
 {
   unsigned long i;
-  char c,*s,*t,*v;
+  unsigned char c,*s,*t,*v;
   if (!*arg) return NIL;	/* better be an argument */
   switch (**arg) {		/* see what the argument is */
   default:			/* atom */
@@ -1576,14 +2059,20 @@ char *parse_astring (char **arg,unsigned long *size,char *del)
   case '{':			/* literal string */
     s = *arg + 1;		/* get size */
     if (!isdigit (*s)) return NIL;
-    if ((*size = i = strtoul (s,&t,10)) > MAXCLIENTLIT) {
+    if ((*size = i = strtoul (s,(char **) &t,10)) > MAXCLIENTLIT) {
       mm_notify (NIL,"Absurdly long client literal",ERROR);
-      syslog (LOG_INFO,"Absurdly long client literal user=%.80s host=%.80s",
-	      user ? user : "???",tcp_clienthost ());
+      syslog (LOG_INFO,"Overlong (%lu) client literal user=%.80s host=%.80s",
+	      i,user ? (char *) user : "???",tcp_clienthost ());
       return NIL;
     }
-				/* validate end of literal */
-    if (!t || (*t != '}') || t[1]) return NIL;
+    switch (*t) {		/* validate end of literal */
+    case '+':			/* non-blocking literal */
+      if (*++t != '}') return NIL;
+    case '}':
+      if (!t[1]) break;		/* OK if end of line */
+    default:
+      return NIL;		/* bad literal */
+    }
     if (litsp >= LITSTKLEN) {	/* make sure don't overflow stack */
       mm_notify (NIL,"Too many literals in command",ERROR);
       return NIL;
@@ -1591,10 +2080,20 @@ char *parse_astring (char **arg,unsigned long *size,char *del)
 				/* get a literal buffer */
     inliteral (s = litstk[litsp++] = (char *) fs_get (i+1),i);
     				/* get new command tail */
-    slurp (*arg = t,CMDLEN - (t - cmdbuf));
+    slurp (*arg = t,CMDLEN - (t - cmdbuf),INPUTTIMEOUT);
     if (!strchr (t,'\012')) return flush ();
 				/* reset strtok mechanism, tie off if done */
     if (!strtok (t,"\015\012")) *t = '\0';
+				/* possible LITERAL+? */
+    if (((i = strlen (t)) > 3) && (t[i - 1] == '}') &&
+	(t[i - 2] == '+') && isdigit (t[i - 3])) {
+				/* back over possible count */
+      for (i -= 4; i && isdigit (t[i]); i--);
+      if (t[i] == '{') {	/* found a literal? */
+	litplus.ok = T;		/* yes, note LITERAL+ in effect, set size */
+	litplus.size = strtoul (t + i + 1,NIL,10);
+      }
+    }
     break;
   }
   if (*del = *t) {		/* have a delimiter? */
@@ -1610,25 +2109,65 @@ char *parse_astring (char **arg,unsigned long *size,char *del)
  * Returns: argument
  */
 
-char *snarf (char **arg)
+unsigned char *snarf (unsigned char **arg)
 {
   unsigned long i;
-  char c;
-  char *s = parse_astring (arg,&i,&c);
+  unsigned char c;
+  unsigned char *s = parse_astring (arg,&i,&c);
   return ((c == ' ') || !c) ? s : NIL;
 }
 
 
+/* Snarf a BASE64 argument for SASL-IR
+ * Accepts: pointer to argument text pointer
+ * Returns: argument
+ */
+
+unsigned char *snarf_base64 (unsigned char **arg)
+{
+  unsigned char *ret = *arg;
+  unsigned char *s = ret + 1;
+  static char base64mask[256] = {
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,
+   0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,
+   0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+  };
+  if (*(ret = *arg) == '=');	/* easy case if zero-length argument */
+				/* must be at least one BASE64 char */
+  else if (!base64mask[*ret]) return NIL;
+  else {			/* quick and dirty */
+    while (base64mask[*s++]);	/* scan until end of BASE64 */
+    if (*s == '=') ++s;		/* allow up to two padding chars */
+    if (*s == '=') ++s;
+  }
+  switch (*s) {			/* anything following the argument? */
+  case ' ':			/* another argument */
+    *s++ = '\0';		/* tie off previous argument */
+    *arg = s;			/* and update argument pointer */
+    break;
+  case '\0':			/* end of command */
+    *arg = NIL;
+    break;
+  default:			/* syntax error */
+    return NIL;
+  }
+  return ret;			/* return BASE64 string */
+}
+
 /* Snarf a list command argument (simple jacket into parse_astring())
  * Accepts: pointer to argument text pointer
  * Returns: argument
  */
 
-char *snarf_list (char **arg)
+unsigned char *snarf_list (unsigned char **arg)
 {
   unsigned long i;
-  char c;
-  char *s,*t;
+  unsigned char c,*s,*t;
   if (!*arg) return NIL;	/* better be an argument */
   switch (**arg) {
   default:			/* atom and/or wildcard chars */
@@ -1657,7 +2196,7 @@ char *snarf_list (char **arg)
  * Returns: string list
  */
 
-STRINGLIST *parse_stringlist (char **s,int *list)
+STRINGLIST *parse_stringlist (unsigned char **s,int *list)
 {
   char c = ' ',*t;
   unsigned long i;
@@ -1688,20 +2227,32 @@ STRINGLIST *parse_stringlist (char **s,int *list)
   return ret;
 }
 
+/* Get value of UID * for criteria parsing
+ * Accepts: stream
+ * Returns: maximum UID
+ */
+
+unsigned long uidmax (MAILSTREAM *stream)
+{
+  return stream->nmsgs ? mail_uid (stream,stream->nmsgs) : 0xffffffff;
+}
+
+
 /* Parse search criteria
  * Accepts: search program to write criteria into
  *	    pointer to argument text pointer
  *	    maximum message number
+ *	    maximum UID
  *	    logical nesting depth
  * Returns: T if success, NIL if error
  */
 
-long parse_criteria (SEARCHPGM *pgm,char **arg,unsigned long maxmsg,
-		     unsigned long depth)
+long parse_criteria (SEARCHPGM *pgm,unsigned char **arg,unsigned long maxmsg,
+		     unsigned long maxuid,unsigned long depth)
 {
   if (arg && *arg) {		/* must be an argument */
 				/* parse criteria */
-    do if (!parse_criterion (pgm,arg,maxmsg,depth)) return NIL;
+    do if (!parse_criterion (pgm,arg,maxmsg,maxuid,depth)) return NIL;
 				/* as long as a space delimiter */
     while (**arg == ' ' && (*arg)++);
 				/* failed if not end of criteria */
@@ -1714,15 +2265,16 @@ long parse_criteria (SEARCHPGM *pgm,char **arg,unsigned long maxmsg,
  * Accepts: search program to write criterion into
  *	    pointer to argument text pointer
  *	    maximum message number
+ *	    maximum UID
  *	    logical nesting depth
  * Returns: T if success, NIL if error
  */
 
-long parse_criterion (SEARCHPGM *pgm,char **arg,unsigned long maxmsg,
-		      unsigned long depth)
+long parse_criterion (SEARCHPGM *pgm,unsigned char **arg,unsigned long maxmsg,
+		      unsigned long maxuid,unsigned long depth)
 {
   unsigned long i;
-  char c = NIL,*s,*t,*v,*tail,*del;
+  unsigned char c = NIL,*s,*t,*v,*tail,*del;
   SEARCHSET **set;
   SEARCHPGMLIST **not;
   SEARCHOR **or;
@@ -1732,7 +2284,7 @@ long parse_criterion (SEARCHPGM *pgm,char **arg,unsigned long maxmsg,
   if ((depth > 500) || !(arg && *arg));
   else if (**arg == '(') {	/* list of criteria? */
     (*arg)++;			/* yes, parse the criteria */
-    if (parse_criteria (pgm,arg,maxmsg,depth+1) && **arg == ')') {
+    if (parse_criteria (pgm,arg,maxmsg,maxuid,depth+1) && **arg == ')') {
       (*arg)++;			/* skip closing paren */
       ret = T;			/* successful parse of list */
     }
@@ -1803,7 +2355,7 @@ long parse_criterion (SEARCHPGM *pgm,char **arg,unsigned long maxmsg,
       else if (!strcmp (s+1,"OT") && c == ' ' && *++tail) {
 	for (not = &pgm->not; *not; not = &(*not)->next);
 	*not = mail_newsearchpgmlist ();
-	ret = parse_criterion ((*not)->pgm,&tail,maxmsg,depth+1);
+	ret = parse_criterion ((*not)->pgm,&tail,maxmsg,maxuid,depth+1);
       }
       break;
 
@@ -1814,10 +2366,13 @@ long parse_criterion (SEARCHPGM *pgm,char **arg,unsigned long maxmsg,
       else if (!strcmp (s+1,"R") && c == ' ') {
 	for (or = &pgm->or; *or; or = &(*or)->next);
 	*or = mail_newsearchor ();
-	ret = *++tail && parse_criterion((*or)->first,&tail,maxmsg,depth+1) &&
-	  *tail == ' ' && *++tail &&
-	    parse_criterion ((*or)->second,&tail,maxmsg,depth+1);
+	ret = *++tail && parse_criterion((*or)->first,&tail,maxmsg,maxuid,
+					 depth+1) &&
+	  (*tail == ' ') && *++tail &&
+	  parse_criterion ((*or)->second,&tail,maxmsg,maxuid,depth+1);
       }
+      else if (!strcmp (s+1,"LDER") && c == ' ' && *++tail)
+	ret = crit_number (&pgm->older,&tail);
       break;
     case 'R':			/* possible RECENT */
       if (!strcmp (s+1,"ECENT")) ret = pgm->recent = T;
@@ -1852,7 +2407,7 @@ long parse_criterion (SEARCHPGM *pgm,char **arg,unsigned long maxmsg,
 	  *not = mail_newsearchpgmlist ();
 	  set = &((*not)->pgm->not = mail_newsearchpgmlist ())->pgm->uid;
 	}
-	ret = crit_set (set,&tail,0xffffffff);
+	ret = crit_set (set,&tail,maxuid);
       }
       else if (!strcmp (s+1,"NANSWERED")) ret = pgm->unanswered = T;
       else if (!strcmp (s+1,"NDELETED")) ret = pgm->undeleted = T;
@@ -1861,6 +2416,10 @@ long parse_criterion (SEARCHPGM *pgm,char **arg,unsigned long maxmsg,
       else if (!strcmp (s+1,"NKEYWORD") && c == ' ' && *++tail)
 	ret = crit_string (&pgm->unkeyword,&tail);
       else if (!strcmp (s+1,"NSEEN")) ret = pgm->unseen = T;
+      break;
+    case 'Y':			/* possible YOUNGER */
+      if (!strcmp (s+1,"OUNGER") && c == ' ' && *++tail)
+	ret = crit_number (&pgm->younger,&tail);
       break;
     default:			/* oh dear */
       break;
@@ -1879,8 +2438,9 @@ long parse_criterion (SEARCHPGM *pgm,char **arg,unsigned long maxmsg,
  * Returns: T if success, NIL if error
  */
 
-long crit_date (unsigned short *date,char **arg)
+long crit_date (unsigned short *date,unsigned char **arg)
 {
+  if (*date) return NIL;	/* can't double this value */
 				/* handle quoted form */
   if (**arg != '"') return crit_date_work (date,arg);
   (*arg)++;			/* skip past opening quote */
@@ -1895,7 +2455,7 @@ long crit_date (unsigned short *date,char **arg)
  * Returns: T if success, NIL if error
  */
 
-long crit_date_work (unsigned short *date,char **arg)
+long crit_date_work (unsigned short *date,unsigned char **arg)
 {
   int d,m,y;
 				/* day */
@@ -1956,9 +2516,10 @@ long crit_date_work (unsigned short *date,char **arg)
  * Returns: T if success, NIL if error
  */
 
-long crit_set (SEARCHSET **set,char **arg,unsigned long maxima)
+long crit_set (SEARCHSET **set,unsigned char **arg,unsigned long maxima)
 {
-  unsigned long i;
+  unsigned long i = 0;
+  if (*set) return NIL;		/* can't double this value */
   *set = mail_newsearchset ();	/* instantiate a new search set */
   if (**arg == '*') {		/* maxnum? */
     (*arg)++;			/* skip past that number */
@@ -1968,6 +2529,7 @@ long crit_set (SEARCHSET **set,char **arg,unsigned long maxima)
   else return NIL;		/* bogon */
   switch (**arg) {		/* decide based on delimiter */
   case ':':			/* sequence range */
+    i = 0;			/* reset for crit_number() */
     if (*++(*arg) == '*') {	/* maxnum? */
       (*arg)++;			/* skip past that number */
       (*set)->last = maxima;
@@ -1996,9 +2558,10 @@ long crit_set (SEARCHSET **set,char **arg,unsigned long maxima)
  * Returns: T if success, NIL if error
  */
 
-long crit_number (unsigned long *number,char **arg)
+long crit_number (unsigned long *number,unsigned char **arg)
 {
-  if (!isdigit (**arg)) return NIL;
+				/* can't double this value */
+  if (*number || !isdigit (**arg)) return NIL;
   *number = 0;
   while (isdigit (**arg)) {	/* found a digit? */
     *number *= 10;		/* add a decade */
@@ -2014,7 +2577,7 @@ long crit_number (unsigned long *number,char **arg)
  * Returns: T if success, NIL if error
  */
 
-long crit_string (STRINGLIST **string,char **arg)
+long crit_string (STRINGLIST **string,unsigned char **arg)
 {
   unsigned long i;
   char c;
@@ -2062,7 +2625,7 @@ void fetch (char *t,unsigned long uid)
 
 void fetch_work (char *t,unsigned long uid,fetchfn_t f[],void *fa[])
 {
-  char *s,*v;
+  unsigned char *s,*v;
   unsigned long i;
   unsigned long k = 0;
   BODY *b;
@@ -2131,7 +2694,7 @@ void fetch_work (char *t,unsigned long uid,fetchfn_t f[],void *fa[])
 	else s += 7;		/* skip to section specifier */
 	if (!isdigit (*s)) {	/* make sure top-level digit */
 	  fs_give ((void **) &ta);
-	  response = "%.80s BAD Syntax error in binary specifier\015\012";
+	  response = badbin;
 	  return;
 	}
       }
@@ -2153,7 +2716,7 @@ void fetch_work (char *t,unsigned long uid,fetchfn_t f[],void *fa[])
 	  if ((*v == '.') && isalpha (v[1])) {
 	    if (ta->binary) {	/* not if binary you don't */
 	      fs_give ((void **) &ta);
-	      response = "%.80s BAD Syntax error in binary specifier\015\012";
+	      response = badbin;
 	      return;
 	    }
 	    *v++ = '\0';	/* yes, tie off section specifier */
@@ -2210,15 +2773,16 @@ void fetch_work (char *t,unsigned long uid,fetchfn_t f[],void *fa[])
 	return;
       }
 
-      if (*v == '<') {		/* partial specifier? */
-	ta->first = strtoul (v+1,&v,10);
-	if ((ta->binary & FTB_SIZE) || (*v++ != '.') ||
-	    !(ta->last = strtoul (v,&v,10)) || (*v++ != '>')) {
-	  if (ta->lines) mail_free_stringlist (&ta->lines);
-	  fs_give ((void **) &ta);
-	  response ="%.80s BAD Syntax error in partial text specifier\015\012";
-	  return;
-	}
+      if ((*v == '<') &&	/* partial specifier? */
+	  ((ta->binary & FTB_SIZE) ||
+	   !(isdigit (v[1]) && ((ta->first = strtoul (v+1,(char **) &v,10)) ||
+				v) &&
+	     (*v++ == '.') && (ta->last = strtoul (v,(char **) &v,10)) &&
+	     (*v++ == '>')))) {
+	if (ta->lines) mail_free_stringlist (&ta->lines);
+	fs_give ((void **) &ta);
+	response ="%.80s BAD Syntax error in partial text specifier\015\012";
+	return;
       }
       switch (*v) {		/* what's there now? */
       case ' ':			/* more follows */
@@ -2268,7 +2832,9 @@ void fetch_work (char *t,unsigned long uid,fetchfn_t f[],void *fa[])
   for (i = 1; i <= nmsgs; i++)
     mail_elt (stream,i)->spare = mail_elt (stream,i)->sequence;
 				/* for each requested message */
-  for (i = 1; (i <= nmsgs) && (response != loseunknowncte); i++)
+  for (i = 1; (i <= nmsgs) && (response != loseunknowncte); i++) {
+				/* kill if dying */
+    if (state == LOGOUT) longjmp (jmpenv,1);
     if (mail_elt (stream,i)->spare) {
 				/* parse envelope, set body, do warnings */
       if (parse_envs) mail_fetchstructure (stream,i,parse_bodies ? &b : NIL);
@@ -2285,6 +2851,7 @@ void fetch_work (char *t,unsigned long uid,fetchfn_t f[],void *fa[])
       PSOUT (")\015\012");	/* trailer */
       quell_events = NIL;	/* events alright now */
     }
+  }
 }
 
 /* Fetch message body structure (extensible)
@@ -2335,7 +2902,7 @@ void fetch_body_part_mime (unsigned long i,void *args)
 	mail_fetch_mime (stream,i,ta->section,&st.size,ta->flags);
       if (ta->first || ta->last) remember (uid,tmp,&st);
     }
-    pbodypartstring (i,tmp,&st,ta);
+    pbodypartstring (i,tmp,&st,NIL,ta);
     fs_give ((void **) &tmp);
   }
   else {			/* clean up the arguments */
@@ -2360,12 +2927,12 @@ void fetch_body_part_contents (unsigned long i,void *args)
     sprintf (tmp,"BODY[%s]",ta->section ? ta->section : "");
 				/* try to use remembered text */
     if (lastuid && (uid == lastuid) && !strcmp (tmp,lastid)) st = lastst;
-    else {			/* get data */
-      st.data = (unsigned char *)
-	mail_fetch_body (stream,i,ta->section,&st.size,ta->flags);
-      if (ta->first || ta->last) remember (uid,tmp,&st);
-    }
-    pbodypartstring (i,tmp,&st,ta);
+				/* get data */
+    else if ((st.data = (unsigned char *)
+	      mail_fetch_body (stream,i,ta->section,&st.size,
+			       ta->flags | FT_RETURNSTRINGSTRUCT)) &&
+	     (ta->first || ta->last)) remember (uid,tmp,&st);
+    pbodypartstring (i,tmp,&st,&stream->private.string,ta);
     fs_give ((void **) &tmp);
   }
   else {			/* clean up the arguments */
@@ -2377,14 +2944,14 @@ void fetch_body_part_contents (unsigned long i,void *args)
 /* Fetch body part binary
  * Accepts: message number
  *	    extra argument
+ * Someday fix this to use stringstruct instead of memory
  */
 
 void fetch_body_part_binary (unsigned long i,void *args)
 {
   TEXTARGS *ta = (TEXTARGS *) args;
   if (i) {			/* do work? */
-    SIZEDTEXT st;
-    SIZEDTEXT cst;
+    SIZEDTEXT st,cst;
     BODY *body = mail_body (stream,i,ta->section);
     char *tmp = (char *) fs_get (100+(ta->section ? strlen (ta->section) : 0));
     unsigned long uid = mail_uid (stream,i);
@@ -2433,9 +3000,9 @@ void fetch_body_part_binary (unsigned long i,void *args)
       fs_give ((void **) &tmp);
       return;
     }
+
 				/* use decoded version if exists */
     if (cst.data) memcpy ((void *) &st,(void *) &cst,sizeof (SIZEDTEXT));
-
     if (ta->binary & FTB_SIZE) {/* just want size? */
       sprintf (tmp,"BINARY.SIZE[%s] %lu",ta->section ? ta->section : "",
 	       st.size);
@@ -2456,20 +3023,10 @@ void fetch_body_part_binary (unsigned long i,void *args)
 	  st.size -= ta->first;	/* reduced size */
 	  if (ta->last && (st.size > ta->last)) st.size = ta->last;
 	}
-	if (!st.size) PSOUT ("\"\"");
-	else {			/* write binary output */
-	  sprintf (tmp + strlen (tmp),"{%lu}\015\012",st.size);
-	  PSOUT (tmp);
-	  if (PSOUTR (&st) == EOF) {
-	    alarm (0);		/* disable all interrupts */
-	    server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
-	    syslog (LOG_INFO,
-		    "%.80s, while writing binary user=%.80s host=%.80s",
-		    strerror (errno),user ? user : "???",tcp_clienthost ());
-	    if (state == OPEN) stream = mail_close (stream);
-	    _exit (1);
-	  }
-	}
+	if (st.size) sprintf (tmp + strlen (tmp),"{%lu}\015\012",st.size);
+	else strcat (tmp,"\"\"");
+	PSOUT (tmp);		/* write binary output */
+	if (st.size && (PSOUTR (&st) == EOF)) ioerror(stdout,"writing binary");
       }
       else {
 	sprintf (tmp,"BINARY[%s] NIL",ta->section ? ta->section : "");
@@ -2510,12 +3067,12 @@ void fetch_body_part_header (unsigned long i,void *args)
     PSOUT ("HEADER");
     if (ta->lines) {
       PSOUT ((ta->flags & FT_NOT) ? ".FIELDS.NOT " : ".FIELDS ");
-      pstringlist (ta->lines);
+      pastringlist (ta->lines);
     }
     strcpy (tmp,"]");		/* close section specifier */
     st.data = (unsigned char *)	/* get data (no hope in using remember here) */
       mail_fetch_header (stream,i,ta->section,ta->lines,&st.size,ta->flags);
-    pbodypartstring (i,tmp,&st,ta);
+    pbodypartstring (i,tmp,&st,NIL,ta);
     fs_give ((void **) &tmp);
   }
   else {			/* clean up the arguments */
@@ -2542,12 +3099,12 @@ void fetch_body_part_text (unsigned long i,void *args)
     else strcpy (tmp,"BODY[TEXT]");
 				/* try to use remembered text */
     if (lastuid && (uid == lastuid) && !strcmp (tmp,lastid)) st = lastst;
-    else {			/* get data */
-      st.data = (unsigned char *)
-	mail_fetch_text (stream,i,ta->section,&st.size,ta->flags);
-      if (ta->first || ta->last) remember (uid,tmp,&st);
-    }
-    pbodypartstring (i,tmp,&st,ta);
+				/* get data */
+    else if ((st.data = (unsigned char *)
+	      mail_fetch_text (stream,i,ta->section,&st.size,
+			       ta->flags | FT_RETURNSTRINGSTRUCT)) &&
+	     (ta->first || ta->last)) remember (uid,tmp,&st);
+    pbodypartstring (i,tmp,&st,&stream->private.string,ta);
     fs_give ((void **) &tmp);
   }
   else {			/* clean up the arguments */
@@ -2561,6 +3118,7 @@ void fetch_body_part_text (unsigned long i,void *args)
  * Accepts: message UID
  *	    body part id
  *	    text
+ *	    string
  */
 
 void remember (unsigned long uid,char *id,SIZEDTEXT *st)
@@ -2574,7 +3132,8 @@ void remember (unsigned long uid,char *id,SIZEDTEXT *st)
     memcpy (fs_get (st->size + 1),st->data,st->size);
   lastst.size = st->size;
 }
-
+
+
 /* Fetch envelope
  * Accepts: message number
  *	    extra argument
@@ -2585,43 +3144,6 @@ void fetch_envelope (unsigned long i,void *args)
   ENVELOPE *env = mail_fetchenvelope (stream,i);
   PSOUT ("ENVELOPE ");		/* output attribute */
   penv (env);			/* output envelope */
-}
-
-/* Fetch matching header lines
- * Accepts: message number
- *	    extra argument
- */
-
-void fetch_rfc822_header_lines (unsigned long i,void *args)
-{
-  STRINGLIST *sa = (STRINGLIST *) args;
-  if (i) {			/* do work? */
-    SIZEDTEXT st;
-    st.data = (unsigned char *)
-      mail_fetch_header (stream,i,NIL,sa,&st.size,FT_PEEK);
-				/* output literal */
-    pnstring ("RFC822.HEADER",&st);
-  }
-  else mail_free_stringlist (&sa);
-}
-
-
-/* Fetch not-matching header lines
- * Accepts: message number
- *	    extra argument
- */
-
-void fetch_rfc822_header_lines_not (unsigned long i,void *args)
-{
-  STRINGLIST *sa = (STRINGLIST *) args;
-  if (i) {			/* do work? */
-    SIZEDTEXT st;
-    st.data = (unsigned char *)
-      mail_fetch_header (stream,i,NIL,sa,&st.size,FT_NOT | FT_PEEK);
-				/* output literal */
-    pnstring ("RFC822.HEADER",&st);
-  }
-  else mail_free_stringlist (&sa);
 }
 
 /* Fetch flags
@@ -2726,7 +3248,7 @@ void fetch_rfc822 (unsigned long i,void *args)
     SIZEDTEXT st;
     st.data = (unsigned char *)
       mail_fetch_message (stream,i,&st.size,(long) args);
-    pnstring ("RFC822",&st);
+    pbodypartstring (i,"RFC822",&st,NIL,NIL);
 #else
     /* Yes, this version is bletcherous, but mail_fetch_message() requires
        too much memory */
@@ -2734,12 +3256,13 @@ void fetch_rfc822 (unsigned long i,void *args)
     char *s = mail_fetch_header (stream,i,NIL,NIL,&hdr.size,FT_PEEK);
     hdr.data = (unsigned char *) memcpy (fs_get (hdr.size),s,hdr.size);
     txt.data = (unsigned char *)
-      mail_fetch_text (stream,i,NIL,&txt.size,(long) args);
+      mail_fetch_text (stream,i,NIL,&txt.size,
+		       ((long) args) | FT_RETURNSTRINGSTRUCT);
     PSOUT ("RFC822 {");
     pnum (hdr.size + txt.size);
     PSOUT ("}\015\012");
-    ptext (&hdr);
-    ptext (&txt);
+    ptext (&hdr,NIL);
+    ptext (&txt,&stream->private.string);
     fs_give ((void **) &hdr.data);
 #endif
     changed_flags (i,f);	/* output changed flags */
@@ -2757,7 +3280,7 @@ void fetch_rfc822_header (unsigned long i,void *args)
   SIZEDTEXT st;
   st.data = (unsigned char *)
     mail_fetch_header (stream,i,NIL,NIL,&st.size,FT_PEEK);
-  pnstring ("RFC822.HEADER",&st);
+  pbodypartstring (i,"RFC822.HEADER",&st,NIL,NIL);
 }
 
 
@@ -2789,9 +3312,9 @@ void fetch_rfc822_text (unsigned long i,void *args)
     int f = mail_elt (stream,i)->seen;
     SIZEDTEXT st;
     st.data = (unsigned char *)
-      mail_fetch_text (stream,i,NIL,&st.size,(long) args);
-    pnstring ("RFC822.TEXT",&st);
-    changed_flags (i,f);	/* output changed flags */
+      mail_fetch_text (stream,i,NIL,&st.size,
+		       ((long) args) | FT_RETURNSTRINGSTRUCT);
+    pbodypartstring (i,"RFC822.TEXT",&st,&stream->private.string,NIL);
   }
 }
 
@@ -2803,9 +3326,9 @@ void penv (ENVELOPE *env)
 {
   PBOUT ('(');			/* delimiter */
   if (env) {			/* only if there is an envelope */
-    pstring (env->date);	/* output envelope fields */
+    pnstring (env->date);	/* output envelope fields */
     PBOUT (' ');
-    pstring (env->subject);
+    pnstring (env->subject);
     PBOUT (' ');
     paddr (env->from);
     PBOUT (' ');
@@ -2819,9 +3342,9 @@ void penv (ENVELOPE *env)
     PBOUT (' ');
     paddr (env->bcc);
     PBOUT (' ');
-    pstring (env->in_reply_to);
+    pnstring (env->in_reply_to);
     PBOUT (' ');
-    pstring (env->message_id);
+    pnstring (env->message_id);
   }
 				/* no envelope */
   else PSOUT ("NIL NIL NIL NIL NIL NIL NIL NIL NIL NIL");
@@ -2857,9 +3380,9 @@ void pbodystructure (BODY *body)
       }
       else PSOUT ("NIL");
       PBOUT (' ');
-      pstringorlist (body->language);
+      pnstringorlist (body->language);
       PBOUT (' ');
-      pstring (body->location);
+      pnstring (body->location);
     }
 
     else {			/* non-multipart body type */
@@ -2869,9 +3392,9 @@ void pbodystructure (BODY *body)
       PBOUT (' ');
       pparam (body->parameter);
       PBOUT (' ');
-      pstring (body->id);
+      pnstring (body->id);
       PBOUT (' ');
-      pstring (body->description);
+      pnstring (body->description);
       PBOUT (' ');
       pstring ((char *) body_encodings[body->encoding]);
       PBOUT (' ');
@@ -2892,7 +3415,7 @@ void pbodystructure (BODY *body)
 	break;
       }
       PBOUT (' ');
-      pstring (body->md5);
+      pnstring (body->md5);
       PBOUT (' ');
       if (body->disposition.type) {
 	PBOUT ('(');
@@ -2903,9 +3426,9 @@ void pbodystructure (BODY *body)
       }
       else PSOUT ("NIL");
       PBOUT (' ');
-      pstringorlist (body->language);
+      pnstringorlist (body->language);
       PBOUT (' ');
-      pstring (body->location);
+      pnstring (body->location);
     }
   }
 				/* no body */
@@ -2938,9 +3461,9 @@ void pbody (BODY *body)
       PBOUT (' ');
       pparam (body->parameter);
       PBOUT (' ');
-      pstring (body->id);
+      pnstring (body->id);
       PBOUT (' ');
-      pstring (body->description);
+      pnstring (body->description);
       PBOUT (' ');
       pstring ((char *) body_encodings[body->encoding]);
       PBOUT (' ');
@@ -2997,13 +3520,13 @@ void paddr (ADDRESS *a)
     PBOUT ('(');		/* open the address list */
     do {			/* for each address */
       PBOUT ('(');		/* open the address */
-      pstring (a->personal);	/* personal name */
+      pnstring (a->personal);	/* personal name */
       PBOUT (' ');
-      pstring (a->adl);		/* at-domain-list */
+      pnstring (a->adl);	/* at-domain-list */
       PBOUT (' ');
-      pstring (a->mailbox);	/* mailbox */
+      pnstring (a->mailbox);	/* mailbox */
       PBOUT (' ');
-      pstring (a->host);	/* domain name of mailbox's host */
+      pnstring (a->host);	/* domain name of mailbox's host */
       PBOUT (')');		/* terminate address */
     } while (a = a->next);	/* until end of address */
     PBOUT (')');		/* close address list */
@@ -3011,6 +3534,25 @@ void paddr (ADDRESS *a)
   else PSOUT ("NIL");		/* empty address */
 }
 
+/* Print set
+ * Accepts: set
+ */
+
+void pset (SEARCHSET **set)
+{
+  SEARCHSET *cur = *set;
+  while (cur) {			/* while there's a set to do */
+    pnum (cur->first);		/* output first value */
+    if (cur->last) {		/* if range, output second value of range */
+      PBOUT (':');
+      pnum (cur->last);
+    }
+    if (cur = cur->next) PBOUT (',');
+  }
+  mail_free_searchset (set);	/* flush set */
+}
+
+
 /* Print number
  * Accepts: number
  */
@@ -3023,7 +3565,7 @@ void pnum (unsigned long i)
 }
 
 
-/* Print null-terminated string
+/* Print string
  * Accepts: string
  */
 
@@ -3031,23 +3573,18 @@ void pstring (char *s)
 {
   SIZEDTEXT st;
   st.data = (unsigned char *) s;/* set up sized text */
-  st.size = s ? strlen (s) : 0;	/* NIL text is zero size */
-  pnstring (NIL,&st);		/* print nstring */
+  st.size = strlen (s);
+  psizedstring (&st,NIL);	/* print string */
 }
 
 
-/* Print NIL or string
- * Accepts: label to be output before nstring
- *	    pointer to sized text or NIL
+/* Print nstring
+ * Accepts: string or NIL
  */
 
-void pnstring (char *label,SIZEDTEXT *st)
+void pnstring (char *s)
 {
-  if (label) {
-    PSOUT (label);
-    PBOUT (' ');
-  }
-  if (st && st->data) psizedtext (st);
+  if (s) pstring (s);		/* print string */
   else PSOUT ("NIL");
 }
 
@@ -3069,105 +3606,166 @@ void pastring (char *s)
   }
 }
 
-/* Print body part string
- * Accepts: message number
- *	    body part id (note: must have space at end to append stuff)
- *	    sized text of string
- *	    text printing arguments
- */
-
-void pbodypartstring (unsigned long msgno,char *id,SIZEDTEXT *st,TEXTARGS *ta)
-{
-  int f = mail_elt (stream,msgno)->seen;
-  if (st->data) {		/* only if have useful data */
-				/* partial specifier */
-    if (ta->first || ta->last) sprintf (id + strlen (id),"<%lu>",ta->first);
-  				/* in case first byte beyond end of text */
-    if (st->size <= ta->first) st->size = ta->first = 0;
-    else {			/* offset and truncate */
-      st->data += ta->first;	/* move to desired position */
-      st->size -= ta->first;	/* reduced size */
-      if (ta->last && (st->size > ta->last)) st->size = ta->last;
-    }
-  }
-  pnstring (id,st);		/* output nstring */
-  changed_flags (msgno,f);	/* and changed flags */
-}
-
-
-/* Print string or string listlist
- * Accepts: string / string list list
- */
-
-void pstringorlist (STRINGLIST *s)
-{
-  if (!s) PSOUT ("NIL");	/* no argument given */
-				/* output list as list */
-  else if (s->next) pstringlist (s);
-  else psizedtext (&s->text);	/* and single-element list as atom */
-}
-
-
-/* Print string list
- * Accepts: string list
- */
-
-void pstringlist (STRINGLIST *s)
-{
-  PBOUT ('(');			/* start list */
-  do {
-    psizedtext (&s->text);	/* output list member */
-    if (s->next) PBOUT (' ');
-  } while (s = s->next);
-  PBOUT (')');			/* terminate list */
-}
-
-/* Print sized text as literal or quoted string
+/* Print sized text as quoted
  * Accepts: sized text
  */
 
-void psizedtext (SIZEDTEXT *s)
+void psizedquoted (SIZEDTEXT *s)
 {
-  unsigned long i;
-  for (i = 0; i < s->size; i++)	/* check if must use literal */
-    if (!(s->data[i] & 0xe0) || (s->data[i] & 0x80) ||
-	(s->data[i] == '"') || (s->data[i] == '\\')) {
-      PBOUT ('{');
-      pnum (s->size);
-      PSOUT ("}\015\012");
-      ptext (s);
-      return;
-    }
   PBOUT ('"');			/* use quoted string */
-  ptext (s);
+  ptext (s,NIL);
   PBOUT ('"');
 }
 
 
-/* Print text
- * Accepts: pointer to text
- *	    pointer to size of text
+/* Print sized text as literal
+ * Accepts: sized text
  */
 
-void ptext (SIZEDTEXT *txt)
+void psizedliteral (SIZEDTEXT *s,STRING *st)
 {
-  /*  RFC 2060 technically forbids NULs in literals.  Normally, the delivering
-   * MTA would take care of MIME converting the message text so that it is
-   * NUL-free.  If it doesn't, then we have the choice of either violating
-   * IMAP by sending NULs, corrupting the data, or going to lots of work to do
-   * MIME conversion in the IMAP server.
-   */
+  PBOUT ('{');			/* print literal size */
+  pnum (s->size);
+  PSOUT ("}\015\012");
+  ptext (s,st);
+}
+
+/* Print sized text as literal or quoted string
+ * Accepts: sized text
+ *	    alternative stringstruct of text
+ */
+
+void psizedstring (SIZEDTEXT *s,STRING *st)
+{
   unsigned char c;
-  unsigned char *s = txt->data;
-  unsigned char *t = s + txt->size;
-  while ((s < t) && ((PBOUT ((c = *s++) ? c : 0x80) != EOF)));
-  if (s == t) return;		/* check for completion */
-  alarm (0);			/* disable all interrupts */
-  server_init (NIL,NIL,NIL,SIG_IGN,SIG_IGN,SIG_IGN,SIG_IGN);
-  syslog (LOG_INFO,"%.80s, while writing text user=%.80s host=%.80s",
-	  strerror (errno),user ? user : "???",tcp_clienthost ());
-  if (state == OPEN) stream = mail_close (stream);
-  _exit (1);
+  unsigned long i;
+		
+  if (s->data) {		/* if text, check if must use literal */
+    for (i = 0; ((i < s->size) && ((c = s->data[i]) & 0xe0) &&
+		 !(c & 0x80) && (c != '"') && (c != '\\')); ++i);
+				/* must use literal if not all QUOTED-CHAR */
+    if (i < s->size) psizedliteral (s,st);
+    else psizedquoted (s);
+  }
+  else psizedliteral (s,st);
+}
+
+
+/* Print sized text as literal or quoted string
+ * Accepts: sized text
+ */
+
+void psizedastring (SIZEDTEXT *s)
+{
+  unsigned long i;
+  unsigned int atomp = s->size ? T : NIL;
+  for (i = 0; i < s->size; i++){/* check if must use literal */
+    if (!(s->data[i] & 0xe0) || (s->data[i] & 0x80) ||
+	(s->data[i] == '"') || (s->data[i] == '\\')) {
+      psizedliteral (s,NIL);
+      return;
+    }
+    else switch (s->data[i]) {	/* else see if any atom-specials */
+    case '(': case ')': case '{': case ' ':
+    case '%': case '*':		/* list-wildcards */
+    case ']':			/* resp-specials */
+				/* CTL and quoted-specials in literal check */
+      atomp = NIL;		/* not an atom */
+    }
+  }
+  if (atomp) ptext (s,NIL);	/* print as atom */
+  else psizedquoted (s);	/* print as quoted string */
+}
+
+/* Print string list
+ * Accepts: string list
+ */
+
+void pastringlist (STRINGLIST *s)
+{
+  PBOUT ('(');			/* start list */
+  do {
+    psizedastring (&s->text);	/* output list member */
+    if (s->next) PBOUT (' ');
+  } while (s = s->next);
+  PBOUT (')');			/* terminate list */
+}
+
+
+/* Print nstring or list of strings
+ * Accepts: string / string list
+ */
+
+void pnstringorlist (STRINGLIST *s)
+{
+  if (!s) PSOUT ("NIL");	/* no argument given */
+  else if (s->next) {		/* output list as list of strings*/
+    PBOUT ('(');		/* start list */
+    do {			/* output list member */
+      psizedstring (&s->text,NIL);
+      if (s->next) PBOUT (' ');
+    } while (s = s->next);
+    PBOUT (')');		/* terminate list */
+  } 
+				/* and single-element list as string */
+  else psizedstring (&s->text,NIL);
+}
+
+/* Print body part string
+ * Accepts: message number
+ *	    body part id (note: must have space at end to append stuff)
+ *	    sized text of string
+ *	    alternative stringstruct of string
+ *	    text printing arguments
+ */
+
+void pbodypartstring (unsigned long msgno,char *id,SIZEDTEXT *st,STRING *bs,
+		      TEXTARGS *ta)
+{
+  int f = mail_elt (stream,msgno)->seen;
+				/* ignore stringstruct if non-initialized */
+  if (bs && !bs->curpos) bs = NIL;
+  if (ta && st->size) {		/* only if have useful data */
+				/* partial specifier */
+    if (ta->first || ta->last) sprintf (id + strlen (id),"<%lu>",ta->first);
+  				/* in case first byte beyond end of text */
+    if (st->size <= ta->first) st->size = ta->first = 0;
+    else {
+      if (st->data) {		/* offset and truncate */
+	st->data += ta->first;	/* move to desired position */
+	st->size -= ta->first;	/* reduced size */
+      }
+      else if (bs && (SIZE (bs) >= ta->first))
+	SETPOS (bs,ta->first + GETPOS (bs));
+      else st->size = 0;	/* shouldn't happen */
+      if (ta->last && (st->size > ta->last)) st->size = ta->last;
+    }
+  }
+  PSOUT (id);
+  PBOUT (' ');
+  psizedstring (st,bs);		/* output string */
+  changed_flags (msgno,f);	/* and changed flags */
+}
+
+/*  RFC 3501 technically forbids NULs in literals.  Normally, the delivering
+ * MTA would take care of MIME converting the message text so that it is
+ * NUL-free.  If it doesn't, then we have the choice of either violating
+ * IMAP by sending NULs, corrupting the data, or going to lots of work to do
+ * MIME conversion in the IMAP server.
+ */
+
+/* Print raw sized text
+ * Accepts: sizedtext
+ */
+
+void ptext (SIZEDTEXT *txt,STRING *st)
+{
+  unsigned char c,*s;
+  unsigned long i = txt->size;
+  if (s = txt->data) while (i && ((PBOUT ((c = *s++) ? c : 0x80) != EOF))) --i;
+  else if (st) while (i && (PBOUT ((c = SNX (st)) ? c : 0x80) != EOF)) --i;
+				/* failed to complete? */
+  if (i) ioerror (stdout,"writing text");
 }
 
 /* Print thread
@@ -3208,17 +3806,18 @@ void pthread (THREADNODE *thr)
 
 void pcapability (long flag)
 {
+  unsigned long i;
   char *s;
   struct stat sbuf;
   AUTHENTICATOR *auth;
   THREADER *thr = (THREADER *) mail_parameters (NIL,GET_THREADERS,NIL);
 				/* always output protocol level */
-  PSOUT ("CAPABILITY IMAP4REV1");
+  PSOUT ("CAPABILITY IMAP4REV1 I18NLEVEL=1 LITERAL+");
 #ifdef NETSCAPE_BRAIN_DAMAGE
   PSOUT (" X-NETSCAPE");
 #endif
   if (flag >= 0) {		/* want post-authentication capabilities? */
-    PSOUT (" IDLE NAMESPACE MAILBOX-REFERRALS BINARY UNSELECT SCAN SORT");
+    PSOUT (" IDLE UIDPLUS NAMESPACE CHILDREN MAILBOX-REFERRALS BINARY UNSELECT ESEARCH WITHIN SCAN SORT");
     while (thr) {		/* threaders */
       PSOUT (" THREAD=");
       PSOUT (thr->name);
@@ -3227,23 +3826,15 @@ void pcapability (long flag)
     if (!anonymous) PSOUT (" MULTIAPPEND");
   }
   if (flag <= 0) {		/* want pre-authentication capabilities? */
-    PSOUT (" LOGIN-REFERRALS");
-    if (s = ssl_start_tls (NIL)) fs_give ((void *) &s);
+    PSOUT (" SASL-IR LOGIN-REFERRALS");
+    if (s = ssl_start_tls (NIL)) fs_give ((void **) &s);
     else PSOUT (" STARTTLS");
 				/* disable plaintext */
-    if (mail_parameters (NIL,GET_DISABLEPLAINTEXT,NIL)) {
+    if (!(i = !mail_parameters (NIL,GET_DISABLEPLAINTEXT,NIL)))
       PSOUT (" LOGINDISABLED");
-      for (auth = mail_lookup_auth (1); auth; auth = auth->next)
-	if (auth->server) {
-	  if (auth->flags & AU_SECURE) {
-	    PSOUT (" AUTH=");
-	    PSOUT (auth->name);
-	  }
-	}
-    }
-				/* display all authentication means */
-    else for (auth = mail_lookup_auth (1); auth; auth = auth->next)
-      if (auth->server) {
+    for (auth = mail_lookup_auth (1); auth; auth = auth->next)
+      if (auth->server && !(auth->flags & AU_DISABLE) &&
+	  !(auth->flags & AU_HIDE) && (i || (auth->flags & AU_SECURE))) {
 	PSOUT (" AUTH=");
 	PSOUT (auth->name);
       }
@@ -3264,14 +3855,13 @@ char *oktab[] = {"#news.", "#ftp/", "#public/", 0};
 long nameok (char *ref,char *name)
 {
   int i;
-  char *s,*t;
+  unsigned char *s,*t;
   if (!name) return NIL;	/* failure if missing name */
   if (!anonymous) return T;	/* otherwise OK if not anonymous */
 				/* validate reference */
   if (ref && ((*ref == '#') || (*ref == '{')))
     for (i = 0; oktab[i]; i++) {
-      for (s = ref, t = oktab[i];
-	   *t && (*s + (isupper (*s) ? 'a'-'A' : 0)) == *t; s++, t++);
+      for (s = ref, t = oktab[i]; *t && !compare_uchar (*s,*t); s++, t++);
       if (!*t) {		/* reference OK */
 	if (*name == '#') break;/* check name if override */
 	else return T;		/* otherwise done */
@@ -3280,8 +3870,7 @@ long nameok (char *ref,char *name)
 				/* ordinary names are OK */
   if ((*name != '#') && (*name != '{')) return T;
   for (i = 0; oktab[i]; i++) {	/* validate mailbox */
-    for (s = name, t = oktab[i];
-	 *t && (*s + (isupper (*s) ? 'a'-'A' : 0)) == *t; s++, t++);
+    for (s = name, t = oktab[i]; *t && !compare_uchar (*s,*t); s++, t++);
     if (!*t) return T;		/* name is OK */
   }
   response = "%.80s NO Anonymous may not %.80s this name\015\012";
@@ -3305,6 +3894,59 @@ char *bboardname (char *cmd,char *name)
   return name;
 }
 
+/* Test if name is news proxy
+ * Accepts: name
+ * Returns: T if news proxy, NIL otherwise
+ */
+
+long isnewsproxy (char *name)
+{
+  return (nntpproxy && (name[0] == '#') &&
+	  ((name[1] == 'N') || (name[1] == 'n')) &&
+	  ((name[2] == 'E') || (name[2] == 'e')) &&
+	  ((name[3] == 'W') || (name[3] == 'w')) &&
+	  ((name[4] == 'S') || (name[4] == 's')) && (name[5] == '.')) ?
+    LONGT : NIL;
+}
+
+
+/* News proxy generate canonical pattern
+ * Accepts: reference
+ *	    pattern
+ *	    buffer to return canonical pattern
+ * Returns: T on success with pattern in buffer, NIL on failure
+ */
+
+long newsproxypattern (char *ref,char *pat,char *pattern,long flag)
+{
+  if (!nntpproxy) return NIL;
+  if (strlen (ref) > NETMAXMBX) {
+    sprintf (pattern,"Invalid reference specification: %.80s",ref);
+    mm_log (pattern,ERROR);
+    return NIL;
+  }
+  if (strlen (pat) > NETMAXMBX) {
+    sprintf (pattern,"Invalid pattern specification: %.80s",pat);
+    mm_log (pattern,ERROR);
+    return NIL;
+  }
+  if (flag) {			/* prepend proxy specifier */
+    sprintf (pattern,"{%.300s/nntp}",nntpproxy);
+    pattern += strlen (pattern);
+  }
+  if (*ref) {			/* have a reference */
+    strcpy (pattern,ref);	/* copy reference to pattern */
+				/* # overrides mailbox field in reference */
+    if (*pat == '#') strcpy (pattern,pat);
+				/* pattern starts, reference ends, with . */
+    else if ((*pat == '.') && (pattern[strlen (pattern) - 1] == '.'))
+      strcat (pattern,pat + 1);	/* append, omitting one of the period */
+    else strcat (pattern,pat);	/* anything else is just appended */
+  }
+  else strcpy (pattern,pat);	/* just have basic name */
+  return isnewsproxy (pattern);
+}
+
 /* IMAP4rev1 Authentication responder
  * Accepts: challenge
  *	    length of challenge
@@ -3318,22 +3960,38 @@ char *imap_responder (void *challenge,unsigned long clen,unsigned long *rlen)
 {
   unsigned long i,j;
   unsigned char *t,resp[RESPBUFLEN];
-  PSOUT ("+ ");
-  for (t = rfc822_binary ((void *) challenge,clen,&i),j = 0; j < i; j++)
-    if (t[j] > ' ') PBOUT (t[j]);
-  fs_give ((void **) &t);
-  CRLF;
-  PFLUSH ();			/* dump output buffer */
-				/* slurp response buffer */
-  slurp ((char *) resp,RESPBUFLEN);
-  if (!(t = (unsigned char *) strchr ((char *) resp,'\012'))) return flush ();
-  if (t[-1] == '\015') --t;	/* remove CR */
-  *t = '\0';			/* tie off buffer */
-  if (resp[0] == '*') {
-    cancelled = T;
-    return NIL;
+  if (initial) {		/* initial response given? */
+    if (clen) return NIL;	/* not permitted */
+				/* set up response */
+    i = strlen ((char *) (t = initial));
+    initial = NIL;		/* no more initial response */
+    if ((*t == '=') && !t[1]) {	/* SASL-IR does this for 0-length response */
+      if (rlen) *rlen = 0;	/* set length zero if empty */
+      return cpystr ("");	/* and return empty string as response */
+    }
   }
-  return (char *) rfc822_base64 (resp,t-resp,rlen ? rlen : &i);
+  else {			/* issue challenge, get response */
+    PSOUT ("+ ");
+    for (t = rfc822_binary ((void *) challenge,clen,&i),j = 0; j < i; j++)
+      if (t[j] > ' ') PBOUT (t[j]);
+    fs_give ((void **) &t);
+    CRLF;
+    PFLUSH ();			/* dump output buffer */
+				/* slurp response buffer */
+    slurp ((char *) resp,RESPBUFLEN,INPUTTIMEOUT);
+    if (!(t = (unsigned char *) strchr ((char *) resp,'\012')))
+      return (char *) flush ();
+    if (t[-1] == '\015') --t;	/* remove CR */
+    *t = '\0';			/* tie off buffer */
+    if (resp[0] == '*') {
+      cancelled = T;
+      return NIL;
+    }
+    i = t - resp;		/* length of response */
+    t = resp;			/* set up for return call */
+  }
+  return (i % 4) ? NIL :	/* return if valid BASE64 */
+    (char *) rfc822_base64 (t,i,rlen ? rlen : &i);
 }
 
 /* Proxy copy across mailbox formats
@@ -3349,26 +4007,33 @@ long proxycopy (MAILSTREAM *stream,char *sequence,char *mailbox,long options)
   MAILSTREAM *ts;
   STRING st;
   MSGDATA md;
+  SEARCHSET *set;
   char tmp[MAILTMPLEN];
   unsigned long i,j;
   md.stream = stream;
   md.msgno = 0;
   md.flags = md.date = NIL;
   md.message = &st;
+  /* Currently ignores CP_MOVE and CP_DEBUG */
   if (!((options & CP_UID) ?	/* validate sequence */
 	mail_uid_sequence (stream,sequence) : mail_sequence (stream,sequence)))
     return NIL;
   response = win;		/* cancel previous errors */
   if (lsterr) fs_give ((void **) &lsterr);
 				/* c-client clobbers sequence, use spare */
-  for (i = 1,j = 0; i <= nmsgs; i++)
-    if ((mail_elt (stream,i)->spare = mail_elt (stream,i)->sequence) && !j)
-      md.msgno = (j = i) - 1;
+  for (i = 1,j = 0,set = mail_newsearchset (); i <= nmsgs; i++)
+    if (mail_elt (stream,i)->spare = mail_elt (stream,i)->sequence) {
+      mail_append_set (set,mail_uid (stream,i));
+      if (!j) md.msgno = (j = i) - 1;
+    }
 				/* only if at least one message to copy */
   if (j && !mail_append_multiple (NIL,mailbox,proxy_append,(void *) &md)) {
     response = trycreate ? losetry : lose;
+    if (set) mail_free_searchset (&set);
     return NIL;
   }
+  if (caset) csset = set;	/* set for return value now */
+  else if (set) mail_free_searchset (&set);
   response = win;		/* stomp any previous babble */
   if (md.msgno) {		/* get new driver name if was dummy */
     sprintf (tmp,"Cross-format (%.80s -> %.80s) COPY completed",
@@ -3439,10 +4104,10 @@ long proxy_append (MAILSTREAM *stream,void *data,char **flags,char **date,
 long append_msg (MAILSTREAM *stream,void *data,char **flags,char **date,
 		 STRING **message)
 {
-  unsigned long i;
+  unsigned long i,j;
   char *t;
   APPENDDATA *ad = (APPENDDATA *) data;
-  char *arg = ad->arg;
+  unsigned char *arg = ad->arg;
 				/* flush text of previous message */
   if (t = ad->flags) fs_give ((void **) &ad->flags);
   if (t = ad->date) fs_give ((void **) &ad->date);
@@ -3474,16 +4139,26 @@ long append_msg (MAILSTREAM *stream,void *data,char **flags,char **date,
     response = "%.80s BAD Missing message to %.80s\015\012";
   else if (!(i = strtoul (arg+1,&t,10)))
     response = "%.80s NO Empty message to %.80s\015\012";
-  else if (i > 0x7fffffff)	/* maybe relax this a little */
+  else if (i > MAXAPPENDTXT)	/* maybe relax this a little */
     response = "%.80s NO Excessively large message to %.80s\015\012";
-  else if ((*t != '}') || t[1]) response = badarg;
-  else {			/* get a literal buffer */
+  else if (((*t == '+') && (t[1] == '}') && !t[2]) || ((*t == '}') && !t[1])) {
+				/* get a literal buffer */
     inliteral (ad->msg = (char *) fs_get (i+1),i);
     				/* get new command tail */
-    slurp (ad->arg,CMDLEN - (ad->arg - cmdbuf));
+    slurp (ad->arg,CMDLEN - (ad->arg - cmdbuf),INPUTTIMEOUT);
     if (strchr (ad->arg,'\012')) {
 				/* reset strtok mechanism, tie off if done */
       if (!strtok (ad->arg,"\015\012")) *ad->arg = '\0';
+				/* possible LITERAL+? */
+      if (((j = strlen (ad->arg)) > 3) && (ad->arg[j - 1] == '}') &&
+	  (ad->arg[j - 2] == '+') && isdigit (ad->arg[j - 3])) {
+				/* back over possible count */
+	for (j -= 4; j && isdigit (ad->arg[j]); j--);
+	if (ad->arg[j] == '{') {/* found a literal? */
+	  litplus.ok = T;	/* yes, note LITERAL+ in effect, set size */
+	  litplus.size = strtoul (ad->arg + j + 1,NIL,10);
+	}
+      }
 				/* initialize stringstruct */
       INIT (ad->message,mail_string,(void *) ad->msg,i);
       return LONGT;		/* ready to go */
@@ -3491,25 +4166,53 @@ long append_msg (MAILSTREAM *stream,void *data,char **flags,char **date,
     flush ();			/* didn't find end of line? */
     fs_give ((void **) &ad->msg);
   }
+  else response = badarg;	/* not a literal */
   return NIL;			/* error */
 }
 
+/* Got COPY UID data
+ * Accepts: MAIL stream
+ *	    mailbox name
+ *	    UID validity
+ *	    source set of UIDs
+ *	    destination set of UIDs
+ */
+
+void copyuid (MAILSTREAM *stream,char *mailbox,unsigned long uidvalidity,
+	      SEARCHSET *sourceset,SEARCHSET *destset)
+{
+  if (cauidvalidity) fatal ("duplicate COPYUID/APPENDUID data");
+  cauidvalidity = uidvalidity;
+  csset = sourceset;
+  caset = destset;
+}
+
+
+/* Got APPEND UID data
+ * Accepts: mailbox name
+ *	    UID validity
+ *	    destination set of UIDs
+ */
+
+void appenduid (char *mailbox,unsigned long uidvalidity,SEARCHSET *set)
+{
+  copyuid (NIL,mailbox,uidvalidity,NIL,set);
+}
+
+
 /* Got a referral
  * Accepts: MAIL stream
  *	    URL
  *	    referral type code
  */
 
-#define REFPREFIX "[REFERRAL "
-#define REFSUFFIX "] Try specified URL"
-
 char *referral (MAILSTREAM *stream,char *url,long code)
 {
   if (lstref) fs_give ((void **) &lstref);
-  lstref = (char *) fs_get (sizeof (REFPREFIX) + strlen (url) +
-			    sizeof (REFSUFFIX) - 1);
-  sprintf (lstref,"[REFERRAL %.900s] Try specified URL",url);
-  if (code == REFAUTH) response = altwin;
+  lstref = cpystr (url);	/* set referral */
+				/* set error if not a logged in referral */
+  if (code != REFAUTH) response = lose;
+  if (!lsterr) lsterr = cpystr ("Try referral URL");
   return NIL;			/* don't chase referrals for now */
 }
 
@@ -3639,6 +4342,7 @@ void mm_status (MAILSTREAM *stream,char *mailbox,MAILSTATUS *status)
 
 void mm_list_work (char *what,int delimiter,char *name,long attributes)
 {
+  char *s;
   if (!quell_events) {
     char tmp[MAILTMPLEN];
     if (finding) {
@@ -3655,6 +4359,8 @@ void mm_list_work (char *what,int delimiter,char *name,long attributes)
       if (attributes & LATT_NOSELECT) strcat (tmp," \\NoSelect");
       if (attributes & LATT_MARKED) strcat (tmp," \\Marked");
       if (attributes & LATT_UNMARKED) strcat (tmp," \\UnMarked");
+      if (attributes & LATT_HASCHILDREN) strcat (tmp," \\HasChildren");
+      if (attributes & LATT_HASNOCHILDREN) strcat (tmp," \\HasNoChildren");
       PSOUT (tmp+1);
       switch (delimiter) {
       case '\\':		/* quoted delimiter */
@@ -3673,7 +4379,9 @@ void mm_list_work (char *what,int delimiter,char *name,long attributes)
 	break;
       }
       PBOUT (' ');
-      pastring (name);		/* output mailbox name */
+				/* output mailbox name */
+      if (proxylist && (s = strchr (name,'}'))) pastring (s+1);
+      else pastring (name);
     }
     CRLF;
   }
@@ -3721,6 +4429,7 @@ void mm_notify (MAILSTREAM *stream,char *string,long errflg)
       (s - string) : strlen (string);
     PSOUTR (&msg);
     CRLF;
+    PFLUSH ();			/* let client see it immediately */
   }
 }
 
@@ -3736,27 +4445,40 @@ void mm_log (char *string,long errflg)
   msg.size = 
     (s = strpbrk ((char *) (msg.data = (unsigned char *) string),"\015\012")) ?
       (s - string) : strlen (string);
-  if (!quell_events) switch (errflg) {
+  switch (errflg) {
   case NIL:			/* information message, set as OK response */
     if (response == win) {	/* only if no other response yet */
-      response = altwin;	/* switch to alternative win message */
-      if (lsterr) fs_give ((void **) &lsterr);
+      if (lsterr) {		/* if there was a previous message */
+	if (!quell_events) {
+	  PSOUT ("* OK ");	/* blat it out */
+	  PSOUT (lsterr);
+	  CRLF;
+	  PFLUSH ();		/* let client see it immediately */
+	}
+	fs_give ((void **) &lsterr);
+      }
       lsterr = cpystr (string); /* copy string for later use */
       if (s) lsterr[s - string] = NIL;
     }
     break;
   case PARSE:			/* parse glitch, output unsolicited OK */
-    PSOUT ("* OK [PARSE] ");
-    PSOUTR (&msg);
-    CRLF;
+    if (!quell_events) {
+      PSOUT ("* OK [PARSE] ");
+      PSOUTR (&msg);
+      CRLF;
+      PFLUSH ();		/* let client see it immediately */
+    }
     break;
   case WARN:			/* warning, output unsolicited NO */
 				/* ignore "Mailbox is empty" (KLUDGE!) */
     if (strcmp (string,"Mailbox is empty")) {
       if (lstwrn) {		/* have previous warning? */
-	PSOUT ("* NO ");
-	PSOUT (lstwrn);
-	CRLF;
+	if (!quell_events) {
+	  PSOUT ("* NO ");
+	  PSOUT (lstwrn);
+	  CRLF;
+	  PFLUSH ();		/* make sure client sees it immediately */
+	}
 	fs_give ((void **) &lstwrn);
       }
       lstwrn = cpystr (string); /* note last warning */
@@ -3767,7 +4489,6 @@ void mm_log (char *string,long errflg)
   default:			/* default should never happen */
     response = trycreate ? losetry : lose;
     if (lsterr) fs_give ((void **) &lsterr);
-				/* note last error */
     lsterr = cpystr (string);	/* note last error */
     if (s) lsterr[s - string] = NIL;
     break;
@@ -3804,7 +4525,7 @@ void mm_dlog (char *string)
 void mm_login (NETMBX *mb,char *username,char *password,long trial)
 {
 				/* set user name */
-  strncpy (username,*mb->user ? mb->user : user,NETMAXUSER);
+  strncpy (username,*mb->user ? mb->user : (char *) user,NETMAXUSER);
   strncpy (password,pass,256);	/* and password */
 }
 
@@ -3825,7 +4546,13 @@ void mm_critical (MAILSTREAM *s)
 
 void mm_nocritical (MAILSTREAM *s)
 {
-  --critical;
+				/* go non-critical, pending death? */
+  if (!--critical && (state == LOGOUT)) {
+				/* clean up iff needed */
+    if (s && (stream != s) && !s->lock && (s->dtb->flags & DR_XPOINT))
+      s = mail_close (s);
+    longjmp (jmpenv,1);		/* die now */
+  }
 }
 
 /* Disk error found
@@ -3842,10 +4569,10 @@ long mm_diskerror (MAILSTREAM *s,long errcode,long serious)
     PFLUSH ();			/* dump output buffer */
     syslog (LOG_ALERT,
 	    "Retrying after disk error user=%.80s host=%.80s mbx=%.80s: %.80s",
-	    user ? user : "???",tcp_clienthost (),
+	    user ? (char *) user : "???",tcp_clienthost (),
 	    (stream && stream->mailbox) ? stream->mailbox : "???",
 	    strerror (errcode));
-    alarm (0);			/* make damn sure timeout disabled */
+    settimeout (0);		/* make damn sure timeout disabled */
     sleep (60);			/* give it some time to clear up */
     return NIL;
   }
@@ -3873,8 +4600,9 @@ void mm_fatal (char *string)
     PSOUT ("* BYE [ALERT] IMAP4rev1 server crashing: ");
     PSOUTR (&msg);
     CRLF;
+    PFLUSH ();
   }
   syslog (LOG_ALERT,"Fatal error user=%.80s host=%.80s mbx=%.80s: %.80s",
-	  user ? user : "???",tcp_clienthost (),
+	  user ? (char *) user : "???",tcp_clienthost (),
 	  (stream && stream->mailbox) ? stream->mailbox : "???",string);
 }

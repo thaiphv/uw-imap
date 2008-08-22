@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2006 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	Scan directories
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	1 August 1988
- * Last Edited:	24 October 2000
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2000 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	15 September 2006
  */
  
 /* Emulator for BSD scandir() call
@@ -58,4 +66,16 @@ int scandir (char *dirname,struct direct ***namelist,select_t select,
   if (nitems && compar) qsort (names,nitems,sizeof (struct direct *),compar);
   *namelist = names;		/* return directory */
   return nitems;		/* and size */
+}
+
+/* Alphabetic file name comparision
+ * Accepts: first candidate directory entry
+ *	    second candidate directory entry
+ * Returns: negative if d1 < d2, 0 if d1 == d2, postive if d1 > d2
+ */
+
+int alphasort (void *d1,void *d2)
+{
+  return strcmp ((*(struct direct **) d1)->d_name,
+		 (*(struct direct **) d2)->d_name);
 }

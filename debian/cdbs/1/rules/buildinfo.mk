@@ -1,5 +1,5 @@
 # -*- mode: makefile; coding: utf-8 -*-
-# Copyright © 2004-2005 Jonas Smedegaard <dr@jones.dk>
+# Copyright © 2004-2006 Jonas Smedegaard <dr@jones.dk>
 # Description: Generate and include build information
 #
 # This program is free software; you can redistribute it and/or
@@ -17,15 +17,12 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 # 02111-1307 USA.
 
-
-ifndef _cdbs_bootstrap
 _cdbs_scripts_path ?= /usr/lib/cdbs
 _cdbs_rules_path ?= /usr/share/cdbs/1/rules
 _cdbs_class_path ?= /usr/share/cdbs/1/class
-endif
 
 ifndef _cdbs_rules_buildinfo
-_cdbs_rules_buildinfo := 1
+_cdbs_rules_buildinfo = 1
 
 include $(_cdbs_rules_path)/buildcore.mk$(_cdbs_makefile_suffix)
 
@@ -35,6 +32,7 @@ common-install-arch common-install-indep:: debian/stamp-buildinfo
 
 debian/stamp-buildinfo:
 	dh_buildinfo
+	touch debian/stamp-buildinfo
 
 clean::
 	rm -f debian/stamp-buildinfo

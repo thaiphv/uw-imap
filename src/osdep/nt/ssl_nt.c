@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2008 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	SSL authentication/encryption module for Windows 9x and NT
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	22 September 1998
- * Last Edited:	30 June 2003
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 1988-2003 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	13 January 2008
  */
 
 #define SECURITY_WIN32
@@ -50,6 +58,8 @@ typedef struct ssl_stream {
 
 static SSLSTREAM *ssl_start(TCPSTREAM *tstream,char *host,unsigned long flags);
 static char *ssl_analyze_status (SECURITY_STATUS err,char *buf);
+static char *ssl_getline_work (SSLSTREAM *stream,unsigned long *size,
+			       long *contd);
 static long ssl_abort (SSLSTREAM *stream);
 
 /* Secure Sockets Layer network driver dispatch */
@@ -83,11 +93,13 @@ typedef BOOL (CALLBACK *CVCCP) (LPCSTR,PCCERT_CHAIN_CONTEXT,
 				PCERT_CHAIN_POLICY_PARA,
 				PCERT_CHAIN_POLICY_STATUS);
 typedef VOID (CALLBACK *CFCC) (PCCERT_CHAIN_CONTEXT);
+typedef BOOL (CALLBACK *CFCCX) (PCCERT_CONTEXT);
 
 static CNTS certNameToStr = NIL;
 static CGCC certGetCertificateChain = NIL;
 static CVCCP certVerifyCertificateChainPolicy = NIL;
 static CFCC certFreeCertificateChain = NIL;
+static CFCCX certFreeCertificateContext = NIL;
 
 /* One-time SSL initialization */
 
@@ -120,7 +132,9 @@ void ssl_onceonlyinit (void)
 	    (certVerifyCertificateChainPolicy = (CVCCP)
 	     GetProcAddress (lib,"CertVerifyCertificateChainPolicy")) &&
 	    (certFreeCertificateChain = (CFCC)
-	     GetProcAddress (lib,"CertFreeCertificateChain")))
+	     GetProcAddress (lib,"CertFreeCertificateChain")) &&
+	    (certFreeCertificateContext = (CFCCX)
+	     GetProcAddress (lib,"CertFreeCertificateContext")))
 	  certNameToStr = (CNTS) GetProcAddress (lib,"CertNameToStrA");
 	return;			/* all done */
       }
@@ -169,7 +183,7 @@ static SSLSTREAM *ssl_start (TCPSTREAM *tstream,char *host,unsigned long flags)
   SecBuffer ibuf[2],obuf[1];
   SecBufferDesc ibufs,obufs;
   SCHANNEL_CRED tlscred;
-  CERT_CONTEXT *cert;
+  CERT_CONTEXT *cert = NIL;
   CERT_CHAIN_PARA chparam;
   CERT_CHAIN_CONTEXT *chain;
   SSL_EXTRA_CERT_CHAIN_POLICY_PARA policy;
@@ -306,6 +320,7 @@ static SSLSTREAM *ssl_start (TCPSTREAM *tstream,char *host,unsigned long flags)
 	      reason = ssl_analyze_status (status.dwError,tmp);
 	    (*certFreeCertificateChain) (chain);
 	  }
+	  (*certFreeCertificateContext) (cert);
 	}
 	if (whost) fs_give ((void **) &whost);
 
@@ -331,6 +346,11 @@ static SSLSTREAM *ssl_start (TCPSTREAM *tstream,char *host,unsigned long flags)
 	stream->sizes.cbMaximumMessage + stream->sizes.cbTrailer;
       if (stream->sizes.cbMaximumMessage < SSLBUFLEN)
 	fatal ("cbMaximumMessage is less than SSLBUFLEN!");
+      else if (stream->sizes.cbMaximumMessage < 16384) {
+	sprintf (tmp,"WINDOWS BUG: cbMaximumMessage = %ld, should be 16384",
+		 (long) stream->sizes.cbMaximumMessage);
+	mm_log (tmp,NIL);
+      }
       stream->ibuf = (char *) fs_get (stream->bufsize);
       stream->obuf = (char *) fs_get (stream->bufsize);
       return stream;
@@ -415,44 +435,67 @@ static char *ssl_analyze_status (SECURITY_STATUS err,char *buf)
 
 char *ssl_getline (SSLSTREAM *stream)
 {
-  int n,m;
-  char *st,*ret,*stp;
-  char c = '\0';
-  char d;
+  unsigned long n,contd;
+  char *ret = ssl_getline_work (stream,&n,&contd);
+  if (ret && contd) {		/* got a line needing continuation? */
+    STRINGLIST *stl = mail_newstringlist ();
+    STRINGLIST *stc = stl;
+    do {			/* collect additional lines */
+      stc->text.data = (unsigned char *) ret;
+      stc->text.size = n;
+      stc = stc->next = mail_newstringlist ();
+      ret = ssl_getline_work (stream,&n,&contd);
+    } while (ret && contd);
+    if (ret) {			/* stash final part of line on list */
+      stc->text.data = (unsigned char *) ret;
+      stc->text.size = n;
+				/* determine how large a buffer we need */
+      for (n = 0, stc = stl; stc; stc = stc->next) n += stc->text.size;
+      ret = fs_get (n + 1);	/* copy parts into buffer */
+      for (n = 0, stc = stl; stc; n += stc->text.size, stc = stc->next)
+	memcpy (ret + n,stc->text.data,stc->text.size);
+      ret[n] = '\0';
+    }
+    mail_free_stringlist (&stl);/* either way, done with list */
+  }
+  return ret;
+}
+
+/* SSL receive line or partial line
+ * Accepts: SSL stream
+ *	    pointer to return size
+ *	    pointer to return continuation flag
+ * Returns: text line string, size and continuation flag, or NIL if failure
+ */
+
+static char *ssl_getline_work (SSLSTREAM *stream,unsigned long *size,
+			       long *contd)
+{
+  unsigned long n;
+  char *s,*ret,c,d;
+  *contd = NIL;			/* assume no continuation */
 				/* make sure have data */
   if (!ssl_getdata (stream)) return NIL;
-  st = stream->iptr;		/* save start of string */
-  n = 0;			/* init string count */
-  while (stream->ictr--) {	/* look for end of line */
+  for (s = stream->iptr, n = 0, c = '\0'; stream->ictr--; n++, c = d) {
     d = *stream->iptr++;	/* slurp another character */
     if ((c == '\015') && (d == '\012')) {
       ret = (char *) fs_get (n--);
-      memcpy (ret,st,n);	/* copy into a free storage string */
+      memcpy (ret,s,*size = n);	/* copy into a free storage string */
       ret[n] = '\0';		/* tie off string with null */
       return ret;
     }
-    n++;			/* count another character searched */
-    c = d;			/* remember previous character */
   }
 				/* copy partial string from buffer */
-  memcpy ((ret = stp = (char *) fs_get (n)),st,n);
+  memcpy ((ret = (char *) fs_get (n)),s,*size = n);
 				/* get more data from the net */
   if (!ssl_getdata (stream)) fs_give ((void **) &ret);
 				/* special case of newline broken by buffer */
   else if ((c == '\015') && (*stream->iptr == '\012')) {
     stream->iptr++;		/* eat the line feed */
     stream->ictr--;
-    ret[n - 1] = '\0';		/* tie off string with null */
+    ret[*size = --n] = '\0';	/* tie off string with null */
   }
-				/* else recurse to get remainder */
-  else if (st = ssl_getline (stream)) {
-    ret = (char *) fs_get (n + 1 + (m = strlen (st)));
-    memcpy (ret,stp,n);		/* copy first part */
-    memcpy (ret + n,st,m);	/* and second part */
-    fs_give ((void **) &stp);	/* flush first part */
-    fs_give ((void **) &st);	/* flush second part */
-    ret[n + m] = '\0';		/* tie off string with null */
-  }
+  else *contd = LONGT;		/* continuation needed */
   return ret;
 }
 
@@ -487,12 +530,12 @@ long ssl_getbuffer (SSLSTREAM *stream,unsigned long size,char *buffer)
 
 long ssl_getdata (SSLSTREAM *stream)
 {
-  SECURITY_STATUS status;
-  SecBuffer buf[4];
-  SecBufferDesc msg;
-  size_t n = 0;
-  size_t i;
   while (stream->ictr < 1) {	/* decrypted buffer empty? */
+    SECURITY_STATUS status;
+    SecBuffer buf[4];
+    SecBufferDesc msg;
+    size_t i;
+    size_t n = 0;		/* initially no bytes to decrypt */
     do {			/* yes, make sure have data from TCP */
       if (stream->iextractr) {	/* have previous unread data? */
 	memcpy (stream->ibuf + n,stream->iextraptr,stream->iextractr);

@@ -27,7 +27,9 @@ for debconf_entry in `echo "$RET" | tr ',' ' '`; do
 	for daemonset in $daemonsets; do
 		service="`echo "$daemonset" | awk -F: '{ print $1 }'`"
 		if [ "$debconf_entry" = "$service" ]; then
-			update-inetd $UPDATE_INETD_ARG "${service}"
+			if [ -x /usr/sbin/update-inetd ]; then
+				update-inetd $UPDATE_INETD_ARG "${service}"
+			fi
 			seen="yes"
 			break
 		fi

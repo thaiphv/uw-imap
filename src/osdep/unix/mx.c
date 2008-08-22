@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2008 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	MX mail routines
  *
@@ -10,14 +23,10 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	3 May 1996
- * Last Edited:	24 October 2002
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2002 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	6 January 2008
  */
-
+
+
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
@@ -27,9 +36,75 @@ extern int errno;		/* just in case */
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include "mx.h"
 #include "misc.h"
 #include "dummy.h"
+#include "fdstring.h"
+
+/* Index file */
+
+#define MXINDEXNAME "/.mxindex"
+#define MXINDEX(d,s) strcat (mx_file (d,s),MXINDEXNAME)
+
+
+/* MX I/O stream local data */
+	
+typedef struct mx_local {
+  int fd;			/* file descriptor of open index */
+  unsigned char *buf;		/* temporary buffer */
+  unsigned long buflen;		/* current size of temporary buffer */
+  unsigned long cachedtexts;	/* total size of all cached texts */
+  time_t scantime;		/* last time directory scanned */
+} MXLOCAL;
+
+
+/* Convenient access to local data */
+
+#define LOCAL ((MXLOCAL *) stream->local)
+
+
+/* Function prototypes */
+
+DRIVER *mx_valid (char *name);
+int mx_isvalid (char *name,char *tmp);
+int mx_namevalid (char *name);
+void *mx_parameters (long function,void *value);
+long mx_dirfmttest (char *name);
+void mx_scan (MAILSTREAM *stream,char *ref,char *pat,char *contents);
+long mx_scan_contents (char *name,char *contents,unsigned long csiz,
+		       unsigned long fsiz);
+void mx_list (MAILSTREAM *stream,char *ref,char *pat);
+void mx_lsub (MAILSTREAM *stream,char *ref,char *pat);
+long mx_subscribe (MAILSTREAM *stream,char *mailbox);
+long mx_unsubscribe (MAILSTREAM *stream,char *mailbox);
+long mx_create (MAILSTREAM *stream,char *mailbox);
+long mx_delete (MAILSTREAM *stream,char *mailbox);
+long mx_rename (MAILSTREAM *stream,char *old,char *newname);
+int mx_rename_work (char *src,size_t srcl,char *dst,size_t dstl,char *name);
+MAILSTREAM *mx_open (MAILSTREAM *stream);
+void mx_close (MAILSTREAM *stream,long options);
+void mx_fast (MAILSTREAM *stream,char *sequence,long flags);
+char *mx_fast_work (MAILSTREAM *stream,MESSAGECACHE *elt);
+char *mx_header (MAILSTREAM *stream,unsigned long msgno,unsigned long *length,
+		 long flags);
+long mx_text (MAILSTREAM *stream,unsigned long msgno,STRING *bs,long flags);
+void mx_flag (MAILSTREAM *stream,char *sequence,char *flag,long flags);
+void mx_flagmsg (MAILSTREAM *stream,MESSAGECACHE *elt);
+long mx_ping (MAILSTREAM *stream);
+void mx_check (MAILSTREAM *stream);
+long mx_expunge (MAILSTREAM *stream,char *sequence,long options);
+long mx_copy (MAILSTREAM *stream,char *sequence,char *mailbox,
+	      long options);
+long mx_append (MAILSTREAM *stream,char *mailbox,append_t af,void *data);
+long mx_append_msg (MAILSTREAM *stream,char *flags,MESSAGECACHE *elt,
+		    STRING *st,SEARCHSET *set);
+
+int mx_select (struct direct *name);
+int mx_numsort (const void *d1,const void *d2);
+char *mx_file (char *dst,char *name);
+long mx_lockindex (MAILSTREAM *stream);
+void mx_unlockindex (MAILSTREAM *stream);
+void mx_setdate (char *file,MESSAGECACHE *elt);
+
 
 /* MX mail routines */
 
@@ -39,7 +114,7 @@ extern int errno;		/* just in case */
 DRIVER mxdriver = {
   "mx",				/* driver name */
 				/* driver flags */
-  DR_MAIL|DR_LOCAL|DR_NOFAST|DR_CRLF|DR_LOCKING,
+  DR_MAIL|DR_LOCAL|DR_NOFAST|DR_CRLF|DR_LOCKING|DR_DIRFMT,
   (DRIVER *) NIL,		/* next driver */
   mx_valid,			/* mailbox is valid for us */
   mx_parameters,		/* manipulate parameters */
@@ -78,8 +153,7 @@ DRIVER mxdriver = {
 
 				/* prototype stream */
 MAILSTREAM mxproto = {&mxdriver};
-
-
+
 /* MX mail validate mailbox
  * Accepts: mailbox name
  * Returns: our driver if name is valid, NIL otherwise
@@ -90,23 +164,47 @@ DRIVER *mx_valid (char *name)
   char tmp[MAILTMPLEN];
   return mx_isvalid (name,tmp) ? &mxdriver : NIL;
 }
-
+
+
 /* MX mail test for valid mailbox
  * Accepts: mailbox name
  *	    temporary buffer to use
- * Returns: T if valid, NIL otherwise
+ * Returns: T if valid, NIL otherwise with errno holding dir stat error
  */
 
 int mx_isvalid (char *name,char *tmp)
 {
   struct stat sbuf;
   errno = NIL;			/* zap error */
-				/* validate name as directory */
-  return (!stat (MXINDEX (tmp,name),&sbuf) &&
-	  ((sbuf.st_mode & S_IFMT) == S_IFREG));
+  if ((strlen (name) <= NETMAXMBX) && *mx_file (tmp,name) &&
+      !stat (tmp,&sbuf) && ((sbuf.st_mode & S_IFMT) == S_IFDIR)) {
+				/* name is directory; is it mx? */
+    if (!stat (MXINDEX (tmp,name),&sbuf) &&
+	((sbuf.st_mode & S_IFMT) == S_IFREG)) return T;
+    errno = NIL;		/* directory but not mx */
+  }
+  else if (!compare_cstring (name,"INBOX")) errno = NIL;
+  return NIL;
 }
 
 
+/* MX mail test for valid mailbox
+ * Accepts: mailbox name
+ * Returns: T if valid, NIL otherwise
+ */
+
+int mx_namevalid (char *name)
+{
+  char *s = (*name == '/') ? name + 1 : name;
+  while (s && *s) {		/* make sure valid name */
+    if (isdigit (*s)) s++;	/* digit, check this node further... */
+    else if (*s == '/') break;	/* all digit node, barf */
+				/* non-digit, skip to next node or return */
+    else if (!((s = strchr (s+1,'/')) && *++s)) return T;
+  }
+  return NIL;			/* all numeric or empty node */
+}
+
 /* MX manipulate driver parameters
  * Accepts: function code
  *	    function-dependent value
@@ -115,10 +213,36 @@ int mx_isvalid (char *name,char *tmp)
 
 void *mx_parameters (long function,void *value)
 {
-  return NIL;
+  void *ret = NIL;
+  switch ((int) function) {
+  case GET_INBOXPATH:
+    if (value) ret = mailboxfile ((char *) value,"~/INBOX");
+    break;
+  case GET_DIRFMTTEST:
+    ret = (void *) mx_dirfmttest;
+    break;
+  case GET_SCANCONTENTS:
+    ret = (void *) mx_scan_contents;
+    break;
+  }
+  return ret;
 }
 
 
+/* MX test for directory format internal node
+ * Accepts: candidate node name
+ * Returns: T if internal name, NIL otherwise
+ */
+
+long mx_dirfmttest (char *name)
+{
+  int c;
+				/* success if index name or all-numberic */
+  if (strcmp (name,MXINDEXNAME+1))
+    while (c = *name++) if (!isdigit (c)) return NIL;
+  return LONGT;
+}
+
 /* MX scan mailboxes
  * Accepts: mail stream
  *	    reference
@@ -128,7 +252,42 @@ void *mx_parameters (long function,void *value)
 
 void mx_scan (MAILSTREAM *stream,char *ref,char *pat,char *contents)
 {
-  if (stream) MM_LOG ("Scan not valid for mx mailboxes",ERROR);
+  if (stream) dummy_scan (NIL,ref,pat,contents);
+}
+
+
+/* MX scan mailbox for contents
+ * Accepts: mailbox name
+ *	    desired contents
+ *	    contents size
+ *	    file size (ignored)
+ * Returns: NIL if contents not found, T if found
+ */
+
+long mx_scan_contents (char *name,char *contents,unsigned long csiz,
+			unsigned long fsiz)
+{
+  long i,nfiles;
+  void *a;
+  char *s;
+  long ret = NIL;
+  size_t namelen = strlen (name);
+  struct stat sbuf;
+  struct direct **names = NIL;
+  if ((nfiles = scandir (name,&names,mx_select,mx_numsort)) > 0)
+    for (i = 0; i < nfiles; ++i) {
+      if (!ret) {
+	sprintf (s = (char *) fs_get (namelen + strlen (names[i]->d_name) + 2),
+		 "%s/%s",name,names[i]->d_name);
+	if (!stat (s,&sbuf) && (csiz <= sbuf.st_size))
+	  ret = dummy_scan_contents (s,contents,csiz,sbuf.st_size);
+	fs_give ((void **) &s);
+      }
+      fs_give ((void **) &names[i]);
+    }
+				/* free directory list */
+  if (a = (void *) names) fs_give ((void **) &a);
+  return ret;
 }
 
 /* MX list mailboxes
@@ -139,25 +298,7 @@ void mx_scan (MAILSTREAM *stream,char *ref,char *pat,char *contents)
 
 void mx_list (MAILSTREAM *stream,char *ref,char *pat)
 {
-  char *s,test[MAILTMPLEN],file[MAILTMPLEN];
-  long i = 0;
-				/* get canonical form of name */
-  if (stream && dummy_canonicalize (test,ref,pat)) {
-				/* found any wildcards? */
-    if (s = strpbrk (test,"%*")) {
-				/* yes, copy name up to that point */
-      strncpy (file,test,i = s - test);
-      file[i] = '\0';		/* tie off */
-    }
-    else strcpy (file,test);	/* use just that name then */
-				/* find directory name */
-    if (s = strrchr (file,'/')) {
-      *s = '\0';		/* found, tie off at that point */
-      s = file;
-    }
-				/* do the work */
-    mx_list_work (stream,s,test,0);
-  }
+  if (stream) dummy_list (NIL,ref,pat);
 }
 
 
@@ -170,47 +311,6 @@ void mx_list (MAILSTREAM *stream,char *ref,char *pat)
 void mx_lsub (MAILSTREAM *stream,char *ref,char *pat)
 {
   if (stream) dummy_lsub (NIL,ref,pat);
-}
-
-/* MX list mailboxes worker routine
- * Accepts: mail stream
- *	    directory name to search
- *	    search pattern
- *	    search level
- */
-
-void mx_list_work (MAILSTREAM *stream,char *dir,char *pat,long level)
-{
-  DIR *dp;
-  struct direct *d;
-  struct stat sbuf;
-  char *cp,*np,curdir[MAILTMPLEN],name[MAILTMPLEN];
-  if (dir && *dir) {		/* make mailbox and directory names */
-    sprintf (name,"%s/",dir);	/* print name starts at directory */
-    mx_file (curdir,dir);	/* path starts from mx_file() name */
-  }
-  else {			/* no directory, use mailbox home dir */
-    mx_file (curdir,mailboxdir (name,NIL,NIL));
-    name[0] = '\0';		/* dummy name */
-  }
-  if (dp = opendir (curdir)) {	/* open directory */
-    np = name + strlen (name);
-    cp = curdir + strlen (strcat (curdir,"/"));
-    while (d = readdir (dp)) {	/* scan, ignore . and numeric names */
-      if ((d->d_name[0] != '.') && !mx_select (d)) {
-	if (level < (long) mail_parameters (NIL,GET_LISTMAXLEVEL,NIL)) {
-	  strcpy (cp,d->d_name);/* make directory name */
-	  strcpy (np,d->d_name);/* make mx name of directory name */
-	  if (dmatch (name,pat,'/') && !stat (curdir,&sbuf) &&
-	      ((sbuf.st_mode &= S_IFMT) == S_IFDIR))
-	    mx_list_work (stream,name,pat,level+1);
-	}
-      }
-      else if (!strcmp (d->d_name,MXINDEXNAME+1) && pmatch_full (dir,pat,'/'))
-	mm_list (stream,'/',dir,NIL);
-    }
-    closedir (dp);		/* all done, flush directory */
-  }
 }
 
 /* MX mail subscribe to mailbox
@@ -244,46 +344,33 @@ long mx_unsubscribe (MAILSTREAM *stream,char *mailbox)
 
 long mx_create (MAILSTREAM *stream,char *mailbox)
 {
+  DRIVER *test;
   int fd;
-  char *s,tmp[MAILTMPLEN],mbx[MAILTMPLEN];
-				/* assume error */
-  sprintf (tmp,"Can't create mailbox %.80s: invalid MX-format name",mailbox);
-				/* make sure valid name */
-  for (s = mailbox; s && *s;) {
-    if (isdigit (*s)) s++;	/* digit, check this node further... */
-				/* all digit node, barf */
-    else if (*s == '/') s = NIL;
-				/* non-digit in node, skip to next node */
-    else if (s = strchr (s+1,'/')) s++;
-    else tmp[0] = NIL;		/* no more nodes, good name */
-  }
-  if (tmp[0]);			/* was there an error in the name? */
+  char *s,tmp[MAILTMPLEN];
+  int mask = umask (0);
+  long ret = NIL;
+  if (!mx_namevalid (mailbox))	/* validate name */
+    sprintf (tmp,"Can't create mailbox %.80s: invalid MX-format name",mailbox);
 				/* must not already exist */
-  else if (mx_isvalid (mailbox,tmp))
+  else if ((test = mail_valid (NIL,mailbox,NIL)) &&
+	   strcmp (test->name,"dummy"))
     sprintf (tmp,"Can't create mailbox %.80s: mailbox already exists",mailbox);
 				/* create directory */
-  else if (!dummy_create_path (stream,strcat (mx_file (mbx,mailbox),"/"),
+  else if (!dummy_create_path (stream,MXINDEX (tmp,mailbox),
 			       get_dir_protection (mailbox)))
-    sprintf (tmp,"Can't create mailbox leaf %.80s: %s",
-	     mailbox,strerror (errno));
-  else {			/* create index file */
-    int mask = umask (0);
-    if (((fd = open (MXINDEX (tmp,mailbox),O_WRONLY|O_CREAT|O_EXCL,
-		     (int) mail_parameters (NIL,GET_MBXPROTECTION,mailbox)))<0)
-	|| close (fd))
-      sprintf (tmp,"Can't create mailbox index %.80s: %s",
-	       mailbox,strerror (errno));
-	
-    else {			/* success */
-      set_mbx_protections (mailbox,mbx);
-      set_mbx_protections (mailbox,tmp);
-      tmp[0] = NIL;
-    }
-    umask (mask);		/* restore mask */
+    sprintf (tmp,"Can't create mailbox %.80s: %s",mailbox,strerror (errno));
+  else {			/* success */
+				/* set index protection */
+    set_mbx_protections (mailbox,tmp);
+				/* tie off directory name */
+    *(s = strrchr (tmp,'/') + 1) = '\0';
+				/* set directory protection */
+    set_mbx_protections (mailbox,tmp);
+    ret = LONGT;
   }
-  if (!tmp[0]) return LONGT;	/* success */
-  MM_LOG (tmp,ERROR);		/* some error */
-  return NIL;
+  umask (mask);			/* restore mask */
+  if (!ret) MM_LOG (tmp,ERROR);	/* some error */
+  return ret;
 }
 
 /* MX mail delete mailbox
@@ -313,11 +400,11 @@ long mx_delete (MAILSTREAM *stream,char *mailbox)
 	unlink (tmp);		/* sayonara */
       }
       closedir (dirp);		/* flush directory */
-    }
-				/* try to remove the directory */
-    if (rmdir (mx_file (tmp,mailbox))) {
-      sprintf (tmp,"Can't delete name %.80s: %s",mailbox,strerror (errno));
-      mm_log (tmp,WARN);
+      *(s = strrchr (tmp,'/')) = '\0';
+      if (rmdir (tmp)) {	/* try to remove the directory */
+	sprintf (tmp,"Can't delete name %.80s: %s",mailbox,strerror (errno));
+	MM_LOG (tmp,WARN);
+      }
     }
     return T;			/* always success */
   }
@@ -338,31 +425,81 @@ long mx_rename (MAILSTREAM *stream,char *old,char *newname)
   struct stat sbuf;
   if (!mx_isvalid (old,tmp))
     sprintf (tmp,"Can't rename mailbox %.80s: no such mailbox",old);
+  else if (!mx_namevalid (newname))
+    sprintf (tmp,"Can't rename to mailbox %.80s: invalid MX-format name",
+	     newname);
 				/* new mailbox name must not be valid */
   else if (mx_isvalid (newname,tmp))
     sprintf (tmp,"Can't rename to mailbox %.80s: destination already exists",
 	     newname);
-				/* success if can rename the directory */
-  else {			/* found superior to destination name? */
-    if (s = strrchr (mx_file (tmp1,newname),'/')) {
-      c = *++s;			/* remember first character of inferior */
-      *s = '\0';		/* tie off to get just superior */
+  else {
+    mx_file (tmp,old);		/* build old directory name */
+    mx_file (tmp1,newname);	/* and new directory name */
+				/* easy if not INBOX */
+    if (compare_cstring (old,"INBOX")) {
+				/* found superior to destination name? */
+      if (s = strrchr (mx_file (tmp1,newname),'/')) {
+	c = *++s;	    /* remember first character of inferior */
+	*s = '\0';		/* tie off to get just superior */
 				/* name doesn't exist, create it */
-      if ((stat (tmp1,&sbuf) || ((sbuf.st_mode & S_IFMT) != S_IFDIR)) &&
-	  !dummy_create_path (stream,tmp1,get_dir_protection (newname)))
-	return NIL;
-      *s = c;			/* restore full name */
+	if ((stat (tmp1,&sbuf) || ((sbuf.st_mode & S_IFMT) != S_IFDIR)) &&
+	    !dummy_create_path (stream,tmp1,get_dir_protection (newname)))
+	  return NIL;
+	*s = c;			/* restore full name */
+      }
+      if (!rename (tmp,tmp1)) return LONGT;
     }
-    if (!rename (mx_file (tmp,old),tmp1)) {
-				/* recreate file if renamed INBOX */
-      if (!compare_cstring (old,"INBOX")) mx_create (NIL,"INBOX");
-      return T;
+
+				/* RFC 3501 requires this */
+    else if (dummy_create_path (stream,strcat (tmp1,"/"),
+				get_dir_protection (newname))) {
+      void *a;
+      int i,n,lasterror;
+      struct direct **names = NIL;
+      size_t srcl = strlen (tmp);
+      size_t dstl = strlen (tmp1);
+				/* rename each mx file to new directory */
+      for (i = lasterror = 0,n = scandir (tmp,&names,mx_select,mx_numsort);
+	   i < n; ++i) {
+	if (mx_rename_work (tmp,srcl,tmp1,dstl,names[i]->d_name))
+	  lasterror = errno;
+	fs_give ((void **) &names[i]);
+      }
+				/* free directory list */
+      if (a = (void *) names) fs_give ((void **) &a);
+      if (lasterror || mx_rename_work (tmp,srcl,tmp1,dstl,MXINDEXNAME+1))
+	errno = lasterror;
+      else return mx_create (NIL,"INBOX");
     }
     sprintf (tmp,"Can't rename mailbox %.80s to %.80s: %s",
 	     old,newname,strerror (errno));
   }
   MM_LOG (tmp,ERROR);		/* something failed */
   return NIL;
+}
+
+
+/* MX rename worker routine
+ * Accepts: source directory name
+ *	    source directory name length
+ *	    destination directory name
+ *	    destination directory name length
+ *	    name of node to move
+ * Returns: zero if success, non-zero if error
+ */
+
+int mx_rename_work (char *src,size_t srcl,char *dst,size_t dstl,char *name)
+{
+  int ret;
+  size_t len = strlen (name);
+  char *s = (char *) fs_get (srcl + len + 2);
+  char *d = (char *) fs_get (dstl + len + 1);
+  sprintf (s,"%s/%s",src,name);
+  sprintf (d,"%s%s",dst,name);
+  ret = rename (s,d);
+  fs_give ((void **) &s);
+  fs_give ((void **) &d);
+  return ret;
 }
 
 /* MX mail open
@@ -380,9 +517,12 @@ MAILSTREAM *mx_open (MAILSTREAM *stream)
 				/* note if an INBOX or not */
   stream->inbox = !compare_cstring (stream->mailbox,"INBOX");
   mx_file (tmp,stream->mailbox);/* get directory name */
-  LOCAL->dir = cpystr (tmp);	/* copy directory name for later */
+				/* canonicalize mailbox name */
+  fs_give ((void **) &stream->mailbox);
+  stream->mailbox = cpystr (tmp);
 				/* make temporary buffer */
-  LOCAL->buf = (char *) fs_get ((LOCAL->buflen = MAXMESSAGESIZE) + 1);
+  LOCAL->buf = (char *) fs_get (CHUNKSIZE);
+  LOCAL->buflen = CHUNKSIZE - 1;
   LOCAL->scantime = 0;		/* not scanned yet */
   LOCAL->fd = -1;		/* no index yet */
   LOCAL->cachedtexts = 0;	/* no cached texts */
@@ -409,8 +549,7 @@ void mx_close (MAILSTREAM *stream,long options)
   if (LOCAL) {			/* only if a file is open */
     int silent = stream->silent;
     stream->silent = T;		/* note this stream is dying */
-    if (options & CL_EXPUNGE) mx_expunge (stream);
-    if (LOCAL->dir) fs_give ((void **) &LOCAL->dir);
+    if (options & CL_EXPUNGE) mx_expunge (stream,NIL,NIL);
 				/* free local scratch buffer */
     if (LOCAL->buf) fs_give ((void **) &LOCAL->buf);
 				/* nuke the local data */
@@ -449,9 +588,9 @@ char *mx_fast_work (MAILSTREAM *stream,MESSAGECACHE *elt)
   struct stat sbuf;
   struct tm *tm;
 				/* build message file name */
-  sprintf (LOCAL->buf,"%s/%lu",LOCAL->dir,elt->private.uid);
-  if (!elt->rfc822_size) {	/* have size yet? */
-    stat (LOCAL->buf,&sbuf);	/* get size of message */
+  sprintf (LOCAL->buf,"%s/%lu",stream->mailbox,elt->private.uid);
+				/* have size yet? */
+  if (!elt->rfc822_size && !stat (LOCAL->buf,&sbuf)) {
 				/* make plausible IMAPish date string */
     tm = gmtime (&sbuf.st_mtime);
     elt->day = tm->tm_mday; elt->month = tm->tm_mon + 1;
@@ -461,7 +600,7 @@ char *mx_fast_work (MAILSTREAM *stream,MESSAGECACHE *elt)
     elt->zhours = 0; elt->zminutes = 0; elt->zoccident = 0;
     elt->rfc822_size = sbuf.st_size;
   }
-  return LOCAL->buf;		/* return file name */
+  return (char *) LOCAL->buf;	/* return file name */
 }
 
 /* MX mail fetch message header
@@ -585,11 +724,11 @@ long mx_ping (MAILSTREAM *stream)
   long nmsgs = stream->nmsgs;
   long recent = stream->recent;
   int silent = stream->silent;
-  if (stat (LOCAL->dir,&sbuf)) return NIL;
-  stream->silent = T;		/* don't pass up mm_exists() events yet */
+  if (stat (stream->mailbox,&sbuf)) return NIL;
+  stream->silent = T;		/* don't pass up exists events yet */
   if (sbuf.st_ctime != LOCAL->scantime) {
     struct direct **names = NIL;
-    long nfiles = scandir (LOCAL->dir,&names,mx_select,mx_numsort);
+    long nfiles = scandir (stream->mailbox,&names,mx_select,mx_numsort);
     if (nfiles < 0) nfiles = 0;	/* in case error */
     old = stream->uid_last;
 				/* note scanned now */
@@ -615,25 +754,22 @@ long mx_ping (MAILSTREAM *stream)
   stream->nmsgs = nmsgs;	/* don't upset mail_uid() */
 
 				/* if INBOX, snarf from system INBOX  */
-  if (mx_lockindex (stream) && stream->inbox) {
+  if (mx_lockindex (stream) && stream->inbox &&
+      !strcmp (sysinbox (),stream->mailbox)) {
     old = stream->uid_last;
-				/* paranoia check */
-    if (!strcmp (sysinbox (),stream->mailbox)) {
-      stream->silent = silent;
-      return NIL;
-    }
     MM_CRITICAL (stream);	/* go critical */
-    stat (sysinbox (),&sbuf);	/* see if anything there */
-				/* can get sysinbox mailbox? */
-    if (sbuf.st_size && (sysibx = mail_open (sysibx,sysinbox (),OP_SILENT))
-	&& (!sysibx->rdonly) && (r = sysibx->nmsgs)) {
+				/* see if anything in system inbox */
+    if (!stat (sysinbox (),&sbuf) && sbuf.st_size &&
+	(sysibx = mail_open (sysibx,sysinbox (),OP_SILENT)) &&
+	!sysibx->rdonly && (r = sysibx->nmsgs)) {
       for (i = 1; i <= r; ++i) {/* for each message in sysinbox mailbox */
 				/* build file name we will use */
-	sprintf (LOCAL->buf,"%s/%lu",LOCAL->dir,++old);
+	sprintf (LOCAL->buf,"%s/%lu",stream->mailbox,++old);
 				/* snarf message from Berkeley mailbox */
 	selt = mail_elt (sysibx,i);
 	if (((fd = open (LOCAL->buf,O_WRONLY|O_CREAT|O_EXCL,
-			 S_IREAD|S_IWRITE)) >= 0) &&
+			 (long) mail_parameters (NIL,GET_MBXPROTECTION,NIL)))
+	     >= 0) &&
 	    (s = mail_fetchheader_full (sysibx,i,NIL,&j,FT_PEEK)) &&
 	    (write (fd,s,j) == j) &&
 	    (s = mail_fetchtext_full (sysibx,i,&j,FT_PEEK)) &&
@@ -656,20 +792,22 @@ long mx_ping (MAILSTREAM *stream)
 	  elt->zhours = selt->zhours; elt->zminutes = selt->zminutes;
 	  elt->zoccident = selt->zoccident;
 	  mx_setdate (LOCAL->buf,elt);
+	  sprintf (tmp,"%lu",i);/* delete it from the sysinbox */
+	  mail_flag (sysibx,tmp,"\\Deleted",ST_SET);
 	}
 	else {			/* failed to snarf */
 	  if (fd) {		/* did it ever get opened? */
 	    close (fd);		/* close descriptor */
 	    unlink (LOCAL->buf);/* flush this file */
 	  }
-	  stream->silent = silent;
-	  return NIL;		/* note that something is badly wrong */
+	  sprintf (tmp,"Message copy to MX mailbox failed: %.80s",
+		   s,strerror (errno));
+	  MM_LOG (tmp,ERROR);
+	  r = 0;		/* stop the snarf in its tracks */
 	}
-	sprintf (tmp,"%lu",i);	/* delete it from the sysinbox */
-	mail_flag (sysibx,tmp,"\\Deleted",ST_SET);
       }
-      stat (LOCAL->dir,&sbuf);	/* update scan time */
-      LOCAL->scantime = sbuf.st_ctime;      
+				/* update scan time */
+      if (!stat (stream->mailbox,&sbuf)) LOCAL->scantime = sbuf.st_ctime;      
       mail_expunge (sysibx);	/* now expunge all those messages */
     }
     if (sysibx) mail_close (sysibx);
@@ -694,20 +832,27 @@ void mx_check (MAILSTREAM *stream)
 
 /* MX mail expunge mailbox
  * Accepts: MAIL stream
+ *	    sequence to expunge if non-NIL
+ *	    expunge options
+ * Returns: T, always
  */
 
-void mx_expunge (MAILSTREAM *stream)
+long mx_expunge (MAILSTREAM *stream,char *sequence,long options)
 {
+  long ret;
   MESSAGECACHE *elt;
   unsigned long i = 1;
   unsigned long n = 0;
   unsigned long recent = stream->recent;
-  if (mx_lockindex (stream)) {	/* lock the index */
+  if (ret = (sequence ? ((options & EX_UID) ?
+			 mail_uid_sequence (stream,sequence) :
+			 mail_sequence (stream,sequence)) : LONGT) &&
+      mx_lockindex (stream)) {	/* lock the index */
     MM_CRITICAL (stream);	/* go critical */
     while (i <= stream->nmsgs) {/* for each message */
-				/* if deleted, need to trash it */
-      if ((elt = mail_elt (stream,i))->deleted) {
-	sprintf (LOCAL->buf,"%s/%lu",LOCAL->dir,elt->private.uid);
+      elt = mail_elt (stream,i);/* if deleted, need to trash it */
+      if (elt->deleted && (sequence ? elt->sequence : T)) {
+	sprintf (LOCAL->buf,"%s/%lu",stream->mailbox,elt->private.uid);
 	if (unlink (LOCAL->buf)) {/* try to delete the message */
 	  sprintf (LOCAL->buf,"Expunge of message %lu failed, aborted: %s",i,
 		   strerror (errno));
@@ -733,10 +878,11 @@ void mx_expunge (MAILSTREAM *stream)
     else MM_LOG ("No messages deleted, so no update needed",(long) NIL);
     MM_NOCRITICAL (stream);	/* release critical */
     mx_unlockindex (stream);	/* finished with index */
-  }
 				/* notify upper level of new mailbox size */
-  mail_exists (stream,stream->nmsgs);
-  mail_recent (stream,recent);
+    mail_exists (stream,stream->nmsgs);
+    mail_recent (stream,recent);
+  }
+  return ret;
 }
 
 /* MX mail copy message(s)
@@ -749,48 +895,88 @@ void mx_expunge (MAILSTREAM *stream)
 
 long mx_copy (MAILSTREAM *stream,char *sequence,char *mailbox,long options)
 {
+  FDDATA d;
   STRING st;
   MESSAGECACHE *elt;
+  MAILSTREAM *astream;
   struct stat sbuf;
   int fd;
-  unsigned long i,j;
-  char *t,flags[MAILTMPLEN],date[MAILTMPLEN];
+  unsigned long i,j,uid,uidv;
+  char *t,tmp[MAILTMPLEN];
+  long ret;
+  mailproxycopy_t pc =
+    (mailproxycopy_t) mail_parameters (stream,GET_MAILPROXYCOPY,NIL);
+				/* make sure valid mailbox */
+  if (!mx_valid (mailbox)) switch (errno) {
+  case NIL:			/* no error in stat() */
+    if (pc) return (*pc) (stream,sequence,mailbox,options);
+    sprintf (LOCAL->buf,"Not a MX-format mailbox: %.80s",mailbox);
+    MM_LOG (LOCAL->buf,ERROR);
+    return NIL;
+  default:			/* some stat() error */
+    MM_NOTIFY (stream,"[TRYCREATE] Must create mailbox before copy",NIL);
+    return NIL;
+  }
 				/* copy the messages */
-  if ((options & CP_UID) ? mail_uid_sequence (stream,sequence) :
-      mail_sequence (stream,sequence))
-    for (i = 1; i <= stream->nmsgs; i++) 
+  if (!(ret = ((options & CP_UID) ? mail_uid_sequence (stream,sequence) :
+	       mail_sequence (stream,sequence))));
+				/* acquire stream to append to */
+  else if (!(astream = mail_open (NIL,mailbox,OP_SILENT))) {
+    MM_LOG ("Can't open copy mailbox",ERROR);
+    ret = NIL;
+  }
+  else {
+    MM_CRITICAL (stream);	/* go critical */
+    if (!(ret = mx_lockindex (astream)))
+      MM_LOG ("Message copy failed: unable to lock index",ERROR);
+    else {
+
+      copyuid_t cu = (copyuid_t) mail_parameters (NIL,GET_COPYUID,NIL);
+      SEARCHSET *source = cu ? mail_newsearchset () : NIL;
+      SEARCHSET *dest = cu ? mail_newsearchset () : NIL;
+      for (i = 1,uid = uidv = 0; ret && (i <= stream->nmsgs); i++) 
       if ((elt = mail_elt (stream,i))->sequence) {
-	if ((fd = open (mx_fast_work (stream,elt),O_RDONLY,NIL))<0) return NIL;
-	fstat (fd,&sbuf);	/* get size of message */
-				/* is buffer big enough? */
-	if (sbuf.st_size > LOCAL->buflen) {
-	  fs_give ((void **) &LOCAL->buf);
-	  LOCAL->buf = (char *) fs_get ((LOCAL->buflen = sbuf.st_size) + 1);
-	}
-				/* slurp message */
-	read (fd,LOCAL->buf,sbuf.st_size);
-				/* tie off file */
-	LOCAL->buf[sbuf.st_size] = '\0';
-	close (fd);		/* flush message file */
-	INIT (&st,mail_string,(void *) LOCAL->buf,sbuf.st_size);
+	if (ret = ((fd = open (mx_fast_work (stream,elt),O_RDONLY,NIL))
+		   >= 0)) {
+	  fstat (fd,&sbuf);	/* get size of message */
+	  d.fd = fd;		/* set up file descriptor */
+	  d.pos = 0;		/* start of file */
+	  d.chunk = LOCAL->buf;
+	  d.chunksize = CHUNKSIZE;
+	  INIT (&st,fd_string,&d,sbuf.st_size);
 				/* init flag string */
-	flags[0] = flags[1] = '\0';
-	if (j = elt->user_flags) do
-	  if (t = stream->user_flags[find_rightmost_bit (&j)])
-	    strcat (strcat (flags," "),t);
-	while (j);
-	if (elt->seen) strcat (flags," \\Seen");
-	if (elt->deleted) strcat (flags," \\Deleted");
-	if (elt->flagged) strcat (flags," \\Flagged");
-	if (elt->answered) strcat (flags," \\Answered");
-	if (elt->draft) strcat (flags," \\Draft");
-	flags[0] = '(';		/* open list */
-	strcat (flags,")");	/* close list */
-	mail_date (date,elt);	/* generate internal date */
-	if (!mail_append_full (NIL,mailbox,flags,date,&st)) return NIL;
-	if (options & CP_MOVE) elt->deleted = T;
+	  tmp[0] = tmp[1] = '\0';
+	  if (j = elt->user_flags) do
+	    if (t = stream->user_flags[find_rightmost_bit (&j)])
+	      strcat (strcat (tmp," "),t);
+	  while (j);
+	  if (elt->seen) strcat (tmp," \\Seen");
+	  if (elt->deleted) strcat (tmp," \\Deleted");
+	  if (elt->flagged) strcat (tmp," \\Flagged");
+	  if (elt->answered) strcat (tmp," \\Answered");
+	  if (elt->draft) strcat (tmp," \\Draft");
+	  tmp[0] = '(';		/* open list */
+	  strcat (tmp,")");	/* close list */
+	  if (ret = mx_append_msg (astream,tmp,elt,&st,dest)) {
+				/* add to source set if needed */
+	    if (source) mail_append_set (source,mail_uid (stream,i));
+				/* delete if doing a move */
+	    if (options & CP_MOVE) elt->deleted = T;
+	  }
+	}
       }
-  return T;			/* return success */
+				/* return sets if doing COPYUID */
+      if (cu && ret) (*cu) (stream,mailbox,astream->uid_validity,source,dest);
+      else {			/* flush any sets we may have built */
+	mail_free_searchset (&source);
+	mail_free_searchset (&dest);
+      }
+      mx_unlockindex (astream);	/* unlock index */
+    }
+    MM_NOCRITICAL (stream);
+    mail_close (astream);	/* finished with append stream */
+  }
+  return ret;			/* return success */
 }
 
 /* MX mail append message from stringstruct
@@ -803,13 +989,10 @@ long mx_copy (MAILSTREAM *stream,char *sequence,char *mailbox,long options)
 
 long mx_append (MAILSTREAM *stream,char *mailbox,append_t af,void *data)
 {
-  MESSAGECACHE *elt,selt;
+  MESSAGECACHE elt;
   MAILSTREAM *astream;
-  int fd;
-  char *flags,*date,*s,tmp[MAILTMPLEN];
+  char *flags,*date,tmp[MAILTMPLEN];
   STRING *message;
-  long f,i,size;
-  unsigned long uf;
   long ret = LONGT;
 				/* default stream to prototype */
   if (!stream) stream = user_flags (&mxproto);
@@ -817,12 +1000,7 @@ long mx_append (MAILSTREAM *stream,char *mailbox,append_t af,void *data)
 				/* make sure valid mailbox */
   if (!mx_isvalid (mailbox,tmp)) switch (errno) {
   case ENOENT:			/* no such file? */
-    if (((mailbox[0] == 'I') || (mailbox[0] == 'i')) &&
-	((mailbox[1] == 'N') || (mailbox[1] == 'n')) &&
-	((mailbox[2] == 'B') || (mailbox[2] == 'b')) &&
-	((mailbox[3] == 'O') || (mailbox[3] == 'o')) &&
-	((mailbox[4] == 'X') || (mailbox[4] == 'x')) && !mailbox[5])
-      mx_create (NIL,"INBOX");
+    if (!compare_cstring (mailbox,"INBOX")) mx_create (NIL,"INBOX");
     else {
       MM_NOTIFY (stream,"[TRYCREATE] Must create mailbox before append",NIL);
       return NIL;
@@ -839,77 +1017,89 @@ long mx_append (MAILSTREAM *stream,char *mailbox,append_t af,void *data)
     MM_LOG (tmp,ERROR);
     return NIL;
   }
+
 				/* get first message */
   if (!MM_APPEND (af) (stream,data,&flags,&date,&message)) return NIL;
   if (!(astream = mail_open (NIL,mailbox,OP_SILENT))) {
-    sprintf (tmp,"Can't open append mailbox: %s",strerror (errno));
+    MM_LOG ("Can't open append mailbox",ERROR);
+    return NIL;
+  }
+  MM_CRITICAL (astream);	/* go critical */
+				/* lock the index */
+  if (!(ret = mx_lockindex (astream)))
+    MM_LOG ("Message append failed: unable to lock index",ERROR);
+  else {
+    appenduid_t au = (appenduid_t) mail_parameters (NIL,GET_APPENDUID,NIL);
+    SEARCHSET *dst = au ? mail_newsearchset () : NIL;
+    do {
+				/* guard against zero-length */
+      if (!(ret = SIZE (message)))
+	MM_LOG ("Append of zero-length message",ERROR);
+      else if (date && !(ret = mail_parse_date (&elt,date))) {
+	sprintf (tmp,"Bad date in append: %.80s",date);
+	MM_LOG (tmp,ERROR);
+      }
+      else ret = mx_append_msg (astream,flags,date ? &elt : NIL,message,dst)&&
+	     MM_APPEND (af) (stream,data,&flags,&date,&message);
+    } while (ret && message);
+				/* return sets if doing APPENDUID */
+    if (au && ret) (*au) (mailbox,astream->uid_validity,dst);
+    else mail_free_searchset (&dst);
+    mx_unlockindex (astream);	/* unlock index */
+  }
+  MM_NOCRITICAL (astream);	/* release critical */
+  mail_close (astream);
+  return ret;
+}
+
+/* MX mail append single message
+ * Accepts: MAIL stream
+ *	    flags for new message if non-NIL
+ *	    elt with source date if non-NIL
+ *	    stringstruct of message text
+ *	    searchset to place UID
+ * Returns: T if success, NIL if failure
+ */
+
+long mx_append_msg (MAILSTREAM *stream,char *flags,MESSAGECACHE *elt,
+		    STRING *st,SEARCHSET *set)
+{
+  char tmp[MAILTMPLEN];
+  int fd;
+  unsigned long uf;
+  long f = mail_parse_flags (stream,flags,&uf);
+				/* make message file name */
+  sprintf (tmp,"%s/%lu",stream->mailbox,++stream->uid_last);
+  if ((fd = open (tmp,O_WRONLY|O_CREAT|O_EXCL,
+		  (long) mail_parameters (NIL,GET_MBXPROTECTION,NIL))) < 0) {
+    sprintf (tmp,"Can't create append message: %s",strerror (errno));
     MM_LOG (tmp,ERROR);
     return NIL;
   }
-  MM_CRITICAL (stream);	/* go critical */
-
-				/* lock the index */
-  if (mx_lockindex (astream)) do {
-    if (!SIZE (message)) {	/* guard against zero-length */
-      MM_LOG ("Append of zero-length message",ERROR);
-      ret = NIL;
-      break;
-    }
-				/* parse flags */
-    f = mail_parse_flags (astream,flags,&uf);
-    if (date) {			/* want to preserve date? */
-				/* yes, parse date into an elt */
-      if (!mail_parse_date (&selt,date)) {
-	sprintf (tmp,"Bad date in append: %.80s",date);
-	MM_LOG (tmp,ERROR);
-	ret = NIL;
-	break;
-      }
-    }
-    mx_file (tmp,mailbox);	/* make message name */
-    sprintf (tmp + strlen (tmp),"/%lu",++astream->uid_last);
-    if ((fd = open (tmp,O_WRONLY|O_CREAT|O_EXCL,S_IREAD|S_IWRITE)) < 0) {
-      sprintf (tmp,"Can't create append message: %s",strerror (errno));
-      MM_LOG (tmp,ERROR);
-      ret = NIL;
-      break;
-    }
-				/* copy message */
-    s = (char *) fs_get (size = SIZE (message));
-    for (i = 0; i < size; s[i++] = SNX (message));
-				/* write the data */
-    if ((write (fd,s,size) < 0) || fsync (fd)) {
-      unlink (tmp);		/* delete mailbox */
+  while (SIZE (st)) {		/* copy the file */
+    if (st->cursize && (write (fd,st->curpos,st->cursize) < 0)) {
+      unlink (tmp);		/* delete file */
+      close (fd);		/* close the file */
       sprintf (tmp,"Message append failed: %s",strerror (errno));
       MM_LOG (tmp,ERROR);
-      ret = NIL;
+      return NIL;
     }
-    fs_give ((void **) &s);	/* flush the buffer */
-    close (fd);			/* close the file */
-    if (ret) {			/* set the date for this message */
-      if (date) mx_setdate (tmp,&selt);
-				/* swell the cache */
-      mail_exists (astream,++astream->nmsgs);
-				/* copy flags */
-      (elt = mail_elt (astream,astream->nmsgs))->private.uid=astream->uid_last;
-      if (f&fSEEN) elt->seen = T;
-      if (f&fDELETED) elt->deleted = T;
-      if (f&fFLAGGED) elt->flagged = T;
-      if (f&fANSWERED) elt->answered = T;
-      if (f&fDRAFT) elt->draft = T;
-      elt->user_flags |= uf;
-				/* get next message */
-      if (!MM_APPEND (af) (stream,data,&flags,&date,&message)) ret = NIL;
-    }
-  } while (ret && message);
-  else {
-    MM_LOG ("Message append failed: unable to lock index",ERROR);
-    ret = NIL;
+    SETPOS (st,GETPOS (st) + st->cursize);
   }
-  mx_unlockindex (astream);	/* unlock index */
-  MM_NOCRITICAL (stream);	/* release critical */
-  mail_close (astream);
-  return ret;
+  close (fd);			/* close the file */
+  if (elt) mx_setdate (tmp,elt);/* set file date */
+				/* swell the cache */
+  mail_exists (stream,++stream->nmsgs);
+				/* copy flags */
+  mail_append_set (set,(elt = mail_elt (stream,stream->nmsgs))->private.uid =
+		   stream->uid_last);
+  if (f&fSEEN) elt->seen = T;
+  if (f&fDELETED) elt->deleted = T;
+  if (f&fFLAGGED) elt->flagged = T;
+  if (f&fANSWERED) elt->answered = T;
+  if (f&fDRAFT) elt->draft = T;
+  elt->user_flags |= uf;
+  return LONGT;
 }
 
 /* Internal routines */
@@ -951,9 +1141,12 @@ int mx_numsort (const void *d1,const void *d2)
 char *mx_file (char *dst,char *name)
 {
   char *s;
-  if (!(mailboxfile (dst,name) && *dst)) return mailboxfile (dst,"~/INBOX");
+				/* empty string if mailboxfile fails */
+  if (!mailboxfile (dst,name)) *dst = '\0';
+				/* driver-selected INBOX  */
+  else if (!*dst) mailboxfile (dst,"~/INBOX");
 				/* tie off unnecessary trailing / */
-  if ((s = strrchr (dst,'/')) && !s[1]) *s = '\0';
+  else if ((s = strrchr (dst,'/')) && !s[1]) *s = '\0';
   return dst;
 }
 
@@ -968,12 +1161,14 @@ long mx_lockindex (MAILSTREAM *stream)
   int k = 0;
   unsigned long msgno = 1;
   struct stat sbuf;
-  char *s,*t,*idx,tmp[MAILTMPLEN];
+  char *s,*t,*idx,tmp[2*MAILTMPLEN];
   MESSAGECACHE *elt;
   blocknotify_t bn = (blocknotify_t) mail_parameters (NIL,GET_BLOCKNOTIFY,NIL);
   if ((LOCAL->fd < 0) &&	/* get index file, no-op if already have it */
-      (LOCAL->fd = open (strcat (strcpy (tmp,LOCAL->dir),MXINDEXNAME),
-			 O_RDWR|O_CREAT,S_IREAD|S_IWRITE)) >= 0) {
+      (LOCAL->fd = open (strcat (strcpy (tmp,stream->mailbox),MXINDEXNAME),
+			 O_RDWR|O_CREAT,
+			 (long) mail_parameters (NIL,GET_MBXPROTECTION,NIL)))
+      >= 0) {
     (*bn) (BLOCK_FILELOCK,NIL);
     flock (LOCAL->fd,LOCK_EX);	/* get exclusive lock */
     (*bn) (BLOCK_NONE,NIL);
@@ -1038,11 +1233,13 @@ long mx_lockindex (MAILSTREAM *stream)
  * Accepts: MAIL stream
  */
 
+#define MXIXBUFLEN 2048
+
 void mx_unlockindex (MAILSTREAM *stream)
 {
   unsigned long i,j;
   off_t size = 0;
-  char *s,tmp[MAILTMPLEN + 64];
+  char *s,tmp[MXIXBUFLEN + 64];
   MESSAGECACHE *elt;
   if (LOCAL->fd >= 0) {
     lseek (LOCAL->fd,0,L_SET);	/* rewind file */
@@ -1053,7 +1250,7 @@ void mx_unlockindex (MAILSTREAM *stream)
 				/* write messages */
     for (i = 1; i <= stream->nmsgs; i++) {
 				/* filled buffer? */
-      if (((s += strlen (s)) - tmp) > MAILTMPLEN) {
+      if (((s += strlen (s)) - tmp) > MXIXBUFLEN) {
 	write (LOCAL->fd,tmp,j = s - tmp);
 	size += j;
 	*(s = tmp) = '\0';	/* dump out and restart buffer */

@@ -1,32 +1,33 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
-# Copyright © 2003-2006 Jonas Smedegaard <dr@jones.dk>
+# Copyright © 2003-2007 Jonas Smedegaard <dr@jones.dk>
 
-# This needs to run before cdbs auto-update rule
-ifneq (,$(findstring update,$(DEB_BUILD_OPTIONS)))
+# This needs to run before cdbs auto-update
 debian/control:: debian/control.in
 DEB_PHONY_RULES += debian/control.in
 debian/control.in::
 	sed $(SEDRULE_CONTENT) <debian/control.in.in >debian/control.in
-endif
 
-include debian/cdbs/1/rules/auto-update.mk
+# More info on local cdbs snippets: See debian/README.cdbs-tweaks
 include /usr/share/cdbs/1/class/langcore.mk
-include debian/cdbs/1/rules/debhelper.mk
-include debian/cdbs/1/rules/po-debconf.mk
-include /usr/share/cdbs/1/rules/simple-patchsys.mk
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/rules/patchsys-quilt.mk
 include debian/cdbs/1/rules/buildinfo.mk
+include debian/cdbs/1/rules/copyright-check.mk
+include debian/cdbs/1/rules/upstream-tarball.mk
 
-DEBVERSION := $(shell head -1 debian/changelog | cut '-d ' -f 2 | sed 's/[()]//g')
-EPOCH := $(shell expr '$(DEBVERSION)' : '\([^:]\+:\)')
-DEBVERSION_ := $(shell expr '$(DEBVERSION)' : '$(EPOCH)\(.*\)$$')
-UPSTREAMVER := $(shell expr '$(DEBVERSION_)' : '\([0-9][0-9a-z]*\)debian')
-VERSION := $(shell expr '$(DEBVERSION_)' : '\([0-9][0-9a-z]*debian\)')
-REVISION := $(shell expr $(DEBVERSION_) : '.*debian\([^-]\+\)-')
-# FIXME: Make sure epoch is included/stripped correctly
+DEB_UPSTREAM_URL = ftp://ftp.cac.washington.edu/mail
+DEB_UPSTREAM_PACKAGE = imap
+DEB_UPSTREAM_TARBALL_EXTENSION = tar.Z
+DEB_UPSTREAM_TARBALL_MD5 = 4d59ce6303cf8ef93ff51341b1ce2df7
 
-SEDRULE_FILENAME = -e 's/__VER__/$(VERSION)/g'
-SEDRULE_CONTENT = -e 's/__DEBIANVER__/$(DEBVERSION)/g' -e 's/__UPSTREAMVER__/$(UPSTREAMVER)/g' -e 's/__FULLVER__/$(VERSION).$(REVISION)/g' -e 's/__VER__/$(VERSION)/g'
+DEB_UPSTREAM_REPACKAGE_EXCLUDE = docs/rfc docs/draft src/osdep/mac/mtest.sit.hqx
+
+major = $(DEB_UPSTREAM_TARBALL_VERSION)
+minor = 0
+
+SEDRULE_FILENAME = -e 's/__VER__/$(major)/g'
+SEDRULE_CONTENT = -e 's/__LIBVER__/$(major)/g' -e 's/__LIBFULLVER__/$(major).$(minor)/g' -e 's/__VER__/$(major)/g'
 
 SEDRULE_PKGCONTENT = $(SEDRULE_CONTENT) -e 's/__PKG__/$(cdbs_curpkg)/g' -e 's/__CERT__/$(CERT_$(cdbs_curpkg))/g' -e 's/__PAMSERVICE__/$(PAMSERVICE_$(cdbs_curpkg))/g' -e 's/__DESC__/$(DESC_$(cdbs_curpkg))/g' -e 's/__DAEMONSETS__/$(DAEMONSETS_$(cdbs_curpkg))/g'
 SEDPACKAGES = ipopd uw-imapd
@@ -46,8 +47,6 @@ CFLAGS += -D_REENTRANT -DDISABLE_POP_PROXY
 CFLAGS += -Wno-parentheses -Wno-strict-aliasing
 #CFLAGS += -Wno-implicit-function-declaration
 
-DEB_PHONY_RULES += update-control
-
 # Enforce symbol resolution at build time
 # (suggested by Debian Policy 3.6.1 chapter 10.2)
 SHLIBCFLAGS = -Wl,-z,defs
@@ -55,44 +54,42 @@ SHLIBCFLAGS = -Wl,-z,defs
 # Enable Kerberos V support
 EXTRAAUTHENTICATORS = gss
 
-# dh_shlibdeps argument -L rewuires debhelper 4.1.1 not in woody
-#DEB_DH_SHLIBDEPS_ARGS = -Llibc-client$(VERSION) -ldebian/libc-client$(VERSION)/usr/lib
-DEB_DH_SHLIBDEPS_ARGS =	-ldebian/libc-client$(VERSION)/usr/lib -- -Ldebian/libc-client$(VERSION).shlibs
-
 # Upstream README is more of a README.build
 DEB_INSTALL_DOCS_ALL =
 
 pre-build::
-	sed $(SEDRULE_CONTENT) <debian/control.in.in | diff -u debian/control.in - || ( \
+	echo "sed $(SEDRULE_CONTENT) <debian/control.in.in | diff -u debian/control.in -"
+	@sed $(SEDRULE_CONTENT) <debian/control.in.in | diff -u debian/control.in - || ( \
 		echo; \
 		echo "Upstream version has changed (or debian/control.in.in is out of sync)"; \
-		echo "Do a 'DEB_BUILD_OPTIONS=update fakeroot debian/rules clean' or edit manually."; \
+		echo "Edit debian/control manually, or use the following command:"; \
+		echo "  DEB_AUTO_UPDATE_DEBIAN_CONTROL=yes fakeroot debian/rules clean"; \
 		exit 1)
 
-build: build-stamp
-build-stamp: debian/stamp-patched
+build: debian/build-stamp
+debian/build-stamp:
 	dh_testdir
 
-	$(MAKE) VERSION=$(VERSION) EXTRAAUTHENTICATORS='$(EXTRAAUTHENTICATORS)' EXTRACFLAGS='$(CFLAGS)' ldb
+	# Debian libc is believed to be IPv6-safe
+	touch ip6
+
+	$(MAKE) VERSION=$(major) EXTRAAUTHENTICATORS='$(EXTRAAUTHENTICATORS)' EXTRACFLAGS='$(CFLAGS)' ldb
 	mv c-client/c-client.a .
 	$(MAKE) clean
 	# Use PAM
-	$(MAKE) VERSION=$(VERSION) EXTRAAUTHENTICATORS='$(EXTRAAUTHENTICATORS)' EXTRACFLAGS='$(CFLAGS)  $(SHLIBCFLAGS)' ldbs
-	LD_LIBRARY_PATH=$(BUILD_TREE)/c-client
-	for i in dmail mailutil mlock tmail; do \
-		$(MAKE) -C $$i ; \
-	done
-	pod2man -c "" -r "UW IMAP $(VERSION)" debian/mlock.pod debian/mlock.1
+	$(MAKE) VERSION=$(major) EXTRAAUTHENTICATORS='$(EXTRAAUTHENTICATORS)' EXTRACFLAGS='$(CFLAGS)  $(SHLIBCFLAGS)' ldbs
+	pod2man -c "" -r "UW IMAP $(DEB_NOEPOCH_VERSION)" debian/mlock.pod debian/mlock.1
 
-	touch build-stamp
+	touch $@
 
 clean::
 	$(MAKE) clean
 	for dir in $(DEB_PATCHDIRS); do rm -f $$dir/*.log; done
 	rm -f c-client.a
-	rm -f debian/stamp-*
+	rm -f debian/build-stamp
 	rm -f debian/mlock.1
 	rm -rf RCS
+	rm -f ip6
 
 # Setup (and tear down) files containing variables static per build
 pre-build::
@@ -101,8 +98,8 @@ pre-build::
 		sed $(SEDRULE_CONTENT) <$$file >$$targetfile; \
 	done
 
-clean::
-	for file in `find debian -maxdepth 2 -type f -name '*.in' -not -name control.in -not -name control.in.in -not -name POTFILES.in -not -name 'watch.in'`; do \
+clean:: 
+	for file in `find debian -maxdepth 2 -type f -name '*.in' -not -name control.in -not -name control.in.in -not -name README.source.in -not -name POTFILES.in -not -name 'watch.in'`; do \
 		targetfile=`echo $$file | sed $(SEDRULE_FILENAME) -e 's/\\.in$$//'`; \
 		rm -f $$targetfile; \
 	done
@@ -127,13 +124,35 @@ clean::
 		done; \
 	done
 
-# TODO: Use d-shlibmove instead (we already depend on it)
-binary-post-install/libc-client$(VERSION)::
-	mv debian/$(cdbs_curpkg)/usr/lib/libc-client.so debian/$(cdbs_curpkg)/usr/lib/libc-client.so.$(VERSION).$(REVISION)
+# Install libs and resolve dev package dependencies
+common-install-arch::
+	mkdir -p debian/tmp/usr/lib
+	install -m 0644 c-client.a debian/tmp/usr/lib/libc-client.a
+	install -m 0644 c-client/libc-client.so debian/tmp/usr/lib/libc-client.so.$(major).$(minor)
+	ln -s libc-client.so.$(major).$(minor) debian/tmp/usr/lib/libc-client.so.$(major)
+	ln -s libc-client.so.$(major).$(minor) debian/tmp/usr/lib/libc-client.so
+	mkdir -p debian/tmp/usr/include/c-client
+	install -m 0644 -t debian/tmp/usr/include/c-client \
+		src/c-client/*.h \
+		src/osdep/unix/*.h \
+		c-client/auths.c \
+		c-client/linkage.c \
+		c-client/linkage.h \
+		c-client/osdep.h
 
-# Automatically calculate development package dependencies
-common-binary-post-install-arch::
-	d-devlibdeps debian/libc-client-dev.substvars debian/libc-client$(VERSION)/usr/lib/libc-client.so.$(VERSION).$(REVISION)
+common-binary-post-install-arch:: debian/install-libs-stamp
+
+debian/install-libs-stamp:
+	d-devlibdeps \
+		debian/libc-client-dev.substvars \
+		debian/tmp/usr/lib/libc-client.so
+	d-shlibmove --commit \
+		--movedev "debian/tmp/usr/include/*" usr/include \
+		debian/tmp/usr/lib/libc-client.so
+	touch $@
+
+clean::
+	rm -f debian/install-libs-stamp
 
 binary-predeb/ipopd::
 	chown root.mail debian/$(cdbs_curpkg)/usr/sbin/ipop2d
@@ -148,3 +167,26 @@ binary-predeb/uw-imapd::
 binary-predeb/mlock::
 	chown root.mail debian/$(cdbs_curpkg)/usr/bin/mlock
 	chmod 2755 debian/$(cdbs_curpkg)/usr/bin/mlock
+
+# Make sure debconf translations are always up-todate
+clean::
+	debconf-updatepo
+
+# Refuse to ship with nonfree RFC files in source
+clean::
+	@echo "-find -name '*.txt' | grep rfc"
+	@-find -name '*.txt' | grep rfc && ( \
+		echo; \
+		echo "ERROR: RFC documents found!"; \
+		echo "RFC documents possibly do not comply with the Debian Free Software"; \
+		echo "Guidelines, and thus better be stripped from the source tarball!"; \
+		exit 1)
+
+# Needed by upstream build process
+CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), libpam-dev, libkrb5-dev, comerr-dev, libssl-dev
+
+# Needed for our packaging routines
+CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), d-shlibs, perl, po-debconf
+
+# Fix double cdbs build-dependencies
+CDBS_BUILD_DEPENDS := $(shell echo '$(CDBS_BUILD_DEPENDS)' | sed -e '/\bcdbs (>= 0.4.39)/ s/ *,* *\bcdbs (>= \(0.4.23-1.1\|0.4.27\)) *,* */, /g' -e 's/^ *, *//' -e 's/ *, *$$//')

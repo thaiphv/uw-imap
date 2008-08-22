@@ -1,33 +1,37 @@
+/* ========================================================================
+ * Copyright 1988-2008 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	NT environment routines
  *
  * Author:	Mark Crispin
- *		Networks and Distributed Computing
- *		Computing & Communications
+ *		UW Technology
  *		University of Washington
- *		Administration Building, AG-44
  *		Seattle, WA  98195
- *		Internet: MRC@CAC.Washington.EDU
+ *		Internet: MRC@Washington.EDU
  *
  * Date:	1 August 1988
- * Last Edited:	16 January 2002
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2002 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	15 February 2008
  */
 
 static char *myUserName = NIL;	/* user name */
 static char *myLocalHost = NIL;	/* local host name */
-static char *myClientAddr = NIL;/* client host address */
-static char *myClientHost = NIL;/* client host name */
-static char *myServerAddr = NIL;/* server host address */
-static char *myServerHost = NIL;/* server host name */
 static char *myHomeDir = NIL;	/* home directory name */
 static char *myNewsrc = NIL;	/* newsrc file name */
 static char *sysInbox = NIL;	/* system inbox name */
 static long list_max_level = 5;	/* maximum level of list recursion */
+				/* block environment init */
+static short block_env_init = NIL;
 static short no822tztext = NIL;	/* disable RFC [2]822 timezone text */
 				/* home namespace */
 static NAMESPACE nshome = {"",'\\',NIL,NIL};
@@ -67,8 +71,6 @@ void *env_parameters (long function,void *value)
 {
   void *ret = NIL;
   switch ((int) function) {
-  case SET_NAMESPACE:
-    fatal ("SET_NAMESPACE not permitted");
   case GET_NAMESPACE:
     ret = (void *) nslist;
     break;
@@ -116,6 +118,11 @@ void *env_parameters (long function,void *value)
   case GET_DISABLE822TZTEXT:
     ret = (void *) (no822tztext ? VOIDT : NIL);
     break;
+  case SET_BLOCKENVINIT:
+    block_env_init = value ? T : NIL;
+  case GET_BLOCKENVINIT:
+    ret = (void *) (block_env_init ? VOIDT : NIL);
+    break;
   case SET_BLOCKNOTIFY:
     mailblocknotify = (blocknotify_t) value;
   case GET_BLOCKNOTIFY:
@@ -161,7 +168,11 @@ static void do_date (char *date,char *prefix,char *fmt,int suffix)
     char *tz;
     tzset ();			/* get timezone from TZ environment stuff */
     tz = tzname[daylight ? (((struct tm *) t)->tm_isdst > 0) : 0];
-    if (tz && tz[0]) sprintf (date + strlen (date)," (%.50s)",tz);
+    if (tz && tz[0]) {
+      char *s;
+      for (s = tz; *s; s++) if (*s & 0x80) return;
+      sprintf (date + strlen (date)," (%.50s)",tz);
+    }
   }
 }
 
@@ -239,7 +250,8 @@ void CALLBACK clock_ticked (UINT IDEvent,UINT uReserved,DWORD dwUser,
  */
 
 void server_init (char *server,char *service,char *sslservice,
-		  void *clkint,void *kodint,void *hupint,void *trmint)
+		  void *clkint,void *kodint,void *hupint,void *trmint,
+		  void *staint)
 {
   if (!check_nt ()) {
     if (!auth_md5.server) fatal ("Can't run on Windows without MD5 database");
@@ -271,7 +283,6 @@ void server_init (char *server,char *service,char *sslservice,
 				/* make sure stdout does binary */
     setmode (fileno (stdin),O_BINARY);
     setmode (fileno (stdout),O_BINARY);
-    setmode (fileno (stderr),O_BINARY);
   }
   alarm_rang = clkint;		/* note the clock interrupt */
   timeBeginPeriod (1000);	/* set the timer interval */
@@ -315,8 +326,8 @@ long server_login (char *user,char *pass,char *authuser,int argc,char *argv[])
   char *s;
 				/* need to get privileges? */
   if (!gotprivs++ && check_nt ()) {
-				/* yes, note client host if specified */
-    if (argc == 2) myClientHost = argv[1];
+				/* hack for inetlisn */
+    if (argc >= 2) myClientHost = argv[1];
 				/* get process token and TCB priv value */
     if (!(OpenProcessToken (GetCurrentProcess (),
 			    TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,&hdl) &&
@@ -337,11 +348,12 @@ long server_login (char *user,char *pass,char *authuser,int argc,char *argv[])
       (authuser && (strlen (authuser) >= MAILTMPLEN)))
     syslog (LOG_ALERT,"SYSTEM BREAK-IN ATTEMPT, host=%.80s",tcp_clienthost ());
   else if (logtry > 0) {	/* still have available logins? */
-    if (check_nt ()) {		/* NT: authentication user not supported yet */
-      if (authuser && *authuser);
-      else if (!pass);		/* ditto pass==NIL */
-				/* try to login and impersonate the guy */
-      else if ((
+				/* authentication user not supported */
+    if (authuser && *authuser && compare_cstring (authuser,user))
+      mm_log ("Authentication id must match authorization id",ERROR);
+    if (check_nt ()) {		/* NT: authserver_login() call not supported */
+      if (!pass) mm_log ("Unsupported authentication mechanism",ERROR);
+      else if ((		/* try to login and impersonate the guy */
 #ifdef LOGIN32_LOGON_NETWORK
 		LogonUser (user,".",pass,LOGON32_LOGON_NETWORK,
 			   LOGON32_PROVIDER_DEFAULT,&hdl) ||
@@ -354,10 +366,8 @@ long server_login (char *user,char *pass,char *authuser,int argc,char *argv[])
 			   LOGON32_PROVIDER_DEFAULT,&hdl)) &&
 	       ImpersonateLoggedOnUser (hdl)) return env_init (user,NIL);
     }
-    else {			/* Win9x: authentication user not supported */
-      if (authuser && *authuser);
-				/* done if from authserver_login() */
-      else if (!pass) server_nli = NIL;
+    else {			/* Win9x: done if from authserver_login() */
+      if (!pass) server_nli = NIL;
 				/* otherwise check MD5 database */
       else if (s = auth_md5_pwd (user)) {
 				/* change NLI state based on pwd match */
@@ -410,6 +420,8 @@ long anonymous_login (int argc,char *argv[])
 
 long env_init (char *user,char *home)
 {
+				/* don't init if blocked */
+  if (block_env_init) return LONGT;
   if (myUserName) fatal ("env_init called twice!");
   myUserName = cpystr (user);	/* remember user name */
   if (!myHomeDir)		/* only if home directory not set up yet */
@@ -493,6 +505,10 @@ char *myusername_full (unsigned long *flags)
 				/* use callback, else logon name */
       ((mailusername && (user = (char *) (*mailusername) ())) ||
        (GetUserName (usr,&len) && _stricmp (user = (char *) usr,"SYSTEM")))) {
+    if (block_env_init) {	/* don't env_init if blocked */
+      if (flags) *flags = MU_LOGGEDIN;
+      return user;
+    }
 				/* try HOMEPATH, then HOME */
     if (p = getenv ("HOMEPATH"))
       sprintf (path = pth,"%s%s",
@@ -510,6 +526,27 @@ char *myusername_full (unsigned long *flags)
   }
   else if (flags) *flags = MU_NOTLOGGEDIN;
   return ret;
+}
+
+/* Return my local host name
+ * Returns: my local host name
+ */
+
+char *mylocalhost (void)
+{
+  if (!myLocalHost) {
+    char tmp[MAILTMPLEN];
+    if (!wsa_initted++) {	/* init Windows Sockets */
+      WSADATA wsock;
+      if (WSAStartup (WINSOCK_VERSION,&wsock)) {
+	wsa_initted = 0;
+	return "random-pc";	/* try again later? */
+      }
+    }
+    myLocalHost = cpystr ((gethostname (tmp,MAILTMPLEN-1) == SOCKET_ERROR) ?
+			  "random-pc" : tcp_canonical (tmp));
+  }
+  return myLocalHost;
 }
 
 /* Return my home directory name
@@ -574,36 +611,49 @@ char *mailboxdir (char *dst,char *dir,char *name)
 
 char *mailboxfile (char *dst,char *name)
 {
+  char homedev[3];
   char *dir = myhomedir ();
+  if (dir[0] && isalpha (dir[0]) && (dir[1] == ':')) {
+    homedev[0] = dir[0];	/* copy home device */
+    homedev[1] = dir[1];
+    homedev[2] = '\0';
+  }
+  else homedev[0] = '\0';	/* ??no home device?? */
   *dst = '\0';			/* default to empty string */
 				/* check for INBOX */
-  if (((name[0] == 'I') || (name[0] == 'i')) &&
-      ((name[1] == 'N') || (name[1] == 'n')) &&
-      ((name[2] == 'B') || (name[2] == 'b')) &&
-      ((name[3] == 'O') || (name[3] == 'o')) &&
-      ((name[4] == 'X') || (name[4] == 'x')) && !name[5]) return dst;
+  if (!compare_cstring (name,"INBOX"));
 				/* reject names with / */
-  if (strchr (name,'/')) return NIL;
-  else if (*name == '#') {	/* namespace names */
+  else if (strchr (name,'/')) dst = NIL;
+  else switch (*name) {
+  case '#':			/* namespace names */
     if (((name[1] == 'u') || (name[1] == 'U')) &&
 	((name[2] == 's') || (name[2] == 'S')) &&
 	((name[3] == 'e') || (name[3] == 'E')) &&
 	((name[4] == 'r') || (name[4] == 'R')) && (name[5] == '.')) {
-				/* copy user name */
+				/* copy user name to destination buffer */
       for (dir = dst,name += 6; *name && (*name != '\\'); *dir++ = *name++);
       *dir++ = '\0';		/* tie off user name */
-      if (!(dir = win_homedir (dst))) return NIL;
+				/* look up homedir for user name */
+      if (dir = win_homedir (dst)) {
 				/* build resulting name */
-      sprintf (dst,"%s\\%s",dir,name);
-      fs_give ((void **) &dir);	/* clean up other user's home dir */
-      return dst;
+	sprintf (dst,"%s\\%s",dir,name);
+	fs_give ((void **) &dir);
+      }
+      else dst = NIL;
     }
-    else return NIL;		/* unknown namespace name */
+    else dst = NIL;		/* unknown namespace name */
+    break;
+  case '\\':			/* absolute path on default drive? */
+    sprintf (dst,"%s%s",homedev,name);
+    break;
+  default:			/* any other name */
+    if (name[1] == ':') {	/* some other drive? */
+      if (name[2] == '\\') strcpy (dst,name);
+      else sprintf (dst,"%c:\\%s",name[0],name+2);
+    }
+				/* build home-directory relative name */
+    else sprintf (dst,"%s\\%s",dir,name);
   }
-				/* absolute path name? */
-  else if ((*name == '\\') || (name[1] == ':')) return strcpy (dst,name);
-				/* build resulting name */
-  sprintf (dst,"%s\\%s",dir,name);
   return dst;			/* return it */
 }
 
@@ -697,8 +747,8 @@ void unlockfd (int fd,char *lock)
 
 MAILSTREAM *default_proto (long type)
 {
-  extern MAILSTREAM DEFAULTPROTO;
-  return &DEFAULTPROTO;		/* return default driver's prototype */
+  extern MAILSTREAM CREATEPROTO,APPENDPROTO;
+  return type ? &APPENDPROTO : &CREATEPROTO;
 }
 
 /* Default block notify routine

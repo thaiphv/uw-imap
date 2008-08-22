@@ -1,3 +1,2 @@
-[type: gettext/rfc822deb] ipopd.templates.master
-[type: gettext/rfc822deb] libc-client__VER__.templates.in.master
-[type: gettext/rfc822deb] uw-imapd.templates.master
+[type: gettext/rfc822deb] ipopd.templates
+[type: gettext/rfc822deb] uw-imapd.templates

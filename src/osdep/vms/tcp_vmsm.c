@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2008 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	VMS TCP/IP routines for Multinet
  *
@@ -10,18 +23,16 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	2 August 1994
- * Last Edited:	7 June 2002
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2002 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	13 January 2008
  */
 
 			
 static tcptimeout_t tmoh = NIL;	/* TCP timeout handler routine */
 static long ttmo_read = 0;	/* TCP timeouts, in seconds */
 static long ttmo_write = 0;
+
+static char *tcp_getline_work (TCPSTREAM *stream,unsigned long *size,
+			       long *contd);
 
 /* TCP/IP manipulate parameters
  * Accepts: function code
@@ -122,6 +133,17 @@ TCPSTREAM *tcp_open (char *host,char *service,unsigned long port)
     mm_log (tmp,ERROR);
     return NIL;
   }
+#if 0
+  /* Maybe this test is necessary.  It depends upon how VMS implements
+   * fd_set.  UNIX-style fd_set needs it; Windows-style does not.
+   */
+  else if (sock >= FD_SETSIZE) {/* unselectable sockets are useless */
+    sprintf (tmp,"Unable to create selectable TCP socket (%d >= %d)",
+	     sock,FD_SETSIZE);
+    close (sock);
+    return NIL;
+  }
+#endif
 				/* open connection */
   if (connect (sock,(struct sockaddr *)&sin,sizeof (sin)) < 0) {
     sprintf (tmp,"Can't connect to %.80s,%d: %s",hostname,port,
@@ -156,51 +178,74 @@ TCPSTREAM *tcp_aopen (NETMBX *mb,char *service,char *usrbuf)
   return NIL;
 }
 
-/* TCP/IP receive line
- * Accepts: TCP/IP stream
+/* TCP receive line
+ * Accepts: TCP stream
  * Returns: text line string or NIL if failure
  */
 
 char *tcp_getline (TCPSTREAM *stream)
 {
-  int n,m;
-  char *st,*ret,*stp;
-  char c = '\0';
-  char d;
+  unsigned long n,contd;
+  char *ret = tcp_getline_work (stream,&n,&contd);
+  if (ret && contd) {		/* got a line needing continuation? */
+    STRINGLIST *stl = mail_newstringlist ();
+    STRINGLIST *stc = stl;
+    do {			/* collect additional lines */
+      stc->text.data = (unsigned char *) ret;
+      stc->text.size = n;
+      stc = stc->next = mail_newstringlist ();
+      ret = tcp_getline_work (stream,&n,&contd);
+    } while (ret && contd);
+    if (ret) {			/* stash final part of line on list */
+      stc->text.data = (unsigned char *) ret;
+      stc->text.size = n;
+				/* determine how large a buffer we need */
+      for (n = 0, stc = stl; stc; stc = stc->next) n += stc->text.size;
+      ret = fs_get (n + 1);	/* copy parts into buffer */
+      for (n = 0, stc = stl; stc; n += stc->text.size, stc = stc->next)
+	memcpy (ret + n,stc->text.data,stc->text.size);
+      ret[n] = '\0';
+    }
+    mail_free_stringlist (&stl);/* either way, done with list */
+  }
+  return ret;
+}
+
+/* TCP receive line or partial line
+ * Accepts: TCP stream
+ *	    pointer to return size
+ *	    pointer to return continuation flag
+ * Returns: text line string, size and continuation flag, or NIL if failure
+ */
+
+static char *tcp_getline_work (TCPSTREAM *stream,unsigned long *size,
+			       long *contd)
+{
+  unsigned long n;
+  char *s,*ret,c,d;
+  *contd = NIL;			/* assume no continuation */
 				/* make sure have data */
   if (!tcp_getdata (stream)) return NIL;
-  st = stream->iptr;		/* save start of string */
-  n = 0;			/* init string count */
-  while (stream->ictr--) {	/* look for end of line */
+  for (s = stream->iptr, n = 0, c = '\0'; stream->ictr--; n++, c = d) {
     d = *stream->iptr++;	/* slurp another character */
     if ((c == '\015') && (d == '\012')) {
       ret = (char *) fs_get (n--);
-      memcpy (ret,st,n);	/* copy into a free storage string */
+      memcpy (ret,s,*size = n);	/* copy into a free storage string */
       ret[n] = '\0';		/* tie off string with null */
       return ret;
     }
-    n++;			/* count another character searched */
-    c = d;			/* remember previous character */
   }
 				/* copy partial string from buffer */
-  memcpy ((ret = stp = (char *) fs_get (n)),st,n);
+  memcpy ((ret = (char *) fs_get (n)),s,*size = n);
 				/* get more data from the net */
   if (!tcp_getdata (stream)) fs_give ((void **) &ret);
 				/* special case of newline broken by buffer */
   else if ((c == '\015') && (*stream->iptr == '\012')) {
     stream->iptr++;		/* eat the line feed */
     stream->ictr--;
-    ret[n - 1] = '\0';		/* tie off string with null */
+    ret[*size = --n] = '\0';	/* tie off string with null */
   }
-				/* else recurse to get remainder */
-  else if (st = tcp_getline (stream)) {
-    ret = (char *) fs_get (n + 1 + (m = strlen (st)));
-    memcpy (ret,stp,n);		/* copy first part */
-    memcpy (ret + n,st,m);	/* and second part */
-    fs_give ((void **) &stp);	/* flush first part */
-    fs_give ((void **) &st);	/* flush second part */
-    ret[n + m] = '\0';		/* tie off string with null */
-  }
+  else *contd = LONGT;		/* continuation needed */
   return ret;
 }
 

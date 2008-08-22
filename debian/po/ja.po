@@ -13,125 +13,106 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-03-31 16:55+0200\n"
-"PO-Revision-Date: 2005-04-29 23:44+0900\n"
+"Project-Id-Version: uw-imap\n"
+"Report-Msgid-Bugs-To: dr@jones.dk\n"
+"POT-Creation-Date: 2007-10-19 20:29+0200\n"
+"PO-Revision-Date: 2007-10-16 23:40+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=EUC-JP\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
-msgid "Which ports should the server listen on?"
-msgstr "¥µ¡¼¥Ğ¤Ç¤É¤Î¥İ¡¼¥È¤ò¥ê¥¹¥ó¤·¤Ş¤¹¤«?"
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
+msgid "Server ports and protocols to support:"
+msgstr "ã‚µãƒãƒ¼ãƒˆã™ã‚‹ã‚µãƒ¼ãƒã®ãƒãƒ¼ãƒˆãŠã‚ˆã³ãƒ—ãƒ­ãƒˆã‚³ãƒ«:"
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
-msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
+msgid "Please choose the server ports and protocols to activate."
+msgstr "æœ‰åŠ¹ã«ã™ã‚‹ã‚µãƒ¼ãƒã®ãƒãƒ¼ãƒˆãŠã‚ˆã³ãƒ—ãƒ­ãƒˆã‚³ãƒ«ã‚’é¸ã‚“ã§ãã ã•ã„ã€‚"
+
+#. Type: multiselect
+#. Description
+#: ../ipopd.templates:2001
+msgid ""
+" pop3:  POP 3 on TCP port 110 with TLS support;\n"
+" pop3s: POP 3 on TCP port 995 with SSL support;\n"
+" pop2:  (obsolete) POP 2 on TCP port 109 with TLS support."
 msgstr ""
-"pop2  = TCP ¥İ¡¼¥È 109 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥İ¡¼¥ÈÉÕ¤­ POP 2¡£¤³¤ì¤Ï¤â¤¦»şÂåÃÙ¤ì"
-"¤Î¤â¤Î¤Ç¤¹¡£"
+" pop3:  TLS ã‚µãƒãƒ¼ãƒˆä»˜ã TCP ãƒãƒ¼ãƒˆ 110 ä¸Šã® POP 3;\n"
+" pop3s: SSL ã‚µãƒãƒ¼ãƒˆä»˜ã TCP ãƒãƒ¼ãƒˆ 995 ä¸Šã® POP 3;\n"
+" pop2:  (æ™‚ä»£é…ã‚Œ) TLS ã‚µãƒãƒ¼ãƒˆä»˜ã TCP ãƒãƒ¼ãƒˆ 109 ä¸Šã® POP 2ã€‚"
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
-msgid "pop3  = POP 3 on TCP port 110 with TLS support."
-msgstr "pop3  = TCP ¥İ¡¼¥È 110 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥İ¡¼¥ÈÉÕ¤­ POP 3¡£"
+#: ../ipopd.templates:2001
+msgid "It is recommended to activate both pop3 and pop3s."
+msgstr "pop3 ã¨ pop3s ã®ä¸¡æ–¹ã‚’æœ‰åŠ¹ã«ã™ã‚‹ã“ã¨ã‚’ãŠå‹§ã‚ã—ã¾ã™ã€‚"
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
-msgid "pop3s = POP 3 on TCP port 995 with SSL support."
-msgstr "pop3s = TCP ¥İ¡¼¥È 995 ¤ÇÆ°ºî¤¹¤ë SSL ¥µ¥İ¡¼¥ÈÉÕ¤­ POP 3¡£"
-
-#. Type: multiselect
+#. Type: boolean
 #. Description
-#: ../ipopd.templates.master:5
-msgid "If in doubt, choose pop3 and pop3s."
-msgstr "¤è¤¯¤ï¤«¤é¤Ê¤±¤ì¤Ğ¡¢pop3 ¤È pop3s ¤òÁª¤ó¤Ç¤¯¤À¤µ¤¤¡£"
+#: ../ipopd.templates:2001 ../ipopd.templates:3001
+msgid ""
+"As the ports and protocols choice may have been overridden by local changes, "
+"you may need to enforce the choice and run the package configuration again "
+"with 'dpkg-reconfigure ipopd'."
+msgstr ""
+"ãƒãƒ¼ãƒˆãŠã‚ˆã³ãƒ—ãƒ­ãƒˆã‚³ãƒ«ã®é¸æŠã¯ãƒ­ãƒ¼ã‚«ãƒ«ã®å¤‰æ›´ã‚’ä¸Šæ›¸ãã™ã‚‹å¯èƒ½æ€§ãŒã‚ã‚‹ã®"
+"ã§ã€'dpkg-reconfigure ipopd' ã§å†åº¦é¸æŠã¨ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸è¨­å®šã‚’å®Ÿè¡Œã™ã‚‹å¿…è¦ãŒã‚ã‚‹ã‹"
+"ã‚‚ã—ã‚Œã¾ã›ã‚“ã€‚"
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:3001 ../uw-imapd.templates:3001
 msgid "Enforce port selection?"
-msgstr "¥İ¡¼¥È¤ÎÁªÂò¤ò¶¯À©¤·¤Ş¤¹¤«?"
+msgstr "ãƒãƒ¼ãƒˆã®é¸æŠã‚’å¼·åˆ¶ã—ã¾ã™ã‹?"
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:3001
+msgid "The ipopd daemon supports listening simultaneously on several ports."
+msgstr "ipopd ãƒ‡ãƒ¼ãƒ¢ãƒ³ã¯è¤‡æ•°ã®ãƒãƒ¼ãƒˆã®åŒæ™‚ç›£è¦–ã‚’ã‚µãƒãƒ¼ãƒˆã—ã¾ã™ã€‚"
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates:2001
 msgid ""
-"The ports selected for enabling may be overridden by locally configured "
-"services. By default the port selection is respected only on initial "
-"installs, and is ignored on later reconfiguration."
-msgstr "Í­¸ú¤È¤·¤ÆÁªÂò¤µ¤ì¤¿¥İ¡¼¥È¤Ï¡¢¥í¡¼¥«¥ë¤ËÀßÄê¤µ¤ì¤¿¥µ¡¼¥Ó¥¹¤Ë¤è¤Ã¤Æ¾å½ñ¤­¤µ¤ì¤ë²ÄÇ½À­¤¬¤¢¤ê¤Ş¤¹¡£¥Ç¥Õ¥©¥ë¥È¤Ç¤Ï¡¢¥İ¡¼¥È¤ÎÁªÂò¤Ï½é´ü¥¤¥ó¥¹¥È¡¼¥ë¤Î¤È¤­¤Î¤ßÂº½Å¤µ¤ì¡¢¤½¤Î¸å¤ÎºÆÀßÄê¤Ç¤ÏÌµ»ë¤µ¤ì¤Ş¤¹¡£"
-
-#. Type: boolean
-#. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
-msgid ""
-"Do you want to ignore possible local tweaks and always use selected ports?"
-msgstr "¥í¡¼¥«¥ëÄ´À°¤Î²ÄÇ½À­¤òÌµ»ë¤·¤Æ¡¢¾ï¤ËÁªÂò¤µ¤ì¤¿¥İ¡¼¥È¤ò»È¤¤¤Ş¤¹¤«?"
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid "Continue installing libc-client without Maildir support?"
-msgstr "Maildir ¥µ¥İ¡¼¥È¤Ê¤·¤Ç libc-client ¤Î¥¤¥ó¥¹¥È¡¼¥ë¤òÂ³¤±¤Ş¤¹¤«?"
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid ""
-"Libc-client earlier than version 2002d (and development versions of 2003) "
-"included an unofficial and no longer maintained patch to support Maildirs. "
-"By default Maildirs were not used by uw-imapd or ipopd, but if you have "
-"changed your system configuration or other installed programs depend on libc-"
-"client then upgrading may result in broken mail handling."
+" imap2: IMAP 4rev1 on TCP port 143 with TLS support;\n"
+" imaps: IMAP 4rev1 on TCP port 993 with SSL support;\n"
+" imap3: (obsolete) IMAP 3 on TCP port 220 with TLS support."
 msgstr ""
-"libc-client ¤Î¥Ğ¡¼¥¸¥ç¥ó 2002d °Ê²¼ (¤ª¤è¤Ó 2003 ¤Î³«È¯¥Ğ¡¼¥¸¥ç¥ó) ¤Ç¤Ï "
-"Maildirs ¤ò¥µ¥İ¡¼¥È¤¹¤ëÈó¸ø¼°¤Ç¤â¤¦¥á¥ó¥Æ¥Ê¥ó¥¹¤µ¤ì¤Æ¤¤¤Ê¤¤¥Ñ¥Ã¥Á¤¬´Ş¤Ş¤ì¤Æ¤¤"
-"¤Ş¤·¤¿¡£¥Ç¥Õ¥©¥ë¥È¤Ç¤Ï uw-imapd ¤ä ipopd ¤Ç¤Ï Maildirs ¤ò»È¤¤¤Ş¤»¤ó¤¬¡¢¥·¥¹¥Æ"
-"¥àÀßÄê¤òÊÑ¹¹¤·¤Æ¤¤¤¿¤ê¡¢¤½¤ÎÂ¾¤Î¥¤¥ó¥¹¥È¡¼¥ëºÑ¤ß¥×¥í¥°¥é¥à¤¬ libc-client ¤Ë°Í"
-"Â¸¤·¤Æ¤¤¤ë¤Î¤Ç¤¢¤ì¤Ğ¡¢¤³¤Î¹¹¿·¤Ï¥á¡¼¥ëÁàºî¤Ë¾ã³²¤ò¤â¤¿¤é¤¹·ë²Ì¤È¤Ê¤ê¤Ş¤¹¡£"
+" imap2:  TLS ã‚µãƒãƒ¼ãƒˆä»˜ã TCP ãƒãƒ¼ãƒˆ 143 ä¸Šã® IMAP 4rev1;\n"
+" imaps:  SSL ã‚µãƒãƒ¼ãƒˆä»˜ã TCP ãƒãƒ¼ãƒˆ 993 ä¸Šã® IMAP 4rev1;\n"
+" imap3:  (æ™‚ä»£é…ã‚Œ) TLS ã‚µãƒãƒ¼ãƒˆä»˜ã TCP ãƒãƒ¼ãƒˆ 220 ä¸Šã® IMAP 3ã€‚"
+
+#. Type: multiselect
+#. Description
+#: ../uw-imapd.templates:2001
+msgid "It is recommended to activate both imap2 and imaps."
+msgstr "imap2 ã¨ imaps ã®ä¸¡æ–¹ã‚’æœ‰åŠ¹ã«ã™ã‚‹ã“ã¨ã‚’ãŠå‹§ã‚ã—ã¾ã™ã€‚"
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:2001 ../uw-imapd.templates:3001
+msgid ""
+"As the ports and protocols choice may have been overridden by local changes, "
+"you may need to enforce the choice and run the package configuration again "
+"with 'dpkg-reconfigure uw-imapd'."
+msgstr ""
+"ãƒãƒ¼ãƒˆãŠã‚ˆã³ãƒ—ãƒ­ãƒˆã‚³ãƒ«ã®é¸æŠã¯ãƒ­ãƒ¼ã‚«ãƒ«ã®å¤‰æ›´ã‚’ä¸Šæ›¸ãã™ã‚‹å¯èƒ½æ€§ãŒã‚ã‚‹ã®"
+"ã§ã€'dpkg-reconfigure uw-imapd' ã§å†åº¦é¸æŠã¨ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸è¨­å®šã‚’å®Ÿè¡Œã™ã‚‹å¿…è¦ãŒã‚"
+"ã‚‹ã‹ã‚‚ã—ã‚Œã¾ã›ã‚“ã€‚<"
 
 #. Type: boolean
 #. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid ""
-"Do you want to continue installing a libc-client without Maildir support?"
-msgstr "Maildir ¥µ¥İ¡¼¥È¤Ê¤·¤Ç libc-client ¤Î¥¤¥ó¥¹¥È¡¼¥ë¤òÂ³¤±¤Ş¤¹¤«?"
-
-#. Type: multiselect
-#. Description
-#: ../uw-imapd.templates.master:5
-msgid ""
-"imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
-"support."
-msgstr ""
-"imap2 = TCP ¥İ¡¼¥È 143 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥İ¡¼¥ÈÉÕ¤­ IMAP 4Rev1 (´ñÌ¯¤Ê¤³¤È¤Ç¤¹"
-"¤¬ 2 ¤Ç¤Ï¤¢¤ê¤Ş¤»¤ó)¡£"
-
-#. Type: multiselect
-#. Description
-#: ../uw-imapd.templates.master:5
-msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
-msgstr ""
-"imap3 = TCP ¥İ¡¼¥È 220 ¤ÇÆ°ºî¤¹¤ë TLS ¥µ¥İ¡¼¥ÈÉÕ¤­ IMAP 3¡£¤³¤ì¤Ï¤â¤¦»şÂåÃÙ¤ì"
-"¤Î¤â¤Î¤Ç¤¹¡£"
-
-#. Type: multiselect
-#. Description
-#: ../uw-imapd.templates.master:5
-msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
-msgstr "imaps = TCP ¥İ¡¼¥È 993 ¤ÇÆ°ºî¤¹¤ë SSL ¥µ¥İ¡¼¥ÈÉÕ¤­ IMAP 4Rev1¡£"
-
-#. Type: multiselect
-#. Description
-#: ../uw-imapd.templates.master:5
-msgid "If in doubt, pick imap2 and imaps."
-msgstr "¤è¤¯¤ï¤«¤é¤Ê¤±¤ì¤Ğ¡¢imap2 ¤È imaps ¤òÁª¤ó¤Ç¤¯¤À¤µ¤¤¡£"
+#: ../uw-imapd.templates:3001
+msgid "The uw-imap daemon supports listening simultaneously on several ports."
+msgstr "uw-imap ãƒ‡ãƒ¼ãƒ¢ãƒ³ã¯è¤‡æ•°ã®ãƒãƒ¼ãƒˆã®åŒæ™‚ç›£è¦–ã‚’ã‚µãƒãƒ¼ãƒˆã—ã¾ã™ã€‚"

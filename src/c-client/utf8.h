@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2008 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	UTF-8 routines
  *
@@ -10,21 +23,17 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	11 June 1997
- * Last Edited:	10 July 2002
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2002 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	17 January 2008
  */
 
-/* UTF-8 size and conversion routines from UCS-2 values.  This will need to
- * be changed if UTF-16 data (surrogate pairs) are ever an issue.
+/* UTF-8 size and conversion routines from UCS-2 values (thus in the BMP).
+ * Don't use these if UTF-16 data (surrogate pairs) are an issue.
+ * For UCS-4 values, use the utf8_size() and utf8_put() functions.
  */
 
-#define UTF8_SIZE(c) ((c & 0xff80) ? ((c & 0xf800) ? 3 : 2) : 1)
+#define UTF8_SIZE_BMP(c) ((c & 0xff80) ? ((c & 0xf800) ? 3 : 2) : 1)
 
-#define UTF8_PUT(b,c) {					\
+#define UTF8_PUT_BMP(b,c) {				\
   if (c & 0xff80) {		/* non-ASCII? */	\
     if (c & 0xf800) {		/* three byte code */	\
       *b++ = 0xe0 | (c >> 12);				\
@@ -35,6 +44,40 @@
   }							\
   else *b++ = c;					\
 }
+
+/* utf8_text() flag values */
+
+#define U8T_CASECANON 2		/* canonicalize case */
+#define U8T_DECOMPOSE 4		/* decompose */
+				/* full canonicalization */
+#define U8T_CANONICAL (U8T_CASECANON | U8T_DECOMPOSE)
+
+
+/* utf8_get() return values */
+
+				/* 0x0000 - 0xffff BMP plane */
+#define U8GM_NONBMP 0xffff0000	/* mask for non-BMP values */
+				/* 0x10000 - 0x10ffff extended planes */
+				/* 0x110000 - 0x7ffffff non-Unicode */
+#define U8G_ERROR 0x80000000	/* error flag */
+#define U8G_BADCONT U8G_ERROR+1	/* continuation when not in progress */
+#define U8G_INCMPLT U8G_ERROR+2	/* incomplete UTF-8 character */
+#define U8G_NOTUTF8 U8G_ERROR+3	/* not a valid UTF-8 octet */
+#define U8G_ENDSTRG U8G_ERROR+4	/* end of string */
+#define U8G_ENDSTRI U8G_ERROR+5	/* end of string w/ incomplete UTF-8 char */
+#define U8G_SURROGA U8G_ERROR+6	/* surrogate codepoint */
+#define U8G_NOTUNIC U8G_ERROR+7	/* non-Unicode codepoint */
+
+
+/* ucs4_width() return values */
+
+#define U4W_ERROR 0x80000000	/* error flags */
+#define U4W_NOTUNCD U4W_ERROR+1	/* not a Unicode char */
+#define U4W_PRIVATE U4W_ERROR+2	/* private-space plane */
+#define U4W_SSPCHAR U4W_ERROR+3	/* Supplementary Special-purpose Plane */
+#define U4W_UNASSGN U4W_ERROR+4	/* unassigned space plane */
+#define U4W_CONTROL U4W_ERROR+5	/* C0/C1 control */
+#define U4W_CTLSRGT U4W_CONTROL	/* in case legacy code references this */
 
 /* ISO-2022 engine states */
 
@@ -279,7 +322,8 @@
 #define I2CS_ISO8859_14 (I2CS_96 | I2CS_96_ISO8859_14)
 #define I2CS_ISO8859_15 (I2CS_96 | I2CS_96_ISO8859_15)
 #define I2CS_ISO8859_16 (I2CS_96 | I2CS_96_ISO8859_16)
-
+
+
 /* Miscellaneous ISO 2022 definitions */
 
 #define EUC_CS2 0x8e		/* single shift CS2 */
@@ -287,17 +331,92 @@
 
 #define BITS7 0x7f		/* 7-bit value mask */
 #define BIT8 0x80		/* 8th bit mask */
+
+/* The following saves us from having to have yet more charset tables */
 
-				/* UCS2 codepoints */
+/* Unicode codepoints */
+
+#define UCS2_C0CONTROL 0x00	/* first C0 control */
+#define UCS2_C0CONTROLEND 0x1F	/* last C0 control */
+#define UCS2_C1CONTROL 0x80	/* first C1 control */
+#define UCS2_C1CONTROLEND 0x9F	/* last C1 control */
+
+				/* ISO 646 substituted Unicode codepoints */
 #define UCS2_POUNDSTERLING 0x00a3
 #define UCS2_YEN 0x00a5
 #define UCS2_OVERLINE 0x203e
-#define UCS2_KATAKANA 0xff61
-#define UBOGON 0xfffd		/* replacement character */
+#define UCS2_EURO 0x20ac
+#define UCS2_KATAKANA 0xff61	/* first katakana codepoint */
+#define UCS2_BOM 0xfeff		/* byte order mark */
+#define UCS2_BOGON 0xfffd	/* replacement character */
+				/* next two codepoints are not Unicode chars */
+#define UCS2_BOMCHECK 0xfffe	/* used to check byte order with UCS2_BOM */
+#define UCS2_NOTCHAR 0xffff	/* not a character */
 
-				/* hankaku katakana parameters */
+#define UCS4_BMPBASE 0x0000	/* Basic Multilingual Plane */
+#define UCS4_SMPBASE 0x10000	/* Supplementary Multilinugual Plane */
+#define UCS4_SIPBASE 0x20000	/* Supplementary Ideographic Plane */
+				/* EastAsianWidth says plane 3 is wide */
+#define UCS4_UNABASE 0x40000	/* unassigned space */
+#define UCS4_SSPBASE 0xe0000	/* Supplementary Special-purpose Plane */
+#define UCS4_PVTBASE 0xf0000	/* private-space (two planes) */
+#define UCS4_MAXUNICODE 0x10ffff/* highest Unicode codepoint */
+
+#define UTF16_BASE 0x10000	/* base of codepoints needing surrogates */
+#define UTF16_SHIFT 10		/* surrogate shift */
+#define UTF16_MASK 0x3ff	/* surrogate mask */
+#define UTF16_SURR 0xd800	/* UTF-16 surrogate area */
+#define UTF16_SURRH 0xd800	/* UTF-16 first high surrogate */
+#define UTF16_SURRHEND 0xdbff	/* UTF-16 last high surrogate */
+#define UTF16_SURRL 0xdc00	/* UTF-16 first low surrogate */
+#define UTF16_SURRLEND 0xdfff	/* UTF-16 last low surrogate */
+#define UTF16_MAXSURR 0xdfff	/* end of UTF-16 surrogates */
+
+
+/* UBOGON is used to represent a codepoint in a character set which does not
+ * map to Unicode.  It is also used for mapping failures, e.g. incomplete
+ * shift sequences.  This name has the same text width as 0x????, for
+ * convenience in the mapping tables.
+ *
+ * NOCHAR is used to represent a codepoint in Unicode which does not map to
+ * the target character set in a reverse mapping table.  This name has the
+ * same text width as 0x???? in case we ever add static reverse mapping tables.
+ */
+
+#define UBOGON UCS2_BOGON
+#define NOCHAR UCS2_NOTCHAR
+
+/* Codepoints in non-Unicode character sets */
+
+/* Codepoints in ISO 646 character sets */
+
+/* British ASCII codepoints */
+
+#define BRITISH_POUNDSTERLING 0x23
+
+/* JIS Roman codepoints */
+
+#define JISROMAN_YEN 0x5c
+#define JISROMAN_OVERLINE 0x7e
+
+
+/* Hankaku katakana codepoints & parameters
+ *
+ * In earlier versions, MAX_KANA_7 and MAX_KANA_8 were the maximum codepoint
+ * values.  Although this made sense, it was confusing with the "max ku" and
+ * "max ten" values used in the double-byte tables; there are 1-origin, but
+ * the calculated values used for "ku" and "ten" are 0-origin (derived by
+ * substracting the "base").  What this all meant is that for double byte
+ * characters the limit test is of the form (value < max_ku), but for single
+ * byte characters (which used the same cell to hold the max ku) the limit
+ * test was (value <= max_ku).
+ *
+ * By making MAX_KANA_[78] be maximum+1, the same (value < max_ku) limit test
+ * is used throughout.  - 6/15/2006
+ */
+
 #define MIN_KANA_7 0x21
-#define MAX_KANA_7 0x5f
+#define MAX_KANA_7 0x60		/* maximum value + 1 */
 #define KANA_7 (UCS2_KATAKANA - MIN_KANA_7)
 #define MIN_KANA_8 (MIN_KANA_7 | BIT8)
 #define MAX_KANA_8 (MAX_KANA_7 | BIT8)
@@ -337,12 +456,22 @@
 #define SC_CHINESE_TRADITIONAL 0x2000000
 #define SC_JAPANESE 0x4000000
 #define SC_KOREAN 0x8000000
+
+
+/* Script table */
+
+typedef struct utf8_scent {
+  char *name;			/* script name */
+  char *description;		/* script description */
+  unsigned long script;		/* script bitmask */
+} SCRIPT;
 
 /* Character set table support */
 
 typedef struct utf8_csent {
   char *name;			/* charset name */
-  unsigned long type;		/* type of charset */
+  unsigned short type;		/* type of charset */
+  unsigned short flags;		/* charset flags */
   void *tab;			/* additional data */
   unsigned long script;		/* script(s) implemented by this charset */
   char *preferred;		/* preferred charset over this one */
@@ -360,20 +489,30 @@ struct utf8_eucparam {
 
 /* Charset types */
 
+#define CT_UNKNOWN 0		/* unknown 8-bit */
 #define CT_ASCII 1		/* 7-bit ASCII no table */
 #define CT_UCS2 2		/* 2 byte 16-bit Unicode no table */
 #define CT_UCS4 3		/* 4 byte 32-bit Unicode no table */
-#define CT_1BYTE0 10		/* 1 byte no table */
+#define CT_1BYTE0 10		/* 1 byte ISO 8859-1 no table */
 #define CT_1BYTE 11		/* 1 byte ASCII + table 0x80-0xff */
 #define CT_1BYTE8 12		/* 1 byte table 0x00 - 0xff */
 #define CT_EUC 100		/* 2 byte ASCII + utf8_eucparam base/CS2/CS3 */
 #define CT_DBYTE 101		/* 2 byte ASCII + utf8_eucparam */
 #define CT_DBYTE2 102		/* 2 byte ASCII + utf8_eucparam plane1/2 */
-#define CT_UTF16 1000		/* 2 byte UTF-16 encoded Unicode no table */
+#define CT_UTF16 1000		/* variable UTF-16 encoded Unicode no table */
 #define CT_UTF8 1001		/* variable UTF-8 encoded Unicode no table */
 #define CT_UTF7 1002		/* variable UTF-7 encoded Unicode no table */
-#define CT_2022 10000		/* variable ISO-2022 encoded no table*/
+#define CT_2022 10000		/* variable ISO-2022 encoded no table */
 #define CT_SJIS 10001		/* 2 byte Shift-JIS encoded JIS no table */
+
+
+/* Character set flags */
+
+#define CF_PRIMARY 0x1		/* primary name for this charset */
+#define CF_DISPLAY 0x2		/* charset used in displays */
+#define CF_POSTING 0x4		/* charset used in email posting */
+#define CF_UNSUPRT 0x8		/* charset unsupported (can't convert to it) */
+#define CF_NOEMAIL 0x10		/* charset not used in email */
 
 
 /* UTF-7 engine states */
@@ -385,22 +524,61 @@ struct utf8_eucparam {
 
 /* Function prototypes */
 
-CHARSET *utf8_charset (char *charset);
+typedef unsigned long (*ucs4cn_t) (unsigned long c);
+typedef unsigned long (*ucs4de_t) (unsigned long c,void **more);
+
+SCRIPT *utf8_script (char *script);
+const CHARSET *utf8_charset (char *charset);
+char *utf8_badcharset (char *charset);
 long utf8_text (SIZEDTEXT *text,char *charset,SIZEDTEXT *ret,long flags);
-void utf8_text_1byte (SIZEDTEXT *text,SIZEDTEXT *ret,void *tab);
-void utf8_text_1byte8 (SIZEDTEXT *text,SIZEDTEXT *ret,void *tab);
-void utf8_text_euc (SIZEDTEXT *text,SIZEDTEXT *ret,void *tab);
-void utf8_text_dbyte (SIZEDTEXT *text,SIZEDTEXT *ret,void *tab);
-void utf8_text_dbyte2 (SIZEDTEXT *text,SIZEDTEXT *ret,void *tab);
-void utf8_text_sjis (SIZEDTEXT *text,SIZEDTEXT *ret);
-void utf8_text_2022 (SIZEDTEXT *text,SIZEDTEXT *ret);
-void utf8_text_utf7 (SIZEDTEXT *text,SIZEDTEXT *ret);
-void utf8_searchpgm (SEARCHPGM *pgm,char *charset);
-void utf8_stringlist (STRINGLIST *st,char *charset);
-long utf8_mime2text (SIZEDTEXT *src,SIZEDTEXT *dst);
-unsigned char *mime2_token (unsigned char *s,unsigned char *se,
-			    unsigned char **t);
-unsigned char *mime2_text (unsigned char *s,unsigned char *se,
-			   unsigned char **t);
-long mime2_decode (unsigned char *e,unsigned char *t,unsigned char *te,
-		   SIZEDTEXT *txt);
+long utf8_text_cs (SIZEDTEXT *text,const CHARSET *cs,SIZEDTEXT *ret,
+		   ucs4cn_t cv,ucs4de_t de);
+long utf8_cstext (SIZEDTEXT *text,char *charset,SIZEDTEXT *ret,
+		  unsigned long errch);
+long utf8_cstocstext (SIZEDTEXT *text,char *sc,SIZEDTEXT *ret,char *dc,
+		      unsigned long errch);
+unsigned short *utf8_rmap (char *charset);
+unsigned short *utf8_rmap_cs (const CHARSET *cs);
+unsigned short *utf8_rmap_gen (const CHARSET *cs,unsigned short *oldmap);
+long utf8_rmaptext (SIZEDTEXT *text,unsigned short *rmap,SIZEDTEXT *ret,
+		    unsigned long errch,long iso2022jp);
+unsigned long utf8_rmapsize (SIZEDTEXT *text,unsigned short *rmap,
+			     unsigned long errch,long iso2022jp);
+long ucs4_rmaptext (unsigned long *ucs4,unsigned long len,unsigned short *rmap,
+		    SIZEDTEXT *ret,unsigned long errch);
+long ucs4_rmaplen (unsigned long *ucs4,unsigned long len,unsigned short *rmap,
+		   unsigned long errch);
+long ucs4_rmapbuf (unsigned char *t,unsigned long *ucs4,unsigned long len,
+		   unsigned short *rmap,unsigned long errch);
+unsigned long utf8_get (unsigned char **s,unsigned long *i);
+unsigned long utf8_get_raw (unsigned char **s,unsigned long *i);
+unsigned long ucs4_cs_get (CHARSET *cs,unsigned char **s,unsigned long *i);
+unsigned long *utf8_csvalidmap (char *charsets[]);
+const CHARSET *utf8_infercharset (SIZEDTEXT *src);
+long utf8_validate (unsigned char *s,unsigned long i);
+void utf8_text_1byte0 (SIZEDTEXT *text,SIZEDTEXT *ret,ucs4cn_t cv,ucs4de_t de);
+void utf8_text_1byte (SIZEDTEXT *text,SIZEDTEXT *ret,void *tab,ucs4cn_t cv,
+		      ucs4de_t de);
+void utf8_text_1byte8 (SIZEDTEXT *text,SIZEDTEXT *ret,void *tab,ucs4cn_t cv,
+		       ucs4de_t de);
+void utf8_text_euc (SIZEDTEXT *text,SIZEDTEXT *ret,void *tab,ucs4cn_t cv,
+		    ucs4de_t de);
+void utf8_text_dbyte (SIZEDTEXT *text,SIZEDTEXT *ret,void *tab,ucs4cn_t cv,
+		      ucs4de_t de);
+void utf8_text_dbyte2 (SIZEDTEXT *text,SIZEDTEXT *ret,void *tab,ucs4cn_t cv,
+		       ucs4de_t de);
+void utf8_text_sjis (SIZEDTEXT *text,SIZEDTEXT *ret,ucs4cn_t cv,ucs4de_t de);
+void utf8_text_2022 (SIZEDTEXT *text,SIZEDTEXT *ret,ucs4cn_t cv,ucs4de_t de);
+void utf8_text_utf7 (SIZEDTEXT *text,SIZEDTEXT *ret,ucs4cn_t cv,ucs4de_t de);
+void utf8_text_utf8 (SIZEDTEXT *text,SIZEDTEXT *ret,ucs4cn_t cv,ucs4de_t de);
+void utf8_text_ucs2 (SIZEDTEXT *text,SIZEDTEXT *ret,ucs4cn_t cv,ucs4de_t de);
+void utf8_text_ucs4 (SIZEDTEXT *text,SIZEDTEXT *ret,ucs4cn_t cv,ucs4de_t de);
+void utf8_text_utf16 (SIZEDTEXT *text,SIZEDTEXT *ret,ucs4cn_t cv,ucs4de_t de);
+unsigned long utf8_size (unsigned long c);
+unsigned char *utf8_put (unsigned char *s,unsigned long c);
+unsigned long ucs4_titlecase (unsigned long c);
+long ucs4_width (unsigned long c);
+long utf8_strwidth (unsigned char *s);
+long utf8_textwidth (SIZEDTEXT *utf8);
+unsigned long ucs4_decompose (unsigned long c,void **more);
+unsigned long ucs4_decompose_recursive (unsigned long c,void **more);

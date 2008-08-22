@@ -1,3 +1,15 @@
+uw-imap (7:2004g.debian1-1) unstable; urgency=low
+
+  * Maildir is back! According to documentation this should be a more
+    flexible and well supported implementation. Let's see if it is true!
+    Beware, however, that it is still an unofficial patch - it is not
+    supported upstream. Bugfixes are welcome, but problems reported
+    without fixes will only lead to the Maildir support being dropped
+    again.
+    In other words: Maildir is EXPERIMENTAL - use at your own risk!
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 11 Oct 2005 23:09:28 +0200
+
 uw-imap (7:2002ddebian1-1) unstable; urgency=low
 
   * Drop Maildir patch. The code has always been buggy, is unsupported

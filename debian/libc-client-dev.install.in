@@ -1,7 +1,0 @@
-c-client.a		/usr/lib
-src/c-client/*.h	/usr/include/c-client
-src/osdep/unix/*.h	/usr/include/c-client
-c-client/auths.c	/usr/include/c-client
-c-client/linkage.c	/usr/include/c-client
-c-client/linkage.h	/usr/include/c-client
-c-client/osdep.h	/usr/include/c-client

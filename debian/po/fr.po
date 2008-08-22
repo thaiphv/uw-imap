@@ -1,187 +1,114 @@
-# translation of fr.po to French
+# Translation of uw-imap debconf templates to French
+# Copyright (C) 2001-2007 Christian Perrier <bubulle@debian.org>
+# This file is distributed under the same license as the uw-imap package.
 #
-#    Translators, if you are not familiar with the PO format, gettext
-#    documentation is worth reading, especially sections dedicated to
-#    this format, e.g. by running:
-#         info -n '(gettext)PO Files'
-#         info -n '(gettext)Header Entry'
-#
-#    Some information specific to po-debconf are available at
-#            /usr/share/doc/po-debconf/README-trans
-#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
-#
-#    Developers do not need to manually edit POT or PO files.
-#
+# Christian Perrier <bubulle@debian.org>, 2007.
 msgid ""
 msgstr ""
-"Project-Id-Version: uw-imap\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-03-31 16:55+0200\n"
-"PO-Revision-Date: 2005-04-02 08:20+0200\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: dr@jones.dk\n"
+"POT-Creation-Date: 2007-10-19 20:29+0200\n"
+"PO-Revision-Date: 2007-10-15 07:32+0200\n"
 "Last-Translator: Christian Perrier <bubulle@debian.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.9.1\n"
+"X-Generator: KBabel 1.11.4\n"
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5 ../uw-imapd.templates.master:5
-msgid "Which ports should the server listen on?"
-msgstr "Ports où le serveur doit être à l'écoute :"
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
+msgid "Server ports and protocols to support:"
+msgstr "Port et protocoles Ã  gÃ©rer sur le serveurÂ :"
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
-msgid "pop2 =  POP 2 on TCP port 109 with TLS support.  This is obsolete."
-msgstr "POP2  - port TCP 109 avec gestion TLS. Ce choix est obsolète."
+#: ../ipopd.templates:2001 ../uw-imapd.templates:2001
+msgid "Please choose the server ports and protocols to activate."
+msgstr "Veuillez choisir les ports et les protocoles Ã  activer sur le serveur."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
-msgid "pop3  = POP 3 on TCP port 110 with TLS support."
-msgstr "POP3  - port TCP 110 avec gestion TLS."
+#: ../ipopd.templates:2001
+msgid ""
+" pop3:  POP 3 on TCP port 110 with TLS support;\n"
+" pop3s: POP 3 on TCP port 995 with SSL support;\n"
+" pop2:  (obsolete) POP 2 on TCP port 109 with TLS support."
+msgstr ""
+" pop3Â Â : POP 3 sur port TCP 110 avec gestion TLS;\n"
+" pop3sÂ : POP 3 sur port TCP 995 avec gestion SSL;\n"
+" pop2Â Â : (obsolÃ¨te) POP 2 sur port TCP 109 avec gestion TLS."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
-msgid "pop3s = POP 3 on TCP port 995 with SSL support."
-msgstr "POP3S - port TCP 995 avec gestion SSL."
+#: ../ipopd.templates:2001
+msgid "It is recommended to activate both pop3 and pop3s."
+msgstr "Il est recommandÃ© d'activer pop3 et pop3s."
 
 #. Type: multiselect
 #. Description
-#: ../ipopd.templates.master:5
-msgid "If in doubt, choose pop3 and pop3s."
-msgstr "Dans le doute, vous devriez choisir POP3 et POP3S."
+#. Type: boolean
+#. Description
+#: ../ipopd.templates:2001 ../ipopd.templates:3001
+msgid ""
+"As the ports and protocols choice may have been overridden by local changes, "
+"you may need to enforce the choice and run the package configuration again "
+"with 'dpkg-reconfigure ipopd'."
+msgstr ""
+"Comme les ports choisis pour Ãªtre activÃ©s peuvent Ãªtre remplacÃ©s par des "
+"modifications locales, il est recommandÃ© de forcer ces choix et de "
+"recommencer la configuration du paquet avec la commande Â«Â dpkg-reconfigure "
+"ipopdÂ Â»."
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
+#: ../ipopd.templates:3001 ../uw-imapd.templates:3001
 msgid "Enforce port selection?"
-msgstr "Faut-il appliquer le choix des ports ?"
+msgstr "Faut-il forcer le choix des portsÂ ?"
 
 #. Type: boolean
 #. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
-msgid ""
-"The ports selected for enabling may be overridden by locally configured "
-"services. By default the port selection is respected only on initial "
-"installs, and is ignored on later reconfiguration."
-msgstr ""
-"Les ports choisis pour être activés peuvent être remplacés par des services "
-"locaux. Le choix des ports n'est respecté, par défaut, que lors de "
-"l'installation initiale et est ignoré lors des reconfigurations ultérieures."
-
-#. Type: boolean
-#. Description
-#: ../ipopd.templates.master:17 ../uw-imapd.templates.master:18
-msgid ""
-"Do you want to ignore possible local tweaks and always use selected ports?"
-msgstr ""
-"Veuillez confirmer si vous préférez ignorer les modifications locales et "
-"toujours utiliser les ports choisis."
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid "Continue installing libc-client without Maildir support?"
-msgstr ""
-"Faut-il poursuivre l'installation de libc-client sans gestion de "
-"« Maildir » ?"
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid ""
-"Libc-client earlier than version 2002d (and development versions of 2003) "
-"included an unofficial and no longer maintained patch to support Maildirs. "
-"By default Maildirs were not used by uw-imapd or ipopd, but if you have "
-"changed your system configuration or other installed programs depend on libc-"
-"client then upgrading may result in broken mail handling."
-msgstr ""
-"Les versions de libc-client antérieures à 2002d (et les versions de "
-"développement de 2003) incluaient une rustine non officielle et non "
-"maintenue pour la gestion des répertoires de courriel au format « Maildir ». "
-"Ce format n'était pas celui par défaut pour uw-imapd ou ipopd. Toutefois, si "
-"votre configuration système a été modifiée ou que d'autres programmes "
-"installés dépendent de libc-client, la gestion du courriel pourrait être "
-"perturbée."
-
-#. Type: boolean
-#. Description
-#: ../libc-client__VER__.templates.in.master:4
-msgid ""
-"Do you want to continue installing a libc-client without Maildir support?"
-msgstr ""
-"Veuillez confirmer que vous souhaitez bien installer un libc-client sans "
-"gestion des répertoires de courriel au format Maildir."
+#: ../ipopd.templates:3001
+msgid "The ipopd daemon supports listening simultaneously on several ports."
+msgstr "Le dÃ©mon ipopd peut Ãªtre Ã  l'Ã©coute sur plusieurs ports simultanÃ©ment."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
+#: ../uw-imapd.templates:2001
 msgid ""
-"imap2 = IMAP 4Rev1 (not 2, strangely enough) on TCP port 143 with TLS "
-"support."
+" imap2: IMAP 4rev1 on TCP port 143 with TLS support;\n"
+" imaps: IMAP 4rev1 on TCP port 993 with SSL support;\n"
+" imap3: (obsolete) IMAP 3 on TCP port 220 with TLS support."
 msgstr ""
-"IMAP2 - IMAP4 version 1 (et non 2, assez étonnamment) sur le port TCP 143, "
-"avec gestion TLS."
+" imap2 : IMAP 4rev1 sur port TCP 143 avec gestion TLS;\n"
+" imaps : IMAP 4rev1 sur port TCP 993 avec gestion SSL;\n"
+" imap3 : (obsolÃ¨te) IMAP 3 sur port TCP 220 avec gestion TLS."
 
 #. Type: multiselect
 #. Description
-#: ../uw-imapd.templates.master:5
-msgid "imap3 = IMAP 3 on TCP port 220 with TLS support.  This is obsolete."
+#: ../uw-imapd.templates:2001
+msgid "It is recommended to activate both imap2 and imaps."
+msgstr "Il est recommandÃ© d'activer imap2 et imaps."
+
+#. Type: multiselect
+#. Description
+#. Type: boolean
+#. Description
+#: ../uw-imapd.templates:2001 ../uw-imapd.templates:3001
+msgid ""
+"As the ports and protocols choice may have been overridden by local changes, "
+"you may need to enforce the choice and run the package configuration again "
+"with 'dpkg-reconfigure uw-imapd'."
 msgstr ""
-"IMAP3 - IMAP3 sur le port TCP 220, avec gestion TLS. Ce choix est obsolète."
+"Comme les ports choisis pour Ãªtre activÃ©s peuvent Ãªtre remplacÃ©s par des "
+"modifications locales, il est recommandÃ© de forcer ces choix et de "
+"recommencer la configuration du paquet avec la commande Â« dpkg-reconfigure "
+"uw-imapd Â»."
 
-#. Type: multiselect
+#. Type: boolean
 #. Description
-#: ../uw-imapd.templates.master:5
-msgid "imaps = IMAP 4Rev1 on TCP port 993 with SSL support."
-msgstr "IMAPS - IMAP4 version 1 sur le port TCP 993, avec gestion SSL."
-
-#. Type: multiselect
-#. Description
-#: ../uw-imapd.templates.master:5
-msgid "If in doubt, pick imap2 and imaps."
-msgstr "Dans le doute, vous devriez choisir IMAP2 et IMAPS."
-
-#~ msgid "pop2, pop3, pop3s"
-#~ msgstr "POP2, POP3, POP3S"
-
-#~ msgid "imap2, imap3, imaps"
-#~ msgstr "IMAP2, IMAP3, IMAPS"
-
-#~ msgid "Allow insecure authentication using plaintext passwords?"
-#~ msgstr ""
-#~ "Faut-il autoriser les authentifications avec mots de passe en clair ?"
-
-#~ msgid ""
-#~ "The use of unencrypted plaintext passwords is generally insecure, and the "
-#~ "current version of libc-client by default only allows network access "
-#~ "through either TLS or SSL connections.  This affects uw-imapd, ipopd and "
-#~ "any other programs that use libc-client for mail access through the "
-#~ "network.  However, this functionality can be changed by using the semi-"
-#~ "official /etc/c-client.cf configuration file.  Read more about this in /"
-#~ "usr/share/doc/libc-client__VER__/README.Debian."
-#~ msgstr ""
-#~ "L'utilisation de mots de passe non chiffrés est considérée comme peu "
-#~ "sûre. La version actuelle de libc-client n'autorise par défaut que des "
-#~ "accès réseau via des connexions TLS ou SSL. Cela concerne uw-imapd, ipopd "
-#~ "ainsi que tous les programmes qui utilisent libc-client pour l'accès au "
-#~ "courriel via le réseau. Ce comportement peut toutefois être modifié à "
-#~ "l'aide du fichier de configuration semi-officiel /etc/c-client.cf. Vous "
-#~ "trouverez plus de détails à ce sujet dans le fichier /usr/share/doc/libc-"
-#~ "client__VER__/README.Debian."
-
-#~ msgid ""
-#~ "Do you want to allow email access authentication using insecure plaintext "
-#~ "passwords?"
-#~ msgstr ""
-#~ "Veuillez confirmer que vous souhaitez permettre l'accès au courriel avec "
-#~ "envoi de mots de passe en clair."
-
-#~ msgid "Note: cramd-md5 passwords are treated as plaintext passwords!"
-#~ msgstr ""
-#~ "Note : les mots de passe cramd-md5 sont considérés comme des mots de "
-#~ "passe en clair."
+#: ../uw-imapd.templates:3001
+msgid "The uw-imap daemon supports listening simultaneously on several ports."
+msgstr ""
+"Le dÃ©mon uw-imap peut Ãªtre Ã  l'Ã©coute sur plusieurs ports simultanÃ©ment."

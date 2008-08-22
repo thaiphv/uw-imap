@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2008 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	Amiga TCP/IP routines
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	1 August 1988
- * Last Edited:	31 October 2002
- * 
- * The IMAP toolkit provided in this Distribution is
- * Copyright 2002 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	13 January 2008
  */
 
 #undef write			/* don't use redefined write() */
@@ -33,9 +41,11 @@ extern long maxposint;		/* get this from write.c */
 
 int tcp_socket_open (struct sockaddr_in *sin,char *tmp,int *ctr,char *hst,
 		     unsigned long port);
+static char *tcp_getline_work (TCPSTREAM *stream,unsigned long *size,
+			       long *contd);
 long tcp_abort (TCPSTREAM *stream);
 char *tcp_name (struct sockaddr_in *sin,long flag);
-long tcp_name_valid (char *s);
+char *tcp_name_valid (char *s);
 
 /* TCP/IP manipulate parameters
  * Accepts: function code
@@ -205,6 +215,14 @@ int tcp_socket_open (struct sockaddr_in *sin,char *tmp,int *ctr,char *hst,
     (*bn) (BLOCK_NONSENSITIVE,data);
     return -1;
   }
+  else if (sock >= FD_SETSIZE) {/* unselectable sockets are useless */
+    sprintf (tmp,"Unable to create selectable TCP socket (%d >= %d)",
+	     sock,FD_SETSIZE);
+    (*bn) (BLOCK_NONSENSITIVE,data);
+    close (sock);
+    errno = EMFILE;
+    return -1;
+  }
   flgs = fcntl (sock,F_GETFL,0);/* get current socket flags */
 				/* set non-blocking if want open timeout */
   if (ctr) fcntl (sock,F_SETFL,flgs | FNDELAY);
@@ -269,51 +287,74 @@ TCPSTREAM *tcp_aopen (NETMBX *mb,char *service,char *usrbuf)
   return NIL;			/* disabled */
 }
 
-/* TCP/IP receive line
- * Accepts: TCP/IP stream
+/* TCP receive line
+ * Accepts: TCP stream
  * Returns: text line string or NIL if failure
  */
 
 char *tcp_getline (TCPSTREAM *stream)
 {
-  int n,m;
-  char *st,*ret,*stp;
-  char c = '\0';
-  char d;
+  unsigned long n,contd;
+  char *ret = tcp_getline_work (stream,&n,&contd);
+  if (ret && contd) {		/* got a line needing continuation? */
+    STRINGLIST *stl = mail_newstringlist ();
+    STRINGLIST *stc = stl;
+    do {			/* collect additional lines */
+      stc->text.data = (unsigned char *) ret;
+      stc->text.size = n;
+      stc = stc->next = mail_newstringlist ();
+      ret = tcp_getline_work (stream,&n,&contd);
+    } while (ret && contd);
+    if (ret) {			/* stash final part of line on list */
+      stc->text.data = (unsigned char *) ret;
+      stc->text.size = n;
+				/* determine how large a buffer we need */
+      for (n = 0, stc = stl; stc; stc = stc->next) n += stc->text.size;
+      ret = fs_get (n + 1);	/* copy parts into buffer */
+      for (n = 0, stc = stl; stc; n += stc->text.size, stc = stc->next)
+	memcpy (ret + n,stc->text.data,stc->text.size);
+      ret[n] = '\0';
+    }
+    mail_free_stringlist (&stl);/* either way, done with list */
+  }
+  return ret;
+}
+
+/* TCP receive line or partial line
+ * Accepts: TCP stream
+ *	    pointer to return size
+ *	    pointer to return continuation flag
+ * Returns: text line string, size and continuation flag, or NIL if failure
+ */
+
+static char *tcp_getline_work (TCPSTREAM *stream,unsigned long *size,
+			       long *contd)
+{
+  unsigned long n;
+  char *s,*ret,c,d;
+  *contd = NIL;			/* assume no continuation */
 				/* make sure have data */
   if (!tcp_getdata (stream)) return NIL;
-  st = stream->iptr;		/* save start of string */
-  n = 0;			/* init string count */
-  while (stream->ictr--) {	/* look for end of line */
+  for (s = stream->iptr, n = 0, c = '\0'; stream->ictr--; n++, c = d) {
     d = *stream->iptr++;	/* slurp another character */
     if ((c == '\015') && (d == '\012')) {
       ret = (char *) fs_get (n--);
-      memcpy (ret,st,n);	/* copy into a free storage string */
+      memcpy (ret,s,*size = n);	/* copy into a free storage string */
       ret[n] = '\0';		/* tie off string with null */
       return ret;
     }
-    n++;			/* count another character searched */
-    c = d;			/* remember previous character */
   }
 				/* copy partial string from buffer */
-  memcpy ((ret = stp = (char *) fs_get (n)),st,n);
+  memcpy ((ret = (char *) fs_get (n)),s,*size = n);
 				/* get more data from the net */
   if (!tcp_getdata (stream)) fs_give ((void **) &ret);
 				/* special case of newline broken by buffer */
   else if ((c == '\015') && (*stream->iptr == '\012')) {
     stream->iptr++;		/* eat the line feed */
     stream->ictr--;
-    ret[n - 1] = '\0';		/* tie off string with null */
+    ret[*size = --n] = '\0';	/* tie off string with null */
   }
-				/* else recurse to get remainder */
-  else if (st = tcp_getline (stream)) {
-    ret = (char *) fs_get (n + 1 + (m = strlen (st)));
-    memcpy (ret,stp,n);		/* copy first part */
-    memcpy (ret + n,st,m);	/* and second part */
-    fs_give ((void **) &stp);	/* flush first part */
-    fs_give ((void **) &st);	/* flush second part */
-    ret[n + m] = '\0';		/* tie off string with null */
-  }
+  else *contd = LONGT;		/* continuation needed */
   return ret;
 }
 
@@ -347,7 +388,7 @@ long tcp_getbuffer (TCPSTREAM *stream,unsigned long size,char *s)
     while (size > 0) {		/* until request satisfied */
       time_t tl = time (0);
       time_t now = tl;
-      int ti = ttmo_read ? now + ttmo_read : 0;
+      time_t ti = ttmo_read ? now + ttmo_read : 0;
       if (tcpdebug) mm_log ("Reading TCP buffer",TCPDEBUG);
       tmo.tv_usec = 0;
       FD_ZERO (&fds);		/* initialize selection vector */
@@ -395,7 +436,7 @@ long tcp_getdata (TCPSTREAM *stream)
   while (stream->ictr < 1) {	/* if nothing in the buffer */
     time_t tl = time (0);	/* start of request */
     time_t now = tl;
-    int ti = ttmo_read ? now + ttmo_read : 0;
+    time_t ti = ttmo_read ? now + ttmo_read : 0;
     if (tcpdebug) mm_log ("Reading TCP data",TCPDEBUG);
     tmo.tv_usec = 0;
     FD_ZERO (&fds);		/* initialize selection vector */
@@ -455,7 +496,7 @@ long tcp_sout (TCPSTREAM *stream,char *string,unsigned long size)
   while (size > 0) {		/* until request satisfied */
     time_t tl = time (0);	/* start of request */
     time_t now = tl;
-    int ti = ttmo_write ? now + ttmo_write : 0;
+    time_t ti = ttmo_write ? now + ttmo_write : 0;
     if (tcpdebug) mm_log ("Writing to TCP",TCPDEBUG);
     tmo.tv_usec = 0;
     FD_ZERO (&fds);		/* initialize selection vector */
@@ -706,31 +747,32 @@ char *tcp_canonical (char *name)
 
 char *tcp_name (struct sockaddr_in *sin,long flag)
 {
-  char *s,tmp[MAILTMPLEN];
+  char *ret,*t,adr[MAILTMPLEN],tmp[MAILTMPLEN];
+  sprintf (ret = adr,"[%.80s]",inet_ntoa (sin->sin_addr));
   if (allowreversedns) {
     struct hostent *he;
     blocknotify_t bn = (blocknotify_t)mail_parameters(NIL,GET_BLOCKNOTIFY,NIL);
     void *data;
     if (tcpdebug) {
-      sprintf (tmp,"Reverse DNS resolution [%s]",inet_ntoa (sin->sin_addr));
+      sprintf (tmp,"Reverse DNS resolution %s",adr);
       mm_log (tmp,TCPDEBUG);
     }
-    (*bn) (BLOCK_DNSLOOKUP,NIL); /* quell alarms */
+    (*bn) (BLOCK_DNSLOOKUP,NIL);/* quell alarms */
     data = (*bn) (BLOCK_SENSITIVE,NIL);
 				/* translate address to name */
-    if (!(he = gethostbyaddr ((char *) &sin->sin_addr,
-			      sizeof (struct in_addr),sin->sin_family)) ||
-	!tcp_name_valid ((char *) he->h_name))
-      sprintf (s = tmp,"[%s]",inet_ntoa (sin->sin_addr));
-    else if (flag) sprintf (s = tmp,"%s [%s]",he->h_name,
-			    inet_ntoa (sin->sin_addr));
-    else s = (char *) he->h_name;
+    if (t = tcp_name_valid ((he = gethostbyaddr ((char *) &sin->sin_addr,
+						 sizeof (struct in_addr),
+						 sin->sin_family)) ?
+			    (char *) he->h_name : NIL)) {
+				/* produce verbose form if needed */
+      if (flag)	sprintf (ret = tmp,"%s %s",t,adr);
+      else ret = t;
+    }
     (*bn) (BLOCK_NONSENSITIVE,data);
     (*bn) (BLOCK_NONE,NIL);	/* alarms OK now */
     if (tcpdebug) mm_log ("Reverse DNS resolution done",TCPDEBUG);
   }
-  else sprintf (s = tmp,"[%s]",inet_ntoa (sin->sin_addr));
-  return cpystr (s);
+  return cpystr (ret);
 }
 
 
@@ -739,11 +781,17 @@ char *tcp_name (struct sockaddr_in *sin,long flag)
  * Returns: T if valid, NIL otherwise
  */
 
-long tcp_name_valid (char *s)
+char *tcp_name_valid (char *s)
 {
   int c;
-  while (c = *s++)		/* must be alnum, dot, or hyphen */
-    if (!((c >= 'A') && (c <= 'Z')) && !((c >= 'a') && (c <= 'z')) &&
-	!((c >= '0') && (c <= '9')) && (c != '-') && (c != '.')) return NIL;
-  return LONGT;
+  char *ret,*tail;
+				/* must be non-empty and not too long */
+  if ((ret = (s && *s) ? s : NIL) && (tail = ret + NETMAXHOST)) {
+				/* must be alnum, dot, or hyphen */
+    while ((c = *s++) && (s <= tail) &&
+	   (((c >= 'A') && (c <= 'Z')) || ((c >= 'a') && (c <= 'z')) ||
+	    ((c >= '0') && (c <= '9')) || (c == '-') || (c == '.')));
+    if (c) ret = NIL;
+  }
+  return ret;
 }

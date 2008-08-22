@@ -1,3 +1,16 @@
+/* ========================================================================
+ * Copyright 1988-2008 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 
+ * ========================================================================
+ */
+
 /*
  * Program:	Standalone Mailbox Lock program
  *
@@ -10,12 +23,7 @@
  *		Internet: MRC@CAC.Washington.EDU
  *
  * Date:	8 February 1999
- * Last Edited:	1 October 2002
- *
- * The IMAP tools software provided in this Distribution is
- * Copyright 2002 University of Washington.
- * The full text of our legal notices is contained in the file called
- * CPYRIGHT, included with this Distribution.
+ * Last Edited:	3 March 2008
  */
 
 #include <errno.h>
@@ -31,60 +39,79 @@
 #include <stdlib.h>
 #include <netdb.h>
 #include <ctype.h>
-#include <strings.h>
+#include <string.h>
 
 #define LOCKTIMEOUT 5		/* lock timeout in minutes */
-#define LOCKPROTECTION 0775
+#define LOCKPROTECTION 0664
+
+#ifndef MAXHOSTNAMELEN		/* Solaris still sucks */
+#define MAXHOSTNAMELEN 256
+#endif
 
 /* Fatal error
  * Accepts: Message string
  *	    exit code
- * Never returns
+ * Returns: code
  */
 
-void die (char *msg,int code)
+int die (char *msg,int code)
 {
   syslog (LOG_NOTICE,"(%u) %s",code,msg);
   write (1,"?",1);		/* indicate "impossible" failure */
-  _exit (code);			/* sayonara */
+  return code;
 }
 
 
 int main (int argc,char *argv[])
 {
-  int ld;
+  int ld,i;
   int tries = LOCKTIMEOUT * 60 - 1;
-  size_t len;
-  char *s,*lock,*hitch,tmp[1024];
-  time_t t;
+  char *s,*dir,*file,*lock,*hitch,tmp[1024];
+  size_t dlen,len;
   struct stat sb,fsb;
   struct group *grp = getgrnam ("mail");
 				/* get syslog */
   openlog (argv[0],LOG_PID,LOG_MAIL);
-  if (!grp || (grp->gr_gid != getegid ())) die ("not setgid mail",EX_USAGE);
-  if (argc != 3) die ("invalid arguments",EX_USAGE);
-  for (s = argv[1]; *s; s++) if (!isdigit (*s)) die ("invalid fd",EX_USAGE);
-  len = strlen (argv[2]);	/* make buffers */
+  if (!grp || (grp->gr_gid != getegid ()))
+    return die ("not setgid mail",EX_USAGE);
+  if (argc != 3) return die ("invalid arguments",EX_USAGE);
+  for (s = argv[1]; *s; s++)
+    if (!isdigit (*s)) return die ("invalid fd",EX_USAGE);
+				/* find directory */
+  if ((*argv[2] != '/') || !(file = strrchr (argv[2],'/')) || !file[1])
+    return die ("invalid path",EX_USAGE);
+				/* calculate lengths of directory and file */
+  if (!(dlen = file - argv[2])) dlen = 1;
+  len = strlen (++file);
+				/* make buffers */
+  dir = (char *) malloc (dlen + 1);
   lock = (char *) malloc (len + 6);
   hitch = (char *) malloc (len + 6 + 40 + MAXHOSTNAMELEN);
-  if (!lock || !hitch) die ("malloc failure",errno);
+  if (!dir || !lock || !hitch) return die ("malloc failure",errno);
+  strncpy (dir,argv[2],dlen);	/* connect to desired directory */
+  dir[dlen] = '\0';
+  printf ("dir=%s, file=%s\n",dir,file);
+  chdir (dir);
 				/* get device/inode of file descriptor */
-  if (fstat (atoi (argv[1]),&fsb)) die ("fstat failure",errno);
+  if (fstat (atoi (argv[1]),&fsb)) return die ("fstat failure",errno);
 				/* better be a regular file */
-  if ((fsb.st_mode & S_IFMT) != S_IFREG) die ("fd not regular file",EX_USAGE);
+  if ((fsb.st_mode & S_IFMT) != S_IFREG)
+    return die ("fd not regular file",EX_USAGE);
 				/* now get device/inode of file */
-  if (lstat (argv[2],&sb)) die ("lstat failure",errno);
+  if (lstat (file,&sb)) return die ("lstat failure",errno);
 				/* does it match? */
-  if ((sb.st_mode & S_IFMT) != S_IFREG) die ("name not regular file",EX_USAGE);
+  if ((sb.st_mode & S_IFMT) != S_IFREG)
+    return die ("name not regular file",EX_USAGE);
   if ((sb.st_dev != fsb.st_dev) || (sb.st_ino != fsb.st_ino))
-    die ("fd and name different",EX_USAGE);
+    return die ("fd and name different",EX_USAGE);
 				/* build lock filename */
-  sprintf (lock,"%s.lock",argv[2]);
+  sprintf (lock,"%s.lock",file);
   if (!lstat (lock,&sb) && ((sb.st_mode & S_IFMT) != S_IFREG))
-    die ("existing lock not regular file",EX_NOPERM);
+    return die ("existing lock not regular file",EX_NOPERM);
 
   do {				/* until OK or out of tries */
-    t = time (0);		/* get the time now */
+    if (!stat (lock,&sb) && (time (0) > (sb.st_ctime + LOCKTIMEOUT * 60)))
+      unlink (lock);		/* time out lock if enough time has passed */
     /* SUN-OS had an NFS
      * As kludgy as an albatross;
      * And everywhere that it was installed,
@@ -100,26 +127,49 @@ int main (int argc,char *argv[])
     if ((ld = open (hitch,O_WRONLY|O_CREAT|O_EXCL,LOCKPROTECTION)) >= 0) {
 				/* make sure others can break the lock */
       chmod (hitch,LOCKPROTECTION);
+				/* get device/inode of hitch file */
+      if (fstat (ld,&fsb)) return die ("hitch fstat failure",errno);
       close (ld);		/* close the hitching-post */
-      link (hitch,lock);	/* tie hitching-post to lock, ignore failure */
-      stat (hitch,&sb);		/* get its data */
+      /* Note: link() may return an error even if it actually succeeded.  So we
+       * always check for success via the link count, and ignore the error if
+       * the link count is right.
+       */
+				/* tie hitching-post to lock */
+      i = link (hitch,lock) ? errno : 0;
+				/* success if link count now 2 */
+      if (stat (hitch,&sb) || (sb.st_nlink != 2) ||
+	  (fsb.st_dev != sb.st_dev) || (fsb.st_ino != sb.st_ino)) {
+	ld = -1;		/* failed to hitch */
+	if (i == EPERM) {	/* was it because links not allowed? */
+	  /* Probably a FAT filesystem on Linux.  It can't be NFS, so try
+	   * creating the lock file directly.
+	   */
+	  if ((ld = open (lock,O_WRONLY|O_CREAT|O_EXCL,LOCKPROTECTION)) >= 0) {
+	    /* get device/inode of lock file */
+	    if (fstat (ld,&fsb)) return die ("lock fstat failure",errno);
+	    close (ld);		/* close the file */
+	  }
+				/* give up immediately if protection failure */
+	  else if (errno != EEXIST) tries = 0;
+	}
+      }
       unlink (hitch);		/* flush hitching post */
-      /* If link count .ne. 2, hitch failed.  Set ld to -1 as if open() failed
-	 so we try again.  If extant lock file and time now is .gt. file time
-	 plus timeout interval, flush the lock so can win next time around. */
-      if ((ld = (sb.st_nlink != 2) ? -1 : 0) && (!stat (lock,&sb)) &&
-	  (t > sb.st_ctime + LOCKTIMEOUT * 60)) unlink (lock);
     }
+				/* give up immediately if protection failure */
+    else if (errno == EACCES) tries = 0;
     if (ld < 0) {		/* lock failed */
       if (tries--) sleep (1);	/* sleep 1 second and try again */
       else {
 	write (1,"-",1);	/* hard failure */
-	_exit (EX_CANTCREAT);
+	return EX_CANTCREAT;
       }
     }
   } while (ld < 0);
   write (1,"+",1);		/* indicate that all is well */
   read (0,tmp,1);		/* read continue signal from parent */
-  unlink (lock);		/* flush the lock file */
+				/* flush the lock file */
+  if (!stat (lock,&sb) && (fsb.st_dev == sb.st_dev) &&
+      (fsb.st_ino == sb.st_ino)) unlink (lock);
+  else syslog (LOG_NOTICE,"lock file %s/%s changed dev/inode",dir,lock);
   return EX_OK;
 }

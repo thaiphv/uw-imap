@@ -1,16 +1,6 @@
 Notes on the package build environment for UW-imap
 ==================================================
 
-License of upstream code requires clearly labeling the code as derived.
-
-Currently this is done by adding "debian" to the library (but actually
-this seems to be too weak so in future may include more places), which
-causes lots of changes at each new upstream release.
-
-So more automated handling of debhelper files was added, and has since
-grown to the rather complex system in use today.
-
-
 Special filenames
 -----------------
 
@@ -19,7 +9,3 @@ Special filenames
 
 *._in:	Like *.in but handled later in the build process to include info
 	that is static for each package (like package name).
-
-*.master: Master files for translation, written in Unicode. Non-master
-	files are included with source to support backports no the dark
-	ages before Unicode support.
