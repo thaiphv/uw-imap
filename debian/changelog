@@ -1,3 +1,19 @@
+uw-imap (8:2007b~dfsg-1) unstable; urgency=medium
+
+  * Revert to older upstream 2007b, and instead bump epoc, as simplest
+    possible apporach to get back to old soname, needed for the frozen
+    Lenny. Thanks to Adeodato Simó for educating me about the problem
+    and coming up with the solution.
+  * Add patch 0001 from newer 2007d release, fixing local exploitable
+    security hole in dmail and tmail. Thanks to Tomas Pospisek for
+    reporting.
+  * Add patch 0002 from newer 2007d release, to not close already closed
+    smtp netstream.
+  * Set urgency=medium due to soname fix (security issue already in
+    7:2007d~dfsg-1 and 7:2007b~dfsg-4+lenny1, so urgency=high unneeded.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 01 Dec 2008 03:22:45 +0100
+
 uw-imap (7:2007d~dfsg-1) unstable; urgency=high
 
   * New upstream release.

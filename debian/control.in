@@ -48,10 +48,10 @@ Description: POP2 and POP3 mail server
  This package contains ipopd, a POP2 and POP3 server daemon which uses
  the c-client library.
 
-Package: libc-client2007d-dev
+Package: libc-client2007b-dev
 Section: libdevel
 Architecture: any
-Depends: libc-client2007d (= ${binary:Version}), ${devlibs:Depends}
+Depends: libc-client2007b (= ${binary:Version}), ${devlibs:Depends}
 Conflicts: libc-client-dev
 Replaces: libc-client-dev
 Provides: libc-client-dev
@@ -67,7 +67,7 @@ Description: c-client library for mail protocols - development files
  This package contains the static c-client library and development
  headers.
 
-Package: libc-client2007d
+Package: libc-client2007b
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-modules, mlock

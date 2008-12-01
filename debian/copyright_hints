@@ -1,7 +1,4 @@
-Format-Specification: http://wiki.debian.org/Proposals/CopyrightFormat?action=recall&rev=XXX
-Upstream-Name: Untrusted draft - double-check copyrights yourself!
-
-Files: CONTENTS
+Apache-2.0 [1988-2006 University of Washington]: CONTENTS
 	SUPPORT
 	docs/CONFIG
 	docs/IPv6.txt
@@ -378,10 +375,7 @@ Files: CONTENTS
 	tools/Makefile
 	tools/ua
 	tools/uahelper.c
-Copyright: 1988-2006, University of Washington
-License: Apache-2.0
-
-Files: README
+Apache-2.0 [1988-2007 University of Washington]: README
 	docs/BUILD
 	docs/FAQ.html
 	docs/FAQ.txt
@@ -458,10 +452,7 @@ Files: README
 	src/tmail/tquota.c
 	src/tmail/tquota.h
 	tools/an
-Copyright: 1988-2007, University of Washington
-License: Apache-2.0
-
-Files: Makefile
+Apache-2.0 [1988-2008 University of Washington]: Makefile
 	docs/RELNOTES
 	src/c-client/env.h
 	src/c-client/mail.h
@@ -501,10 +492,7 @@ Files: Makefile
 	src/osdep/vms/tcp_vmsl.c
 	src/osdep/vms/tcp_vmsm.c
 	src/osdep/wce/tcp_wce.c
-Copyright: 1988-2008, University of Washington
-License: Apache-2.0
-
-Files: src/osdep/unix/os_aos.c
+Apache-2.0 [(((unsigned)>=060)&((unsigned)<=067)) / 1988-2007 University of Washington / (-'0')]: src/osdep/unix/os_aos.c
 	src/osdep/unix/os_bsd.c
 	src/osdep/unix/os_cvx.c
 	src/osdep/unix/os_do4.c
@@ -515,12 +503,7 @@ Files: src/osdep/unix/os_aos.c
 	src/osdep/unix/os_shp.c
 	src/osdep/unix/os_sol.c
 	src/osdep/unix/os_sun.c
-Copyright: (((unsigned)>=060)&((unsigned)<=067))
-	1988-2007, University of Washington
-	(-'0')
-License: Apache-2.0
-
-Files: src/osdep/unix/os_art.c
+Apache-2.0 [(((unsigned)>=060)&((unsigned)<=067)) / 1988-2006 University of Washington / (-'0')]: src/osdep/unix/os_art.c
 	src/osdep/unix/os_asv.c
 	src/osdep/unix/os_aux.c
 	src/osdep/unix/os_cyg.c
@@ -529,66 +512,21 @@ Files: src/osdep/unix/os_art.c
 	src/osdep/unix/os_sv2.c
 	src/osdep/unix/os_sv4.c
 	src/osdep/unix/os_vu2.h
-Copyright: (((unsigned)>=060)&((unsigned)<=067))
-	1988-2006, University of Washington
-	(-'0')
-License: Apache-2.0
-
-Files: src/c-client/misc.c
-	src/c-client/misc.h
-	src/c-client/rfc822.h
-Copyright: 1988, Stanford University
-	1988-2006, University of Washington
-License: Apache-2.0
-
-Files: src/c-client/imap4r1.c
-	src/c-client/rfc822.c
-	src/c-client/smtp.c
-Copyright: 1988, Stanford University
-	1988-2008, University of Washington
-License: Apache-2.0
-
-Files: src/osdep/vms/link.opt
+*No copyright* UNKNOWN []: src/osdep/mac/mtest.sit.hqx
+	src/osdep/vms/link.opt
 	src/osdep/vms/link_mnt.opt
 	src/osdep/vms/link_nlb.opt
-Copyright: *No copyright*
-License: UNKNOWN
-
-Files: src/c-client/smtp.h
+Apache-2.0 [1988 Stanford University / 1988-2006 University of Washington]: src/c-client/misc.c
+	src/c-client/misc.h
+	src/c-client/rfc822.h
+Apache-2.0 [1988 Stanford University / 1988-2008 University of Washington]: src/c-client/imap4r1.c
+	src/c-client/rfc822.c
+	src/c-client/smtp.c
+Apache-2.0 [1988 Stanford University / 1988-2007 University of Washington]: src/c-client/smtp.h
 	src/mtest/mtest.c
-Copyright: 1988, Stanford University
-	1988-2007, University of Washington
-License: Apache-2.0
-
-Files: src/c-client/utf8.h
-Copyright: 1988-2008, University of Washington
-	((c & 0xff80) ? ((c & 0xf800) ? 3 : 2) : 1)
-License: Apache-2.0
-
-Files: src/c-client/mail.c
-Copyright: = " 1988-2007, University of Washington\n\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n http://www.apache.org/licenses/LICENSE-2.0\n";
-	1988-2008, University of Washington
-License: Apache-2.0
-
-Files: src/osdep/nt/os_nt.h
-Copyright: = a,b)
-	1988-2007, University of Washington
-License: Apache-2.0
-
-Files: src/ansilib/memset.c
-Copyright: while (n) s[--n
-License: Apache-2.0
-
-Files: NOTICE
-Copyright: 1988, Stanford University and was developed in the
-	1988-2007, by the University of Washington
-License: UNKNOWN
-
-Files: LICENSE.txt
-Copyright: owner
-	owner. For the purposes of this definition, "submitted"
-	owner as "Not a Contribution."
-	owner that is granting the License
-	owner or entity authorized by
-License: UNKNOWN
-
+Apache-2.0 [1988-2008 University of Washington / ((c & 0xff80) ? ((c & 0xf800) ? 3 : 2) : 1)]: src/c-client/utf8.h
+Apache-2.0 [= " 1988-2007 University of Washington\n\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n http://www.apache.org/licenses/LICENSE-2.0\n"; / 1988-2008 University of Washington]: src/c-client/mail.c
+Apache-2.0 [= a,b) / 1988-2007 University of Washington]: src/osdep/nt/os_nt.h
+Apache-2.0 [while (n) s[--n]: src/ansilib/memset.c
+UNKNOWN [1988 Stanford University and was developed in the / 1988-2007 by the University of Washington]: NOTICE
+UNKNOWN [owner / owner. For the purposes of this definition, "submitted" / owner as "Not a Contribution." / owner that is granting the License / owner or entity authorized by]: LICENSE.txt
