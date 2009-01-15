@@ -1,3 +1,49 @@
+uw-imap (8:2007b~dfsg-1.1) unstable; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Fix denial of service vulnerability because of rfc822_output_char() not
+    checking for a full buffer and writing one byte ahead the buffer, later
+    resulting in memcpy getting called with a possible size argument of -1
+    (0003_CVE-2008-5514.patch; Closes: #510918)
+
+ -- Nico Golde <nion@debian.org>  Thu, 15 Jan 2009 19:00:01 +0100
+
+uw-imap (8:2007b~dfsg-1) unstable; urgency=medium
+
+  * Revert to older upstream 2007b, and instead bump epoc, as simplest
+    possible apporach to get back to old soname, needed for the frozen
+    Lenny. Thanks to Adeodato Simó for educating me about the problem
+    and coming up with the solution.
+  * Add patch 0001 from newer 2007d release, fixing local exploitable
+    security hole in dmail and tmail. Thanks to Tomas Pospisek for
+    reporting.
+  * Add patch 0002 from newer 2007d release, to not close already closed
+    smtp netstream.
+  * Set urgency=medium due to soname fix (security issue already in
+    7:2007d~dfsg-1 and 7:2007b~dfsg-4+lenny1, so urgency=high unneeded.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 01 Dec 2008 03:22:45 +0100
+
+uw-imap (7:2007d~dfsg-1) unstable; urgency=high
+
+  * New upstream release.
+  * Set urgency=high as this release fixes a locally exploitable hole in
+    dmail and tmail.
+  * Update cdbs snippets:
+    + Restructure output of copyright-check.mk to match new proposed
+      copyright-format at
+      http://wiki.debian.org/Proposals/CopyrightFormat .
+    + Several minor improvements to upstream-tarball.mk.
+    + Add new local package-relations.mk to merge duplicate
+      build-dependencies and more.  Drop cleanup in debian/rules.
+    + Update debian/README.cdbs-tweaks.
+  * Update copyright hints.
+  * Add DEB_MAINTAINER_MODE in debian/rules (thanks to Romain Beauxis).
+  * Semi-auto-update debian/control to update dependencies:
+      DEB_MAINTAINER_MODE=1 fakeroot debian/rules clean
+
+ -- Jonas Smedegaard <dr@jones.dk>  Mon, 03 Nov 2008 13:19:02 +0100
+
 uw-imap (7:2007b~dfsg-3) unstable; urgency=high
 
   * Fix patch 1001 to properly include IP6 flag, so package get compiled
