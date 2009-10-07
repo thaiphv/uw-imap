@@ -192,11 +192,13 @@ document):
     set restrictedBox NIL
 
 
-Enhanced maildir support
-========================
+Maildir support
+===============
 
-This package has been patched to Support maildir format mailboxes.  See 
-/usr/share/doc/libc-client__VER__/README.maildir.gz for further info.
+Earlier releases included a patch to support maildir format mailboxes,
+but that patch was not freely licensed and its author has explicitly
+requested its removal.  No alternative reliable Maildir patch is known
+to exist currently.
 
 
 

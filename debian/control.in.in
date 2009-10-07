@@ -2,7 +2,7 @@ Source: uw-imap
 Priority: optional
 Section: mail
 Maintainer: Jonas Smedegaard <dr@jones.dk>
-Standards-Version: 3.7.3
+Standards-Version: 3.8.0
 Build-Depends: @cdbs@
 Vcs-Git: git://git.debian.org/git/collab-maint/uw-imap.git
 Vcs-Browser: http://git.debian.org/?p=collab-maint/uw-imap.git;a=summary
@@ -11,11 +11,11 @@ Homepage: http://www.washington.edu/imap/
 Package: uw-imapd
 Section: mail
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, openssl, libpam-runtime (>= 0.76-13.1), openbsd-inetd | inet-superserver
-Recommends: exim4 | mail-transport-agent
-Suggests: mutt | imap-client, logcheck
-Provides: imap-server
-Conflicts: imap-server
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${cdbs:Depends}
+Recommends: ${cdbs:Recommends}
+Suggests: ${cdbs:Suggests}
+Conflicts: ${cdbs:Conflicts}
+Provides: ${cdbs:Provides}
 Description: remote mail folder access server using IMAP4rev1
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.
@@ -31,11 +31,11 @@ Description: remote mail folder access server using IMAP4rev1
 Package: ipopd
 Section: mail
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, openssl, libpam-runtime (>= 0.76-13.1), openbsd-inetd | inet-superserver
-Recommends: exim4 | mail-transport-agent
-Conflicts: pop3-server
-Provides: pop3-server
-Suggests: logcheck
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${cdbs:Depends}
+Recommends: ${cdbs:Recommends}
+Suggests: ${cdbs:Suggests}
+Conflicts: ${cdbs:Conflicts}
+Provides: ${cdbs:Provides}
 Description: POP2 and POP3 mail server
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.
@@ -51,7 +51,7 @@ Description: POP2 and POP3 mail server
 Package: libc-client__VER__-dev
 Section: libdevel
 Architecture: any
-Depends: libc-client__VER__ (= ${binary:Version}), ${devlibs:Depends}
+Depends: libc-client__VER__ (= ${binary:Version}), ${devlibs:Depends}, ${misc:Depends}
 Conflicts: libc-client-dev
 Replaces: libc-client-dev
 Provides: libc-client-dev
@@ -70,8 +70,8 @@ Description: c-client library for mail protocols - development files
 Package: libc-client__VER__
 Section: libs
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-modules, mlock
-Suggests: uw-mailutils
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${cdbs:Depends}
+Suggests: ${cdbs:Suggests}
 Description: c-client library for mail protocols - library files
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.
@@ -86,7 +86,7 @@ Description: c-client library for mail protocols - library files
 Package: mlock
 Section: mail
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: mailbox locking program
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.
@@ -102,7 +102,7 @@ Description: mailbox locking program
 Package: uw-mailutils
 Section: mail
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: c-client support programs
  IMAP (Internet Message Access Protocol) is a method of accessing
  electronic messages kept on a (possibly shared) mail server.

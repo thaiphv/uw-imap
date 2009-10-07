@@ -1,3 +1,11 @@
+uw-imap (8:2007b~dfsg-2) unstable; urgency=low
+
+  * Maildir support dropped!  Patch earlier applied was not freely
+    licensed and its author has explicitly requested its removal.
+    No alternative reliable Maildir patch is known to exist currently.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Tue, 11 Oct 2005 23:09:28 +0200
+
 uw-imap (7:2004g.debian1-1) unstable; urgency=low
 
   * Maildir is back! According to documentation this should be a more

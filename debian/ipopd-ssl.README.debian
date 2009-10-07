@@ -1,3 +1,0 @@
-Now that the ipopd package supports SSL, this package is obsolete.  It is
-being provided solely as a way to seamlessly upgrade to ipopd.  Once ipopd
-is installed, you can purge it.
