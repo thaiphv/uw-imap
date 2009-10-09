@@ -1,4 +1,7 @@
-Apache-2.0 [1988-2006 University of Washington]: CONTENTS
+Format: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=REVISION
+Name: Untrusted draft - double-check copyrights yourself!
+
+Files: CONTENTS
 	SUPPORT
 	docs/CONFIG
 	docs/IPv6.txt
@@ -375,7 +378,10 @@ Apache-2.0 [1988-2006 University of Washington]: CONTENTS
 	tools/Makefile
 	tools/ua
 	tools/uahelper.c
-Apache-2.0 [1988-2007 University of Washington]: README
+Copyright: 1988-2006, University of Washington
+License: Apache-2.0
+
+Files: README
 	docs/BUILD
 	docs/FAQ.html
 	docs/FAQ.txt
@@ -452,7 +458,72 @@ Apache-2.0 [1988-2007 University of Washington]: README
 	src/tmail/tquota.c
 	src/tmail/tquota.h
 	tools/an
-Apache-2.0 [1988-2008 University of Washington]: Makefile
+Copyright: 1988-2007, University of Washington
+License: Apache-2.0
+
+Files: debian/NEWS.in
+	debian/README.build
+	debian/README.source
+	debian/TODO
+	debian/__PKG__.config._in
+	debian/__PKG__.pam._in
+	debian/__PKG__.postinst._in
+	debian/__PKG__.postrm._in
+	debian/__PKG__.preinst._in
+	debian/compat
+	debian/control
+	debian/control.in
+	debian/control.in.in
+	debian/gbp.conf
+	debian/ipopd.README.debian.in
+	debian/ipopd.install
+	debian/ipopd.links
+	debian/ipopd.lintian-overrides
+	debian/ipopd.logcheck.ignore.server
+	debian/ipopd.manpages
+	debian/ipopd.templates
+	debian/libc-client-dev.substvars
+	debian/libc-client__VER__-dev.README.debian
+	debian/libc-client__VER__-dev.docs.in
+	debian/libc-client__VER__.README.debian.in
+	debian/libc-client__VER__.docs.in
+	debian/mlock.install
+	debian/mlock.lintian-overrides
+	debian/mlock.manpages
+	debian/mlock.pod
+	debian/patches/1001_shlibs.patch
+	debian/patches/2002_mailspool.patch
+	debian/patches/2004_no_binaries_below_etc.patch
+	debian/patches/2010_disallow_escaping_home.patch
+	debian/patches/README
+	debian/patches/series
+	debian/po/POTFILES.in
+	debian/po/da.po
+	debian/po/fi.po
+	debian/po/gl.po
+	debian/po/ja.po
+	debian/po/nl.po
+	debian/po/sv.po
+	debian/po/tr.po
+	debian/uw-imapd.README.debian.in
+	debian/uw-imapd.docs
+	debian/uw-imapd.install
+	debian/uw-imapd.lintian-overrides
+	debian/uw-imapd.logcheck.ignore.server
+	debian/uw-imapd.manpages
+	debian/uw-imapd.templates
+	debian/uw-mailutils.README.debian.in
+	debian/uw-mailutils.install
+	debian/uw-mailutils.logcheck.ignore.server
+	debian/uw-mailutils.manpages
+	debian/watch
+	src/osdep/vms/link.opt
+	src/osdep/vms/link_mnt.opt
+	src/osdep/vms/link_nlb.opt
+Copyright: *No copyright*
+License: UNKNOWN
+
+Files: Makefile
 	docs/RELNOTES
 	src/c-client/env.h
 	src/c-client/mail.h
@@ -492,7 +563,10 @@ Apache-2.0 [1988-2008 University of Washington]: Makefile
 	src/osdep/vms/tcp_vmsl.c
 	src/osdep/vms/tcp_vmsm.c
 	src/osdep/wce/tcp_wce.c
-Apache-2.0 [(((unsigned)>=060)&((unsigned)<=067)) / 1988-2007 University of Washington / (-'0')]: src/osdep/unix/os_aos.c
+Copyright: 1988-2008, University of Washington
+License: Apache-2.0
+
+Files: src/osdep/unix/os_aos.c
 	src/osdep/unix/os_bsd.c
 	src/osdep/unix/os_cvx.c
 	src/osdep/unix/os_do4.c
@@ -503,7 +577,12 @@ Apache-2.0 [(((unsigned)>=060)&((unsigned)<=067)) / 1988-2007 University of Wash
 	src/osdep/unix/os_shp.c
 	src/osdep/unix/os_sol.c
 	src/osdep/unix/os_sun.c
-Apache-2.0 [(((unsigned)>=060)&((unsigned)<=067)) / 1988-2006 University of Washington / (-'0')]: src/osdep/unix/os_art.c
+Copyright: (((unsigned)>=060)&((unsigned)<=067))
+	1988-2007, University of Washington
+	(-'0')
+License: Apache-2.0
+
+Files: src/osdep/unix/os_art.c
 	src/osdep/unix/os_asv.c
 	src/osdep/unix/os_aux.c
 	src/osdep/unix/os_cyg.c
@@ -512,21 +591,124 @@ Apache-2.0 [(((unsigned)>=060)&((unsigned)<=067)) / 1988-2006 University of Wash
 	src/osdep/unix/os_sv2.c
 	src/osdep/unix/os_sv4.c
 	src/osdep/unix/os_vu2.h
-*No copyright* UNKNOWN []: src/osdep/mac/mtest.sit.hqx
-	src/osdep/vms/link.opt
-	src/osdep/vms/link_mnt.opt
-	src/osdep/vms/link_nlb.opt
-Apache-2.0 [1988 Stanford University / 1988-2006 University of Washington]: src/c-client/misc.c
+Copyright: (((unsigned)>=060)&((unsigned)<=067))
+	1988-2006, University of Washington
+	(-'0')
+License: Apache-2.0
+
+Files: src/c-client/misc.c
 	src/c-client/misc.h
 	src/c-client/rfc822.h
-Apache-2.0 [1988 Stanford University / 1988-2008 University of Washington]: src/c-client/imap4r1.c
+Copyright: 1988, Stanford University
+	1988-2006, University of Washington
+License: Apache-2.0
+
+Files: src/c-client/imap4r1.c
 	src/c-client/rfc822.c
 	src/c-client/smtp.c
-Apache-2.0 [1988 Stanford University / 1988-2007 University of Washington]: src/c-client/smtp.h
+Copyright: 1988, Stanford University
+	1988-2008, University of Washington
+License: Apache-2.0
+
+Files: debian/po/eu.po
+	debian/po/ru.po
+	debian/po/templates.pot
+Copyright: YEAR THE PACKAGE'S HOLDER
+License: UNKNOWN
+
+Files: src/c-client/smtp.h
 	src/mtest/mtest.c
-Apache-2.0 [1988-2008 University of Washington / ((c & 0xff80) ? ((c & 0xf800) ? 3 : 2) : 1)]: src/c-client/utf8.h
-Apache-2.0 [= " 1988-2007 University of Washington\n\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n http://www.apache.org/licenses/LICENSE-2.0\n"; / 1988-2008 University of Washington]: src/c-client/mail.c
-Apache-2.0 [= a,b) / 1988-2007 University of Washington]: src/osdep/nt/os_nt.h
-Apache-2.0 [while (n) s[--n]: src/ansilib/memset.c
-UNKNOWN [1988 Stanford University and was developed in the / 1988-2007 by the University of Washington]: NOTICE
-UNKNOWN [owner / owner. For the purposes of this definition, "submitted" / owner as "Not a Contribution." / owner that is granting the License / owner or entity authorized by]: LICENSE.txt
+Copyright: 1988, Stanford University
+	1988-2007, University of Washington
+License: Apache-2.0
+
+Files: debian/po/it.po
+	debian/po/vi.po
+Copyright: 2007, Free Software Foundation, Inc
+License: UNKNOWN
+
+Files: src/c-client/utf8.h
+Copyright: 1988-2008, University of Washington
+	((c & 0xff80) ? ((c & 0xf800) ? 3 : 2) : 1)
+License: Apache-2.0
+
+Files: src/c-client/mail.c
+Copyright: = " 1988-2007, University of Washington\n\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n http://www.apache.org/licenses/LICENSE-2.0\n";
+	1988-2008, University of Washington
+License: Apache-2.0
+
+Files: src/osdep/nt/os_nt.h
+Copyright: = a,b)
+	1988-2007, University of Washington
+License: Apache-2.0
+
+Files: src/ansilib/memset.c
+Copyright: while (n) s[--n
+License: Apache-2.0
+
+Files: debian/rules
+Copyright: 2003-2009, Jonas Smedegaard <dr@jones.dk>
+License: GPL
+
+Files: debian/cdbs/1/rules/buildinfo.mk
+Copyright: 2004-2007, Jonas Smedegaard <dr@jones.dk>
+License: GPL
+
+Files: debian/cdbs/1/rules/upstream-tarball.mk
+Copyright: 2007-2008, Jonas Smedegaard <dr@jones.dk>
+License: GPL
+
+Files: debian/cdbs/1/rules/package-relations.mk
+Copyright: 2008, Jonas Smedegaard <dr@jones.dk>
+License: GPL
+
+Files: debian/cdbs/1/rules/copyright-check.mk
+Copyright: \s*(\S.*?)\s*\
+License: GPL
+
+Files: NOTICE
+Copyright: 1988, Stanford University and was developed in the
+	1988-2007, by the University of Washington
+License: UNKNOWN
+
+Files: debian/po/ca.po
+Copyright: 2004, Free Software Foundation, Inc
+License: UNKNOWN
+
+Files: debian/po/es.po
+Copyright: 2004, Software in the Public Interest
+License: UNKNOWN
+
+Files: debian/po/pt.po
+Copyright: 2007, Miguel Figueiredo <elmig@debianpt.org>
+License: UNKNOWN
+
+Files: debian/po/de.po
+Copyright: Helge Kreutzmann <debian@helgefjell.de>, 2007,
+	Matthias Julius <mdeb@julius-net.net>, 2006
+License: UNKNOWN
+
+Files: debian/po/pt_BR.po
+Copyright: Lus Lopes <andrelop@debian.org>, 2007,
+	2007, Andr Lus Lopes
+License: UNKNOWN
+
+Files: debian/po/fr.po
+Copyright: de forcer ces choix et de "
+	2001-2007, Christian Perrier <bubulle@debian.org>
+	d'activer pop3 et pop3s."
+License: UNKNOWN
+
+Files: LICENSE.txt
+Copyright: owner
+	owner. For the purposes of this definition, "submitted"
+	owner as "Not a Contribution."
+	owner that is granting the License
+	owner or entity authorized by
+License: UNKNOWN
+
+Files: debian/po/cs.po
+Copyright: se maj na serveru povolit."
+	m server podporovat:"
+License: UNKNOWN
+
