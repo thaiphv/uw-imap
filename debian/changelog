@@ -1,8 +1,63 @@
-uw-imap (8:2007b~dfsg-1.1build1) karmic; urgency=low
+uw-imap (8:2007e~dfsg-3) unstable; urgency=low
 
-  * No-change rebuild against libkrb5-3
+  * Fix have ipopd (not uw-imapd) conflict/replace virtual pop3-server.
 
- -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 12 Oct 2009 19:38:26 +0000
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 09 Oct 2009 22:31:48 +0200
+
+uw-imap (8:2007e~dfsg-2) unstable; urgency=low
+
+  * Explicitly conflict with alternate imap/pop daemons which use
+    identical filenames. Closes: bug#550380, thanks to Ralf Treinen.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Fri, 09 Oct 2009 22:24:04 +0200
+
+uw-imap (8:2007e~dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update debian/copyright:
+    + Add X-Files-Stripped and X-Files-Stripped-Reason notes for files
+      stripped in repackaged source
+    + Update contact infor for upstream author
+    + Attach note on Debian-distributed license texts to respective tags
+    + Bump to revision 413 of new copyright format
+  * Recommend default-mta (not exim4) as, well, default MTA.
+  * Have uw-imapd and ipopd PAM files include common-session-
+    noninteractive (not common-session), and tighten dependencies on
+    libpam-runtime to versions providing the included file.
+  * Drop patches 0001-0003 part of current upstream source.
+  * Drop patch 1003 (maildir support) as it is not freely licensed and
+    its author has explicitly requested its removal.  Add NEWS item and
+    rewrite README.Debian section.  Update debian/control.
+  * Stop SONAME from auto-bumping with each new release (but do bump
+    this time around due to dropped Maildir patch).
+  * Rewrite README.source to no longer describe source contents but
+    mention the use of Git, CDBS, quilt and DEB_MAINTAINER_MODE. Drop
+    README.cdbs-tweaks and cdbs-specific notes in debian/rules.
+  * Add git-buildpackage configfile, enabling signed tags and
+    pristine-tar.
+  * Update CDBS snippets:
+    + Add CDBS snippet package-relations.mk.
+    + Consistently use underscore (not dash) in variables.
+    + Implement fail-source-not-repackaged rule in upstream-tarball.mk.
+    + Update URL to draft DEP5 format in copyright-check.mk output.
+  * Drop no longer used -ssl README.debian files.
+  * Add DEB_MAINTAINER_MODE in debian/rules (thanks to Romain Beauxis).
+  * Resolve, cleanup and apply CDBS-declared dependencies using
+    package-relations.mk.
+  * Update copyright info:
+    + Rewrite to rev54 of DEB5 draft machine-readable format.
+    + Extend copyright years for debian/*.
+    + Add Source stanza.
+    + Add copyright and licensing infor for PO files.
+    + Fix set Stanford University as copyright holder (not license).
+  * Fix tighten build-dependency on debhelper (5.0.44 too old for v6).
+  * Bump policy-compliance to Standards-Version 3.8.0 (mailbox access
+    requirements might not comply with Policy v3.8.1 or newer).
+  * Always depend on ${misc:Depends} (not only when known needed).
+  * Use lowercase hostname variable in postinsts to not bogusly upset
+    lintian.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Wed, 07 Oct 2009 15:15:57 +0200
 
 uw-imap (8:2007b~dfsg-1.1) unstable; urgency=high
 
