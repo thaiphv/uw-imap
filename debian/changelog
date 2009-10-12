@@ -1,3 +1,9 @@
+uw-imap (8:2007b~dfsg-1.1build1) karmic; urgency=low
+
+  * No-change rebuild against libkrb5-3
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 12 Oct 2009 19:38:26 +0000
+
 uw-imap (8:2007b~dfsg-1.1) unstable; urgency=high
 
   * Non-maintainer upload by the Security Team.
