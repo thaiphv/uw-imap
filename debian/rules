@@ -221,9 +221,9 @@ CDBS_SUGGESTS_libc-client$(major) = uw-mailutils
 
 # Provide virtual packages for common services
 CDBS_CONFLICTS_uw-imapd = imap-server
-CBS_PROVIDES_uw-imapd = imap-server
+CDBS_PROVIDES_uw-imapd = imap-server
 CDBS_CONFLICTS_ipopd = pop3-server
-CBS_PROVIDES_ipopd = pop3-server
+CDBS_PROVIDES_ipopd = pop3-server
 
 # Explicitly conflict with packages shipping identically named files
 #  * courier-imap: imapd binary, imapd.8 man page and imap PAM file

@@ -1,3 +1,11 @@
+uw-imap (8:2007e~dfsg-3.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Add Provides to virtual pop3-server and imap-server to avoid file
+    conflicts with alternative daemons. (Closes: #550380)
+
+ -- Stefano Zacchiroli <zack@debian.org>  Sat, 23 Jan 2010 17:16:33 +0100
+
 uw-imap (8:2007e~dfsg-3) unstable; urgency=low
 
   * Fix have ipopd (not uw-imapd) conflict/replace virtual pop3-server.
