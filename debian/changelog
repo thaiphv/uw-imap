@@ -1,3 +1,10 @@
+uw-imap (8:2007e~dfsg-3.1ubuntu1) maverick; urgency=low
+
+  * Added debian/patches/1100_kolab_annotations.patch to support Kolab
+    integration
+
+ -- Scott Kitterman <scott@kitterman.com>  Tue, 03 Aug 2010 09:26:11 -0400
+
 uw-imap (8:2007e~dfsg-3.1) unstable; urgency=low
 
   * Non-maintainer upload.

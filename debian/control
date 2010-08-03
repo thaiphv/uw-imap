@@ -1,7 +1,8 @@
 Source: uw-imap
 Priority: optional
 Section: mail
-Maintainer: Jonas Smedegaard <dr@jones.dk>
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: Jonas Smedegaard <dr@jones.dk>
 Standards-Version: 3.8.0
 Build-Depends: debhelper (>= 6), quilt, patchutils (>= 0.2.25), dh-buildinfo, devscripts (>= 2.10.7), cdbs (>= 0.4.39), libpam-dev, libkrb5-dev, comerr-dev, libssl-dev, d-shlibs, perl, po-debconf
 Vcs-Git: git://git.debian.org/git/collab-maint/uw-imap.git
