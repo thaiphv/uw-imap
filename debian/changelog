@@ -1,3 +1,9 @@
+uw-imap (8:2007e~dfsg-3.1ubuntu2) oneiric; urgency=low
+
+  * Rebuild for OpenSSL 1.0.0.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Sat, 21 May 2011 11:59:55 +0100
+
 uw-imap (8:2007e~dfsg-3.1ubuntu1) maverick; urgency=low
 
   * Added debian/patches/1100_kolab_annotations.patch to support Kolab
