@@ -1,3 +1,11 @@
+uw-imap (8:2007e~dfsg-3.1ubuntu3) oneiric; urgency=low
+
+  * Apply patch from Vladimir Kolesnikov to properly zero out len
+    parameter when mail_fetch_body() returns an empty string.
+    (LP: #617876)
+
+ -- Daniel T Chen <crimsun@ubuntu.com>  Thu, 28 Jul 2011 18:38:08 -0400
+
 uw-imap (8:2007e~dfsg-3.1ubuntu2) oneiric; urgency=low
 
   * Rebuild for OpenSSL 1.0.0.
