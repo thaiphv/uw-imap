@@ -1,3 +1,10 @@
+uw-imap (8:2007e~dfsg-3.1ubuntu4) oneiric; urgency=low
+
+  * Resolve unresolved symbols in shared libraries. Closes: #558968.
+    Fixing the FTFBS for prayer.
+
+ -- Matthias Klose <doko@ubuntu.com>  Tue, 13 Sep 2011 22:53:14 +0000
+
 uw-imap (8:2007e~dfsg-3.1ubuntu3) oneiric; urgency=low
 
   * Apply patch from Vladimir Kolesnikov to properly zero out len
