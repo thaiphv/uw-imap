@@ -1,3 +1,23 @@
+uw-imap (8:2007e~dfsg-3.2ubuntu1) precise; urgency=low
+
+  * Merge with Debian; remaining changes:
+    - Resolve unresolved symbols in shared libraries. Closes: #558968.
+      Fixing the FTFBS for prayer.
+    - Apply patch from Vladimir Kolesnikov to properly zero out len
+      parameter when mail_fetch_body() returns an empty string.
+    - Added debian/patches/1100_kolab_annotations.patch to support Kolab
+      integration.
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 09 Dec 2011 17:29:44 +0100
+
+uw-imap (8:2007e~dfsg-3.2) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Fix FTBFS with flag -Werror=format-security. Patch by Aurélien Jarno.
+   (Closes: #646481). 
+
+ -- Ana Beatriz Guerrero Lopez <ana@debian.org>  Sat, 03 Dec 2011 22:28:48 +0100
+
 uw-imap (8:2007e~dfsg-3.1ubuntu4) oneiric; urgency=low
 
   * Resolve unresolved symbols in shared libraries. Closes: #558968.

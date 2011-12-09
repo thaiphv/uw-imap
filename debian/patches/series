@@ -1,4 +1,5 @@
 1001_shlibs.patch
+1002_fix_ftbfs.patch
 1100_kolab_annotations.patch
 2002_mailspool.patch
 2004_no_binaries_below_etc.patch
