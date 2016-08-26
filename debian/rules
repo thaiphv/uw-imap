@@ -61,7 +61,7 @@ PAMSERVICE_uw-imapd = imap
 DESC_uw-imapd = University of Washington IMAP daemon
 DAEMONSETS_uw-imapd = imap2:imapd imap3:imapd imaps:imapd
 
-CFLAGS += -D_REENTRANT -DDISABLE_POP_PROXY
+CFLAGS += -D_REENTRANT -DDISABLE_POP_PROXY -fPIC
 
 # Suppress seemingly non-fatal warnings to easer spot more important ones.
 CFLAGS += -Wno-parentheses -Wno-strict-aliasing
