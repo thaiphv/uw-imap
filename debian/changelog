@@ -1,3 +1,9 @@
+uw-imap (8:2007e~dfsg-3.2ubuntu2) precise; urgency=low
+
+  * Bump revision
+
+ -- Thai Pham  <tpham@freelancer.com>  Thu, 25 Aug 2016 20:15:23 -0400
+
 uw-imap (8:2007e~dfsg-3.2ubuntu1) precise; urgency=low
 
   * Merge with Debian; remaining changes:
